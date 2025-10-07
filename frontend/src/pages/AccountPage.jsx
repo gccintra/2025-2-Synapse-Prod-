@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
-import Header from "../components/HeaderEditAccount";
+import HeaderEditAccount from "../components/HeaderEditAccount";
 import PreferredTopics from "../components/PreferredTopics";
 import AddSource from "../pages/AddSource";
 
@@ -63,7 +63,10 @@ const SourceCard = ({ source, onDelete }) => (
       <h3 className="font-semibold text-gray-800">{source.name}</h3>
       {source.url && <p className="text-sm text-gray-500">{source.url}</p>}
     </div>
-    <button onClick={() => onDelete(source.id)} className="text-red-500 hover:text-red-700">
+    <button
+      onClick={() => onDelete(source.id)}
+      className="text-red-500 hover:text-red-700"
+    >
       <svg
         xmlns="http://www.w3.org/2000/svg"
         className="h-5 w-5"
@@ -145,23 +148,24 @@ const AccountPage = () => {
       try {
         const apiUrl = import.meta.env.VITE_API_BASE_URL;
         // Busca de dados do perfil, tópicos e fontes em paralelo
-        const [profileResponse, topicsResponse, sourcesResponse] = await Promise.all([
-          fetch(`${apiUrl}/users/profile`, {
-            method: "GET",
-            headers: { "Content-Type": "application/json" },
-            credentials: "include",
-          }),
-          fetch(`${apiUrl}/topics/list`, {
-            method: "GET",
-            headers: { "Content-Type": "application/json" },
-            credentials: "include",
-          }),
-          fetch(`${apiUrl}/news_sources/list_all_attached_sources`, {
-            method: "GET",
-            headers: { "Content-Type": "application/json" },
-            credentials: "include",
-          }),
-        ]);
+        const [profileResponse, topicsResponse, sourcesResponse] =
+          await Promise.all([
+            fetch(`${apiUrl}/users/profile`, {
+              method: "GET",
+              headers: { "Content-Type": "application/json" },
+              credentials: "include",
+            }),
+            fetch(`${apiUrl}/topics/list`, {
+              method: "GET",
+              headers: { "Content-Type": "application/json" },
+              credentials: "include",
+            }),
+            fetch(`${apiUrl}/news_sources/list_all_attached_sources`, {
+              method: "GET",
+              headers: { "Content-Type": "application/json" },
+              credentials: "include",
+            }),
+          ]);
 
         const profileData = await profileResponse.json();
         const topicsData = await topicsResponse.json();
@@ -218,10 +222,15 @@ const AccountPage = () => {
       const result = await response.json();
       if (response.ok) {
         // Adiciona o novo tópico apenas se ele já não estiver na lista (caso de re-associação)
-        if (!userData.preferred_topics.some((t) => t.id === result.data.topic.id)) {
+        if (
+          !userData.preferred_topics.some((t) => t.id === result.data.topic.id)
+        ) {
           setUserData((currentUserData) => ({
             ...currentUserData,
-            preferred_topics: [...currentUserData.preferred_topics, result.data.topic],
+            preferred_topics: [
+              ...currentUserData.preferred_topics,
+              result.data.topic,
+            ],
           }));
         }
         setNewTopic("");
@@ -264,11 +273,14 @@ const AccountPage = () => {
     try {
       const apiUrl = import.meta.env.VITE_API_BASE_URL;
       const csrfToken = getCookie("csrf_access_token");
-      const response = await fetch(`${apiUrl}/news_sources/detach/${sourceId}`, {
-        method: "DELETE",
-        headers: { "X-CSRF-TOKEN": csrfToken },
-        credentials: "include",
-      });
+      const response = await fetch(
+        `${apiUrl}/news_sources/detach/${sourceId}`,
+        {
+          method: "DELETE",
+          headers: { "X-CSRF-TOKEN": csrfToken },
+          credentials: "include",
+        }
+      );
 
       if (response.ok) {
         setUserData((currentUserData) => ({
@@ -335,7 +347,7 @@ const AccountPage = () => {
   // Se não há erro e o carregamento terminou, mostra a página completa.
   return (
     <div className="bg-gray-50 min-h-screen">
-      <Header userEmail={userData.email} />
+      <HeaderEditAccount userEmail={userData.email} />
       <main className="max-w-7xl mx-auto px-6">
         <div className="flex">
           <aside className="mt-16 ml-12 w-1/3">

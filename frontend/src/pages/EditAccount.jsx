@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
-import Header from "../components/HeaderEditAccount";
+import HeaderEditAccount from "../components/HeaderEditAccount";
 
 // Importe os ícones que você está usando no formulário
 import UserIcon from "../icons/user-regular-full.svg";
@@ -159,7 +159,7 @@ function EditAccount() {
 
   return (
     <>
-      <Header userEmail={formData.email} />
+      <HeaderEditAccount userEmail={formData.email} />
       {/* Container principal da página de edição */}
       <div className="min-h-screen flex flex-col justify-start items-center bg-[#f5f5f5] pt-16">
         <div className="w-full max-w-lg">
@@ -193,7 +193,11 @@ function EditAccount() {
                     value={formData.fullName}
                     onChange={handleChange}
                     placeholder="Enter your name..."
-                    className={`w-full border rounded py-2 px-9 focus:outline-none focus:ring-1 font-montserrat ${errors.fullName ? "border-red-500 focus:ring-red-500" : "border-gray-800 focus:ring-black"}`}
+                    className={`w-full border rounded py-2 px-9 focus:outline-none focus:ring-1 font-montserrat ${
+                      errors.fullName
+                        ? "border-red-500 focus:ring-red-500"
+                        : "border-gray-800 focus:ring-black"
+                    }`}
                   />
                 </div>
                 {errors.fullName && (
@@ -227,7 +231,11 @@ function EditAccount() {
                     value={formData.email}
                     onChange={handleChange}
                     placeholder="Enter your e-mail..."
-                    className={`w-full border rounded py-2 px-9 focus:outline-none focus:ring-1 font-montserrat ${errors.email ? "border-red-500 focus:ring-red-500" : "border-gray-800 focus:ring-black"}`}
+                    className={`w-full border rounded py-2 px-9 focus:outline-none focus:ring-1 font-montserrat ${
+                      errors.email
+                        ? "border-red-500 focus:ring-red-500"
+                        : "border-gray-800 focus:ring-black"
+                    }`}
                   />
                 </div>
                 {errors.email && (
