@@ -40,14 +40,14 @@ const PreferredTopics = ({
 
       {/* Lista de tópicos existentes */}
       <div>
-        <p className="mt-8 mb-3 text-base font-medium text-gray-900 font-montserrat">
+        <p className="mt-8 mb-3 text-lg font-medium text-gray-900 font-montserrat">
           Your topics
         </p>
         <div className="flex flex-wrap gap-2">
           {topics.map((topic) => (
             <div
               key={topic.id}
-              className="flex items-center gap-2 bg-white text-gray-900 text-xs font-medium border border-black shadow-lg pl-3 pr-2 py-1 rounded-full font-montserrat"
+              className="flex items-center gap-2 bg-white text-gray-900 text-sm font-medium border border-black shadow-lg pl-3 pr-2 py-1 rounded-full font-montserrat transition-all duration-300 ease-in-out hover:scale-[1.02] hover:shadow-xl hover:-translate-y-0.5 cursor-pointer"
             >
               <span>{topic.name}</span>
               <button
