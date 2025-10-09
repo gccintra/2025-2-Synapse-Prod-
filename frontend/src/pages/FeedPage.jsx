@@ -115,12 +115,10 @@ const FeedPage = () => {
         ) : (
           <>
             {/* Grid para os 3 primeiros cards (Destaques) */}
-            <div className="max-w-6xl">
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mt-12 mb-12">
-                {MOCK_NEWS_DATA.slice(0, 3).map((news) => (
-                  <NewsCard key={news.id} news={news} />
-                ))}
-              </div>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mt-12 mb-12">
+              {MOCK_NEWS_DATA.slice(0, 3).map((news) => (
+                <NewsCard key={news.id} news={news} />
+              ))}
             </div>
 
             {/* Layout em Lista para os demais (Corpo do Feed) */}

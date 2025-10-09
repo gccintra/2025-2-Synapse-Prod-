@@ -28,7 +28,7 @@ const NewsCard = ({ news, isListItem = false }) => {
   }
   // Layout para os Cards de Destaque (grid-cols-3)
   return (
-    <div className="text-base rounded-lg overflow-hidden hover:shadow-xl transition-shadow cursor-pointer font-montserrat">
+    <div className="text-base rounded-lg overflow-hidden transition-all duration-300 ease-in-out hover:shadow-xl hover:scale-[1.01] cursor-pointer font-montserrat">
       {/* Imagem */}
       <img
         src={Test2NewsImage} // Imagem de teste
