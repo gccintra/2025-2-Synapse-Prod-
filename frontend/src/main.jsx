@@ -1,6 +1,10 @@
 import React from "react";
 import ReactDOM from "react-dom/client";
-import { createBrowserRouter, RouterProvider, Navigate } from "react-router-dom";
+import {
+  createBrowserRouter,
+  RouterProvider,
+  Navigate,
+} from "react-router-dom";
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import "./index.css";
@@ -13,6 +17,7 @@ import ChangePassword from "./pages/ChangePassword.jsx";
 import AccountPage from "./pages/AccountPage";
 import PublicRoute from "./components/PublicRoute.jsx";
 import PrivateRoute from "./components/PrivateRoute.jsx";
+import FeedPage from "./pages/FeedPage.jsx";
 
 // Cria o objeto de configuração do roteador
 const router = createBrowserRouter([
@@ -27,11 +32,15 @@ const router = createBrowserRouter([
     element: <AboutPage />, // Renderiza o componente AboutPage
   },
   {
+    path: "/feed",
+    element: <FeedPage />,
+  },
+  {
     // Rotas públicas restritas (APENAS para usuários não logados)
     element: <PublicRoute />,
     children: [
       {
-        path: "/login", 
+        path: "/login",
         element: <LoginPage />,
       },
       {
@@ -55,6 +64,11 @@ const router = createBrowserRouter([
 ReactDOM.createRoot(document.getElementById("root")).render(
   <React.StrictMode>
     <RouterProvider router={router} />
-    <ToastContainer position="bottom-right" autoClose={5000} hideProgressBar={false} theme="dark" />
+    <ToastContainer
+      position="bottom-right"
+      autoClose={5000}
+      hideProgressBar={false}
+      theme="dark"
+    />
   </React.StrictMode>
 );

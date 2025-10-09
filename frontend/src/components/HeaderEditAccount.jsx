@@ -45,7 +45,7 @@ const HeaderEditAccount = ({ userEmail }) => {
         {/* Lado direito: E-mail do usuário + seta + dropdown */}
         <div className="relative">
           <button
-            className="flex items-center rounded-md text-gray-800 hover:text-gray-600 focus:outline-none text-sm font-montserrat"
+            className="flex items-center rounded-md text-gray-800 hover:text-gray-600 focus:outline-none text-base font-montserrat"
             onClick={() => setDropdownOpen((open) => !open)}
           >
             <span className="font-medium font-montserrat">{userEmail}</span>
