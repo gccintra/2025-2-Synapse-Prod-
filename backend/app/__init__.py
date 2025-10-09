@@ -44,9 +44,9 @@ def create_app(config_overrides=None):
     db.init_app(app)
     jwt = JWTManager(app)
 
-    from app.entities import (user_entity, topic_entity, user_topic_entity, 
+    from app.entities import (user_entity, topic_entity, user_topic_entity,
                               news_entity, news_source_entity, news_topic_entity, user_news_sources_entity, user_news_entity)
-    
+
     with app.app_context():
         db.create_all()
 
@@ -54,5 +54,6 @@ def create_app(config_overrides=None):
     app.register_blueprint(topic_bp, url_prefix="/topics")
     app.register_blueprint(news_bp, url_prefix="/news")
     app.register_blueprint(news_source_bp, url_prefix="/news_sources")
+    
 
     return app

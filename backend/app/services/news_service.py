@@ -1,4 +1,9 @@
 from app.repositories.news_repository import NewsRepository
+from app.repositories.news_source_repository import NewsSourceRepository
+from app.models.news import News, NewsValidationError
+from app.models.news_source import NewsSource, NewsSourceValidationError
+from app.models.exceptions import NewsNotFoundError
+
 
 class NewsService():
     """
@@ -13,12 +18,50 @@ class NewsService():
     Nota: A lógica de coleta de notícias foi movida para NewsCollectService
     """
     def __init__(self, news_repo: NewsRepository | None = None):
-        self.news_repo = news_repo or NewsRepository(),
+        self.news_repo = news_repo or NewsRepository()
 
-    # TODO: Implementar métodos de busca e apresentação:
-    # - get_all_news(filters, pagination)
-    # - get_news_by_id(news_id)
+    def get_news_by_id(self, news_id: int) -> News:
+        """
+        Busca uma notícia pelo seu ID.
+        Lança NewsNotFoundError se a notícia não for encontrada.
+        """
+        news = self.news_repo.find_by_id(news_id)
+        if not news:
+            raise NewsNotFoundError(f"Notícia com ID {news_id} não encontrada.")
+        return news
+
+    def get_news_for_user(self, user_id: int, page: int = 1, per_page: int = 10):
+        """
+        Retorna notícias paginadas para um usuário.
+
+        Args:
+            user_id: ID do usuário
+            page: Número da página (começa em 1)
+            per_page: Quantidade de itens por página
+
+        Returns:
+            Dict com notícias, paginação e metadados
+        """
+        # TODO: Implementar filtros baseados nas preferências do usuário
+        # Por enquanto retorna todas as notícias paginadas
+
+        offset = (page - 1) * per_page
+        all_news = self.news_repo.find_all()
+
+        total = len(all_news)
+        paginated_news = all_news[offset:offset + per_page]
+
+        return {
+            "news": [news.to_dict() for news in paginated_news],
+            "pagination": {
+                "page": page,
+                "per_page": per_page,
+                "total": total,
+                "pages": (total + per_page - 1) // per_page
+            }
+        }
+
+    # TODO: Implementar métodos adicionais de busca e apresentação:
     # - get_news_by_topic(topic_id, pagination)
     # - get_news_by_source(source_id, pagination)
     # - search_news(query, filters, pagination)
-    

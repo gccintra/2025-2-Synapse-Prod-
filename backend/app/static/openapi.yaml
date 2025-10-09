@@ -32,20 +32,20 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/UserRegister'
+              $ref: "#/components/schemas/UserRegister"
       responses:
-        '201':
+        "201":
           description: Usuário registrado com sucesso.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/SuccessResponse'
-        '400':
-          $ref: '#/components/responses/BadRequestError' # Corrected indentation
-        '409':
-          $ref: '#/components/responses/ConflictError'
-        '500':
-          $ref: '#/components/responses/InternalServerError'
+                $ref: "#/components/schemas/SuccessResponse"
+        "400":
+          $ref: "#/components/responses/BadRequestError" # Corrected indentation
+        "409":
+          $ref: "#/components/responses/ConflictError"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
 
   /users/login:
     post:
@@ -60,9 +60,9 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/UserLogin'
+              $ref: "#/components/schemas/UserLogin"
       responses:
-        '200':
+        "200":
           description: Login bem-sucedido.
           headers:
             Set-Cookie:
@@ -72,22 +72,22 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/UserLoginResponse'
-        '400':
-          $ref: '#/components/responses/BadRequestError' # Corrected indentation
-        '401':
+                $ref: "#/components/schemas/UserLoginResponse"
+        "400":
+          $ref: "#/components/responses/BadRequestError" # Corrected indentation
+        "401":
           description: Credenciais inválidas.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                $ref: "#/components/schemas/ErrorResponse"
               example:
                 success: false
                 message: "Falha na autenticação."
                 data: null
                 error: "Credenciais inválidas."
-        '500':
-          $ref: '#/components/responses/InternalServerError' # Corrected indentation
+        "500":
+          $ref: "#/components/responses/InternalServerError" # Corrected indentation
 
   /users/profile:
     get:
@@ -99,18 +99,18 @@ paths:
       security:
         - cookieAuth: []
       responses:
-        '200':
+        "200":
           description: Perfil do usuário recuperado com sucesso.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/UserProfileResponse'
-        '401':
-          $ref: '#/components/responses/UnauthorizedError' # Corrected indentation
-        '404':
-          $ref: '#/components/responses/NotFoundError'
-        '500':
-          $ref: '#/components/responses/InternalServerError'
+                $ref: "#/components/schemas/UserProfileResponse"
+        "401":
+          $ref: "#/components/responses/UnauthorizedError" # Corrected indentation
+        "404":
+          $ref: "#/components/responses/NotFoundError"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
 
   /users/profile/update:
     put:
@@ -128,24 +128,24 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/UserProfileUpdate'
+              $ref: "#/components/schemas/UserProfileUpdate"
       responses:
-        '200':
+        "200":
           description: Perfil atualizado com sucesso.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/UserProfileResponse'
-        '400':
-          $ref: '#/components/responses/BadRequestError' # Corrected indentation
-        '401':
-          $ref: '#/components/responses/UnauthorizedError' # Corrected indentation
-        '404':
-          $ref: '#/components/responses/NotFoundError' # Corrected indentation
-        '409':
-          $ref: '#/components/responses/ConflictError'
-        '500':
-          $ref: '#/components/responses/InternalServerError'
+                $ref: "#/components/schemas/UserProfileResponse"
+        "400":
+          $ref: "#/components/responses/BadRequestError" # Corrected indentation
+        "401":
+          $ref: "#/components/responses/UnauthorizedError" # Corrected indentation
+        "404":
+          $ref: "#/components/responses/NotFoundError" # Corrected indentation
+        "409":
+          $ref: "#/components/responses/ConflictError"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
 
   /users/profile/change_password:
     put:
@@ -163,22 +163,22 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/ChangePassword'
+              $ref: "#/components/schemas/ChangePassword"
       responses:
-        '200':
+        "200":
           description: Senha alterada com sucesso.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/SuccessResponse'
-        '400':
-          $ref: '#/components/responses/BadRequestError' # Corrected indentation
-        '401':
-          $ref: '#/components/responses/UnauthorizedError' # Corrected indentation
-        '404':
-          $ref: '#/components/responses/NotFoundError' # Corrected indentation
-        '500':
-          $ref: '#/components/responses/InternalServerError'
+                $ref: "#/components/schemas/SuccessResponse"
+        "400":
+          $ref: "#/components/responses/BadRequestError" # Corrected indentation
+        "401":
+          $ref: "#/components/responses/UnauthorizedError" # Corrected indentation
+        "404":
+          $ref: "#/components/responses/NotFoundError" # Corrected indentation
+        "500":
+          $ref: "#/components/responses/InternalServerError"
 
   # --- Topic Routes ---
   /topics/create:
@@ -205,20 +205,20 @@ paths:
                   type: string
                   example: "Inteligência Artificial"
       responses:
-        '201':
+        "201":
           description: Tópico criado/associado com sucesso.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/TopicResponse'
-        '400':
-          $ref: '#/components/responses/BadRequestError' # Corrected indentation
-        '401':
-          $ref: '#/components/responses/UnauthorizedError' # Corrected indentation
-        '409':
-          $ref: '#/components/responses/ConflictError' # Corrected indentation
-        '500':
-          $ref: '#/components/responses/InternalServerError'
+                $ref: "#/components/schemas/TopicResponse"
+        "400":
+          $ref: "#/components/responses/BadRequestError" # Corrected indentation
+        "401":
+          $ref: "#/components/responses/UnauthorizedError" # Corrected indentation
+        "409":
+          $ref: "#/components/responses/ConflictError" # Corrected indentation
+        "500":
+          $ref: "#/components/responses/InternalServerError"
 
   /topics/list:
     get:
@@ -230,16 +230,16 @@ paths:
       security:
         - cookieAuth: []
       responses:
-        '200':
+        "200":
           description: Tópicos recuperados com sucesso.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/TopicListResponse'
-        '401':
-          $ref: '#/components/responses/UnauthorizedError' # Corrected indentation
-        '500':
-          $ref: '#/components/responses/InternalServerError'
+                $ref: "#/components/schemas/TopicListResponse"
+        "401":
+          $ref: "#/components/responses/UnauthorizedError" # Corrected indentation
+        "500":
+          $ref: "#/components/responses/InternalServerError"
 
   /topics/delete/{topic_id}:
     delete:
@@ -260,18 +260,18 @@ paths:
             type: integer
             example: 5
       responses:
-        '200':
+        "200":
           description: Tópico desvinculado com sucesso.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/SuccessResponse'
-        '401':
-          $ref: '#/components/responses/UnauthorizedError' # Corrected indentation
-        '404':
-          $ref: '#/components/responses/NotFoundError' # Corrected indentation
-        '500':
-          $ref: '#/components/responses/InternalServerError'
+                $ref: "#/components/schemas/SuccessResponse"
+        "401":
+          $ref: "#/components/responses/UnauthorizedError" # Corrected indentation
+        "404":
+          $ref: "#/components/responses/NotFoundError" # Corrected indentation
+        "500":
+          $ref: "#/components/responses/InternalServerError"
 
   # --- News Source Routes ---
   /news_sources/list_all:
@@ -284,16 +284,16 @@ paths:
       security:
         - cookieAuth: []
       responses:
-        '200':
+        "200":
           description: Sucesso. Retorna a lista de fontes.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/NewsSourceListResponse'
-        '401':
-          $ref: '#/components/responses/UnauthorizedError' # Corrected indentation
-        '500':
-          $ref: '#/components/responses/InternalServerError' # Corrected indentation
+                $ref: "#/components/schemas/NewsSourceListResponse"
+        "401":
+          $ref: "#/components/responses/UnauthorizedError" # Corrected indentation
+        "500":
+          $ref: "#/components/responses/InternalServerError" # Corrected indentation
 
   /news_sources/list_all_attached_sources:
     get:
@@ -305,16 +305,16 @@ paths:
       security:
         - cookieAuth: []
       responses:
-        '200':
+        "200":
           description: Sucesso. Retorna a lista de fontes associadas.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/NewsSourceListResponse'
-        '401':
-          $ref: '#/components/responses/UnauthorizedError' # Corrected indentation
-        '500':
-          $ref: '#/components/responses/InternalServerError' # Corrected indentation
+                $ref: "#/components/schemas/NewsSourceListResponse"
+        "401":
+          $ref: "#/components/responses/UnauthorizedError" # Corrected indentation
+        "500":
+          $ref: "#/components/responses/InternalServerError" # Corrected indentation
 
   /news_sources/list_all_unattached_sources:
     get:
@@ -326,16 +326,16 @@ paths:
       security:
         - cookieAuth: []
       responses:
-        '200':
+        "200":
           description: Sucesso. Retorna a lista de fontes não associadas.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/NewsSourceListResponse'
-        '401':
-          $ref: '#/components/responses/UnauthorizedError' # Corrected indentation
-        '500':
-          $ref: '#/components/responses/InternalServerError' # Corrected indentation
+                $ref: "#/components/schemas/NewsSourceListResponse"
+        "401":
+          $ref: "#/components/responses/UnauthorizedError" # Corrected indentation
+        "500":
+          $ref: "#/components/responses/InternalServerError" # Corrected indentation
 
   /news_sources/attach:
     post:
@@ -362,22 +362,22 @@ paths:
                   description: O ID da fonte de notícia a ser associada.
                   example: 2
       responses:
-        '200':
+        "200":
           description: Fonte associada com sucesso.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/SuccessResponse'
-        '400':
-          $ref: '#/components/responses/BadRequestError' # Corrected indentation
-        '401':
-          $ref: '#/components/responses/UnauthorizedError' # Corrected indentation
-        '404':
-          $ref: '#/components/responses/NotFoundError' # Corrected indentation
-        '409':
-          $ref: '#/components/responses/ConflictError'
-        '500':
-          $ref: '#/components/responses/InternalServerError'
+                $ref: "#/components/schemas/SuccessResponse"
+        "400":
+          $ref: "#/components/responses/BadRequestError" # Corrected indentation
+        "401":
+          $ref: "#/components/responses/UnauthorizedError" # Corrected indentation
+        "404":
+          $ref: "#/components/responses/NotFoundError" # Corrected indentation
+        "409":
+          $ref: "#/components/responses/ConflictError"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
 
   /news_sources/detach/{news_source_id}:
     delete:
@@ -398,29 +398,29 @@ paths:
             type: integer
             example: 1
       responses:
-        '200':
+        "200":
           description: Fonte desassociada com sucesso.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/SuccessResponse'
-        '401':
-          $ref: '#/components/responses/UnauthorizedError' # Corrected indentation
-        '400': # Added 400 for invalid ID type
+                $ref: "#/components/schemas/SuccessResponse"
+        "401":
+          $ref: "#/components/responses/UnauthorizedError" # Corrected indentation
+        "400": # Added 400 for invalid ID type
           description: Dados inválidos. O ID da fonte de notícia na URL deve ser um número inteiro válido.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                $ref: "#/components/schemas/ErrorResponse"
               example:
                 success: false
                 message: "Dados inválidos."
                 data: null
                 error: "O ID da fonte de notícia na URL deve ser um número inteiro válido."
-        '404':
-          $ref: '#/components/responses/NotFoundError' # Corrected indentation
-        '500':
-          $ref: '#/components/responses/InternalServerError'
+        "404":
+          $ref: "#/components/responses/NotFoundError" # Corrected indentation
+        "500":
+          $ref: "#/components/responses/InternalServerError"
 
 components:
   schemas:
@@ -507,17 +507,19 @@ components:
           type: object
           properties:
             full_name: { type: string, example: "João da Silva" }
-            email: { type: string, format: email, example: "joao.silva@example.com" }
-        error: { type: 'object', nullable: true }
+            email:
+              { type: string, format: email, example: "joao.silva@example.com" }
+        error: { type: "object", nullable: true }
 
     UserProfileResponse:
       type: object
       properties:
         success: { type: boolean, example: true }
-        message: { type: string, example: "Perfil do usuário recuperado com sucesso." }
+        message:
+          { type: string, example: "Perfil do usuário recuperado com sucesso." }
         data:
-          $ref: '#/components/schemas/UserProfile'
-        error: { type: 'object', nullable: true }
+          $ref: "#/components/schemas/UserProfile"
+        error: { type: "object", nullable: true }
 
     # --- Topic Schemas ---
     Topic:
@@ -536,9 +538,9 @@ components:
           type: object
           properties:
             topic:
-              $ref: '#/components/schemas/Topic'
+              $ref: "#/components/schemas/Topic"
             attached: { type: boolean, example: true }
-        error: { type: 'object', nullable: true }
+        error: { type: "object", nullable: true }
 
     TopicListResponse:
       type: object
@@ -548,8 +550,8 @@ components:
         data:
           type: array
           items:
-            $ref: '#/components/schemas/Topic'
-        error: { type: 'object', nullable: true }
+            $ref: "#/components/schemas/Topic"
+        error: { type: "object", nullable: true }
 
     # --- News Source Schemas ---
     NewsSource:
@@ -563,12 +565,13 @@ components:
       type: object
       properties:
         success: { type: boolean, example: true }
-        message: { type: string, example: "Fontes de notícias listadas com sucesso." }
+        message:
+          { type: string, example: "Fontes de notícias listadas com sucesso." }
         data:
           type: array
           items:
-            $ref: '#/components/schemas/NewsSource'
-        error: { type: 'object', nullable: true }
+            $ref: "#/components/schemas/NewsSource"
+        error: { type: "object", nullable: true }
 
     # --- Generic Schemas ---
     SuccessResponse:
@@ -576,15 +579,15 @@ components:
       properties:
         success: { type: boolean, example: true }
         message: { type: string, example: "Operação realizada com sucesso." }
-        data: { type: 'object', nullable: true }
-        error: { type: 'object', nullable: true }
+        data: { type: "object", nullable: true }
+        error: { type: "object", nullable: true }
 
     ErrorResponse:
       type: object
       properties:
         success: { type: boolean, example: false }
         message: { type: string }
-        data: { type: 'object', nullable: true }
+        data: { type: "object", nullable: true }
         error: { type: string }
 
   responses:
@@ -593,7 +596,7 @@ components:
       content:
         application/json:
           schema:
-            $ref: '#/components/schemas/ErrorResponse'
+            $ref: "#/components/schemas/ErrorResponse"
           example:
             success: false
             message: "Dados inválidos."
@@ -614,7 +617,7 @@ components:
       content:
         application/json:
           schema:
-            $ref: '#/components/schemas/ErrorResponse'
+            $ref: "#/components/schemas/ErrorResponse"
           example:
             success: false
             message: "Recurso não encontrado."
@@ -625,7 +628,7 @@ components:
       content:
         application/json:
           schema:
-            $ref: '#/components/schemas/ErrorResponse'
+            $ref: "#/components/schemas/ErrorResponse"
           example:
             success: false
             message: "Conflito de dados."
@@ -636,7 +639,7 @@ components:
       content:
         application/json:
           schema:
-            $ref: '#/components/schemas/ErrorResponse'
+            $ref: "#/components/schemas/ErrorResponse"
           example:
             success: false
             message: "Erro interno do servidor."
