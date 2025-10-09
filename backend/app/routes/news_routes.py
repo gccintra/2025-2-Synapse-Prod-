@@ -13,7 +13,7 @@ news_controller = NewsController()
 def favorite_news(user_id, news_id):
     return news_controller.favorite_news(user_id, news_id)
 
-@news_bp.route("/<int:news_id>/unfavorite", methods=["POST"])
+@news_bp.route("/<int:news_id>/unfavorite", methods=["DELETE"])
 @jwt_required()
 @get_user_id_from_token
 def unfavorite_news(user_id, news_id):

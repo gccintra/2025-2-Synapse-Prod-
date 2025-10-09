@@ -41,6 +41,26 @@ class UserNewsRepository:
             self.session.rollback()
             raise
 
+    def remove_favorite(self, user_id: int, news_id: int) -> bool:
+        try:
+            stmt = select(UserNewsEntity).where(
+                UserNewsEntity.user_id == user_id,
+                UserNewsEntity.news_id == news_id
+            )
+            entity = self.session.execute(stmt).scalar_one_or_none()
+
+            if entity:
+                self.session.delete(entity)
+                self.session.commit()
+                return True
+            else:
+                return False
+
+        except SQLAlchemyError as e:
+            logging.error(f"Erro ao remover favorito user_id={user_id}, news_id={news_id}: {e}", exc_info=True)
+            self.session.rollback()
+            raise
+
     def get_favorites_by_user(self, user_id: int) -> list[UserNews]:
         try:
             stmt = select(UserNewsEntity).where(

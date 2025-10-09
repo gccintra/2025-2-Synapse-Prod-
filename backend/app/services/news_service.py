@@ -153,4 +153,4 @@ class NewsService():
         return self.user_news_repo.set_favorite(user_id, news_id, is_favorite=True)
 
     def unfavorite_news(self, user_id, news_id):
-        return self.user_news_repo.set_favorite(user_id, news_id, is_favorite=False)
+        return self.user_news_repo.remove_favorite(user_id, news_id)
