@@ -44,3 +44,6 @@ class TopicService:
 
     def detach_for_user(self, user_id: int, topic_id: int) -> bool:
         return self.users_topics.detach(user_id, topic_id)
+
+    def search(self, query: str, limit: int = 10) -> list[Topic]:
+        return self.topics.search_by_name(query, limit)
