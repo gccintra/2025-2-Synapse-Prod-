@@ -6,6 +6,7 @@ from newspaper import Article
 from sqlalchemy.exc import IntegrityError
 from newspaper.configuration import Configuration
 from app.repositories.news_repository import NewsRepository
+from app.repositories.user_news_repository import UserNewsRepository
 from app.repositories.news_source_repository import NewsSourceRepository
 from app.models.news import News, NewsValidationError
 from app.models.news_source import NewsSource
@@ -21,12 +22,13 @@ from app.models.exceptions import NewsSourceValidationError
 # TODO: adicionar parâmetro para dizer se vou rodar um top headlines ou um search por palavra chave
 
 class NewsService():
-    def __init__(self, news_repo: NewsRepository | None = None, news_source_repo: NewsSourceRepository | None = None):
+    def __init__(self, news_repo: NewsRepository | None = None, news_source_repo: NewsSourceRepository | None = None, user_news_repo: UserNewsRepository | None = None):
         self.news_repo = news_repo or NewsRepository()
         self.news_sources_repo = news_source_repo or NewsSourceRepository()
         self.gnews_api_key = os.getenv('GNEWS_API_KEY')
         self.api_endpoint = "https://gnews.io/api/v4/top-headlines"
         self.api_endpoint_search = "https://gnews.io/api/v4/search"
+        self.user_news_repo = user_news_repo or UserNewsRepository()
 
     # TODO: Nao devo receber uma lista de topicos, devo criar uma função para calcular quais topicos devem ser pesquisados, além de selecionar quantas consultas serão feitas em cada endpoint (search e top headlines)
     
@@ -146,3 +148,9 @@ class NewsService():
         except Exception as e:
             logging.error(f"Erro no scraping de {url}: {e}", exc_info=True)
             return None
+
+    def favorite_news(self, user_id, news_id):
+        return self.user_news_repo.set_favorite(user_id, news_id, is_favorite=True)
+
+    def unfavorite_news(self, user_id, news_id):
+        return self.user_news_repo.set_favorite(user_id, news_id, is_favorite=False)
