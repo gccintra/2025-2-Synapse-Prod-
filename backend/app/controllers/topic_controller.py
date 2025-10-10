@@ -67,17 +67,37 @@ class TopicController:
             response = self.service.detach_for_user(user_id, topic_id)
             if not response:
                 return jsonify({
-                    "success": False, 
-                    "message": "Relação não encontrada.", 
-                    "data": None, 
+                    "success": False,
+                    "message": "Relação não encontrada.",
+                    "data": None,
                     "error": "Nada a remover."
                 }), 404
             return jsonify({"success": True, "message": "Tópico desvinculado com sucesso.", "data": None, "error": None}), 200
         except Exception as e:
             logging.error(f"Erro inesperado ao desvincular tópico: {e}", exc_info=True)
             return jsonify({
-                "success": False, 
-                "message": "Erro interno do servidor.", 
-                "data": None, 
+                "success": False,
+                "message": "Erro interno do servidor.",
+                "data": None,
+                "error": "Ocorreu um erro inesperado."
+            }), 500
+        
+    # Autocomplete
+    def search(self, query: str, limit: int = 10):
+        try:
+            topics = self.service.search(query, limit)
+            data = [{"id": t.id, "name": t.name} for t in topics]
+            return jsonify({
+                "success": True,
+                "message": f"{len(topics)} tópico(s) encontrado(s).",
+                "data": data,
+                "error": None
+            }), 200
+        except Exception as e:
+            logging.error(f"Erro inesperado ao buscar tópicos: {e}", exc_info=True)
+            return jsonify({
+                "success": False,
+                "message": "Erro interno do servidor.",
+                "data": None,
                 "error": "Ocorreu um erro inesperado."
             }), 500
