@@ -32,7 +32,11 @@ class NewsService():
         topic_repo: TopicRepository | None = None,
         news_topic_repo: NewsTopicRepository | None = None,
         ai_service: AIService | None = None,
-        similarity_service: TopicSimilarityService | None = None
+        similarity_service: TopicSimilarityService | None = None,
+        prioritization_service=None,
+        keyword_service=None,
+        cache=None,
+        rate_limiter=None
     ):
         self.news_repo = news_repo or NewsRepository()
         self.news_sources_repo = news_source_repo or NewsSourceRepository()
@@ -40,6 +44,31 @@ class NewsService():
         self.news_topic_repo = news_topic_repo or NewsTopicRepository()
         self.ai_service = ai_service or AIService()
         self.similarity_service = similarity_service or TopicSimilarityService(self.ai_service)
+
+        # Novos serviços para coleta inteligente
+        from app.services.topic_prioritization_service import TopicPrioritizationService
+        from app.services.keyword_generation_service import KeywordGenerationService
+        from app.utils.topic_search_cache import TopicSearchCache
+        from app.utils.api_rate_limiter import APIRateLimiter
+        from app.config.news_collection_config import get_config
+
+        self.config = get_config()
+        self.cache = cache or TopicSearchCache(self.config["cache_file_path"])
+        self.rate_limiter = rate_limiter or APIRateLimiter(
+            max_calls=self.config["gemini_max_calls_per_minute"],
+            window_seconds=self.config["gemini_rate_limit_window_seconds"]
+        )
+        self.prioritization_service = prioritization_service or TopicPrioritizationService(
+            cache=self.cache,
+            config=self.config
+        )
+        self.keyword_service = keyword_service or KeywordGenerationService(
+            ai_service=self.ai_service,
+            cache=self.cache,
+            rate_limiter=self.rate_limiter,
+            config=self.config
+        )
+
         self.gnews_api_key = os.getenv('GNEWS_API_KEY')
         self.api_endpoint = "https://gnews.io/api/v4/top-headlines"
         self.api_endpoint_search = "https://gnews.io/api/v4/search"
@@ -178,6 +207,317 @@ class NewsService():
             logging.error(f"Erro ao chamar a GNews API: {e}", exc_info=True)
             return []
 
+    def search_articles_via_gnews(self, query: str, language='pt', country='br', max_articles=10):
+        """
+        Busca notícias usando o endpoint de search do GNews com query.
+
+        Args:
+            query: Query de busca (pode usar operadores OR, AND, NOT)
+            language: Código do idioma (pt, en, etc)
+            country: Código do país (br, us, etc)
+            max_articles: Máximo de artigos (padrão: 10)
+
+        Returns:
+            Lista de artigos (metadata)
+        """
+        params = {
+            'q': query,
+            'lang': language,
+            'country': country,
+            'apikey': self.gnews_api_key,
+            'max': max_articles
+        }
+
+        try:
+            logging.info(f"GNews Search: query=\"{query}\", lang={language}, country={country}")
+            response = requests.get(self.api_endpoint_search, params=params)
+            response.raise_for_status()
+            articles = response.json().get('articles', [])
+            logging.info(f"GNews retornou {len(articles)} artigos")
+            return articles
+        except requests.exceptions.RequestException as e:
+            logging.error(f"Erro ao chamar GNews Search API: {e}", exc_info=True)
+            return []
+
+    def call_top_headlines(self, category='general', language='pt', country='br', max_articles=10):
+        """
+        Busca notícias usando o endpoint top-headlines do GNews.
+
+        Args:
+            category: Categoria (general, world, business, etc)
+            language: Código do idioma
+            country: Código do país
+            max_articles: Máximo de artigos
+
+        Returns:
+            Lista de artigos (metadata)
+        """
+        params = {
+            'category': category,
+            'lang': language,
+            'country': country,
+            'apikey': self.gnews_api_key,
+            'max': max_articles
+        }
+
+        try:
+            logging.info(f"GNews Top-Headlines: category={category}, lang={language}, country={country}")
+            response = requests.get(self.api_endpoint, params=params)
+            response.raise_for_status()
+            articles = response.json().get('articles', [])
+            logging.info(f"GNews retornou {len(articles)} artigos")
+            return articles
+        except requests.exceptions.RequestException as e:
+            logging.error(f"Erro ao chamar GNews Top-Headlines API: {e}", exc_info=True)
+            return []
+
+    def collect_news_intelligently(self):
+        """
+        Método principal de coleta inteligente de notícias.
+
+        Fluxo:
+        1. Carregar e limpar cache
+        2. Priorizar tópicos baseado em métricas
+        3. Gerar keywords em batch (1 chamada Gemini)
+        4. Fazer 1 chamada top-headlines
+        5. Fazer N chamadas search (conforme config)
+        6. Processar todas as notícias
+        7. Categorizar em batch (2 chamadas Gemini)
+        8. Salvar cache
+
+        Returns:
+            Tupla (new_articles_count, new_sources_count)
+        """
+        if not self.gnews_api_key:
+            logging.error("GNEWS_API_KEY não configurada")
+            raise ValueError("GNEWS_API_KEY não configurada")
+
+        logging.info("=" * 80)
+        logging.info("INICIANDO COLETA INTELIGENTE DE NOTÍCIAS")
+        logging.info("=" * 80)
+
+        # PASSO 1: Carregar e limpar cache
+        logging.info("[1/8] Carregando cache...")
+        self.cache.load()
+        removed = self.cache.clean_old_entries(hours=self.config["cache_ttl_hours"])
+        logging.info(f"Cache carregado. {removed} entradas antigas removidas.")
+
+        # PASSO 2: Selecionar tópicos prioritários
+        logging.info(f"[2/8] Selecionando {self.config['topics_to_select']} tópicos prioritários...")
+        prioritized_topics = self.prioritization_service.get_prioritized_topics(
+            count=self.config["topics_to_select"]
+        )
+
+        if not prioritized_topics:
+            logging.error("Nenhum tópico selecionado. Abortando coleta.")
+            return (0, 0)
+
+        logging.info(f"Tópicos selecionados: {[t.topic_name for t in prioritized_topics]}")
+
+        # PASSO 3: Gerar keywords em batch (1 ÚNICA CHAMADA GEMINI)
+        logging.info("[3/8] Gerando keywords para todos os tópicos em batch...")
+        topic_names = [t.topic_name for t in prioritized_topics]
+        keywords_dict = self.keyword_service.generate_keywords_batch(topic_names)
+
+        if not keywords_dict:
+            logging.error("Falha ao gerar keywords. Abortando coleta.")
+            return (0, 0)
+
+        # PASSO 4: Coletar artigos do GNews
+        logging.info("[4/8] Coletando notícias do GNews...")
+        all_articles_metadata = []
+
+        # 4.1: Chamada obrigatória ao top-headlines
+        logging.info("  [4.1] Chamando top-headlines (obrigatório)...")
+        top_articles = self.call_top_headlines(
+            category=self.config["gnews_top_headlines_category"],
+            language=self.config["default_language"],
+            country=self.config["default_country"],
+            max_articles=self.config["gnews_max_articles_per_call"]
+        )
+        all_articles_metadata.extend(top_articles)
+
+        # 4.2: Chamadas de search para cada tópico
+        logging.info(f"  [4.2] Fazendo {self.config['gnews_search_calls']} chamadas de search...")
+        search_count = 0
+
+        for topic_score in prioritized_topics:
+            topic_name = topic_score.topic_name
+            topic_data = keywords_dict.get(topic_name.lower())
+
+            if not topic_data:
+                logging.warning(f"Sem dados para tópico '{topic_name}'. Pulando.")
+                continue
+
+            # Extrair keywords, idioma e país
+            keyword_groups = topic_data.get("keywords", [])
+            lang = topic_data.get("language", "en")
+            country = topic_data.get("country", "us")
+
+            if not keyword_groups:
+                logging.warning(f"Sem keywords para tópico '{topic_name}'. Pulando.")
+                continue
+
+            logging.debug(f"Tópico '{topic_name}': language={lang}, country={country}")
+
+            # Para cada grupo de keywords do tópico
+            for i, keywords_group in enumerate(keyword_groups, 1):
+                if search_count >= self.config["gnews_search_calls"]:
+                    logging.info(f"Atingiu limite de {self.config['gnews_search_calls']} chamadas de search.")
+                    break
+
+                # Construir query booleana
+                query = self.keyword_service.build_boolean_query(keywords_group)
+
+                if not query:
+                    logging.warning(f"Query vazia para tópico '{topic_name}'. Pulando.")
+                    continue
+
+                # Chamar API
+                search_articles = self.search_articles_via_gnews(
+                    query=query,
+                    language=lang,
+                    country=country,
+                    max_articles=self.config["gnews_max_articles_per_call"]
+                )
+
+                all_articles_metadata.extend(search_articles)
+                search_count += 1
+
+                # Registrar no cache
+                self.cache.record_search(
+                    topic_name=topic_name,
+                    keywords=keywords_group,
+                    language=lang,
+                    country=country,
+                    news_found=len(search_articles)
+                )
+
+                logging.info(f"    Search {search_count}/{self.config['gnews_search_calls']}: "
+                            f"tópico='{topic_name}', query=\"{query}\", "
+                            f"lang={lang}, country={country}, artigos={len(search_articles)}")
+
+            if search_count >= self.config["gnews_search_calls"]:
+                break
+
+        logging.info(f"Total de artigos coletados: {len(all_articles_metadata)}")
+
+        # PASSO 5: Processar notícias (criar fontes, scraping, salvar)
+        logging.info("[5/8] Processando notícias...")
+        new_articles_count = 0
+        new_sources_count = 0
+        articles_to_categorize = []
+
+        for i, article_meta in enumerate(all_articles_metadata, 1):
+            title = article_meta.get('title')
+            article_url = article_meta.get('url')
+
+            if not article_url:
+                logging.warning(f"Artigo {i} sem URL. Pulando.")
+                continue
+
+            # Verificar duplicata
+            if self.news_repo.find_by_url(article_url):
+                logging.debug(f"Artigo {i} já existe: {article_url}")
+                continue
+
+            source_name = article_meta.get('source', {}).get('name')
+            source_url = article_meta.get('source', {}).get('url')
+
+            if not source_name or not source_url:
+                logging.warning(f"Artigo {i} sem dados de fonte. Pulando.")
+                continue
+
+            # Buscar ou criar fonte
+            news_source_model = self.news_sources_repo.find_by_url(source_url)
+            if not news_source_model:
+                news_source_model = self.news_sources_repo.find_by_name(source_name)
+
+            if not news_source_model:
+                try:
+                    new_source = NewsSource(name=source_name, url=source_url)
+                    news_source_model = self.news_sources_repo.create(new_source)
+                    new_sources_count += 1
+                    logging.info(f"Nova fonte criada: {source_name}")
+                except IntegrityError:
+                    news_source_model = self.news_sources_repo.find_by_url(source_url)
+                    if not news_source_model:
+                        news_source_model = self.news_sources_repo.find_by_name(source_name)
+                    if not news_source_model:
+                        logging.error(f"Erro crítico ao criar fonte '{source_name}'")
+                        continue
+                except Exception as e:
+                    logging.error(f"Erro ao criar fonte '{source_name}': {e}")
+                    continue
+
+            source_id = news_source_model.id
+
+            # Scraping
+            article_content = self.scrape_article_content(article_url)
+            if not article_content:
+                logging.warning(f"Falha no scraping: {article_url}")
+                continue
+
+            # Salvar notícia
+            try:
+                published_at_str = article_meta.get('publishedAt')
+                if published_at_str and published_at_str.endswith('Z'):
+                    published_at_str = published_at_str[:-1] + '+00:00'
+                published_at_dt = datetime.fromisoformat(published_at_str)
+
+                article = News(
+                    title=article_meta.get('title'),
+                    url=article_url,
+                    description=article_meta.get('description'),
+                    content=article_content,
+                    image_url=article_meta.get('image'),
+                    published_at=published_at_dt,
+                    source_id=source_id,
+                )
+
+                saved_article = self.news_repo.create(article)
+                new_articles_count += 1
+                logging.info(f"Notícia {new_articles_count} salva: '{saved_article.title[:50]}...'")
+
+                articles_to_categorize.append({
+                    'news_id': saved_article.id,
+                    'content': saved_article.content,
+                    'title': saved_article.title
+                })
+
+            except Exception as e:
+                logging.error(f"Erro ao salvar artigo '{title}': {e}")
+                continue
+
+        # PASSO 6: Categorizar artigos em batch (2 chamadas Gemini)
+        if articles_to_categorize:
+            logging.info(f"[6/8] Categorizando {len(articles_to_categorize)} artigos em batch...")
+            try:
+                # Usa rate_limiter interno do AIService via _categorize_articles_batch
+                self._categorize_articles_batch(articles_to_categorize)
+                logging.info("Categorização concluída.")
+            except Exception as e:
+                logging.error(f"Erro na categorização: {e}", exc_info=True)
+        else:
+            logging.info("[6/8] Nenhum artigo novo para categorizar.")
+
+        # PASSO 7: Salvar cache atualizado
+        logging.info("[7/8] Salvando cache...")
+        self.cache.save()
+
+        # PASSO 8: Resumo final
+        logging.info("[8/8] Coleta inteligente finalizada!")
+        logging.info("=" * 80)
+        logging.info(f"RESUMO:")
+        logging.info(f"  - Tópicos priorizados: {len(prioritized_topics)}")
+        logging.info(f"  - Chamadas GNews: {1 + search_count} (1 top-headlines + {search_count} search)")
+        logging.info(f"  - Artigos coletados: {len(all_articles_metadata)}")
+        logging.info(f"  - Novos artigos salvos: {new_articles_count}")
+        logging.info(f"  - Novas fontes: {new_sources_count}")
+        logging.info("=" * 80)
+
+        return (new_articles_count, new_sources_count)
+
     def _get_all_topics_cached(self) -> list[Topic]:
         import time
 
@@ -268,7 +608,14 @@ Responda APENAS com o objeto JSON, sem nenhum texto adicional ou formatação de
 **Seu Objeto JSON de Resposta:**"""
 
         try:
+            # THROTTLING: Aguardar se necessário antes de chamar IA
+            self.rate_limiter.wait_if_needed()
+
             response_text = self.ai_service.generate_content(prompt)
+
+            # THROTTLING: Registrar chamada
+            self.rate_limiter.record_call()
+
             if not response_text:
                 logging.warning("Resposta vazia da IA para extração de tópicos em batch.")
                 return {article['news_id']: [] for article in articles_data}
@@ -349,11 +696,17 @@ Responda APENAS com o objeto JSON, sem nenhum texto adicional ou formatação de
         if topics_to_check_similarity and existing_topics:
             logging.info(f"Verificando similaridade de {len(topics_to_check_similarity)} tópicos em batch")
             try:
+                # THROTTLING: Aguardar se necessário antes de chamar IA
+                self.rate_limiter.wait_if_needed()
+
                 # UMA ÚNICA CHAMADA DE IA PARA VERIFICAR SIMILARIDADE DE TODOS OS TÓPICOS!
                 similarity_results = self.similarity_service.find_similar_topics_batch(
                     topics_to_check_similarity,
                     existing_topics
                 )
+
+                # THROTTLING: Registrar chamada
+                self.rate_limiter.record_call()
 
                 # Adicionar resultados ao mapeamento
                 for topic_name, similar_topic in similarity_results.items():

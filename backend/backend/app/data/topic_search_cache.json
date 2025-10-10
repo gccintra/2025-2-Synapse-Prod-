@@ -1,0 +1,122 @@
+{
+  "tecnologia": {
+    "searches": [
+      {
+        "keywords": [
+          "Inteligência Artificial",
+          "computação quântica",
+          "cibersegurança"
+        ],
+        "timestamp": "2025-10-10T12:41:00.717152",
+        "language": "en",
+        "country": "us",
+        "news_found": 0
+      }
+    ]
+  },
+  "esportes": {
+    "searches": [
+      {
+        "keywords": [
+          "Olimpíadas Paris",
+          "eSports",
+          "futebol feminino"
+        ],
+        "timestamp": "2025-10-10T12:41:01.352136",
+        "language": "en",
+        "country": "us",
+        "news_found": 0
+      }
+    ]
+  },
+  "política": {
+    "searches": [
+      {
+        "keywords": [
+          "reforma tributária",
+          "eleições municipais",
+          "diplomacia internacional"
+        ],
+        "timestamp": "2025-10-10T12:41:02.002494",
+        "language": "pt",
+        "country": "br",
+        "news_found": 0
+      }
+    ]
+  },
+  "entretenimento": {
+    "searches": [
+      {
+        "keywords": [
+          "plataformas streaming",
+          "festivais música",
+          "cultura pop"
+        ],
+        "timestamp": "2025-10-10T12:41:02.651752",
+        "language": "en",
+        "country": "us",
+        "news_found": 0
+      }
+    ]
+  },
+  "inovação": {
+    "searches": [
+      {
+        "keywords": [
+          "startups disruptivas",
+          "tecnologias emergentes",
+          "transformação digital"
+        ],
+        "timestamp": "2025-10-10T13:02:10.182590",
+        "language": "pt",
+        "country": "br",
+        "news_found": 0
+      }
+    ]
+  },
+  "economia": {
+    "searches": [
+      {
+        "keywords": [
+          "inflação juros",
+          "mercado financeiro",
+          "política monetária"
+        ],
+        "timestamp": "2025-10-10T13:02:10.897961",
+        "language": "pt",
+        "country": "br",
+        "news_found": 10
+      }
+    ]
+  },
+  "cultura": {
+    "searches": [
+      {
+        "keywords": [
+          "eventos culturais",
+          "arte contemporânea",
+          "diversidade cultural"
+        ],
+        "timestamp": "2025-10-10T13:02:11.489872",
+        "language": "pt",
+        "country": "br",
+        "news_found": 0
+      }
+    ]
+  },
+  "internacional": {
+    "searches": [
+      {
+        "keywords": [
+          "geopolítica global",
+          "relações exteriores",
+          "conflitos diplomacia"
+        ],
+        "timestamp": "2025-10-10T13:02:12.067997",
+        "language": "pt",
+        "country": "br",
+        "news_found": 0
+      }
+    ]
+  }
+}
