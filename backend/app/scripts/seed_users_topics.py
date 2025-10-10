@@ -52,39 +52,39 @@ SAMPLE_USERS = [
 ]
 
 SAMPLE_TOPICS = [
-    "tecnologia",
-    "política",
-    "economia",
-    "esportes",
-    "saúde",
-    "educação",
-    "entretenimento",
-    "ciência",
-    "meio ambiente",
-    "cultura",
-    "internacional",
-    "segurança",
-    "negócios",
-    "inovação",
+    "technology",
+    "crypto",
+    "economy",
+    "sports",
+    "health",
+    "study",
+    "artifical inteligence",
+    "science",
+    "business",
+    "culture",
+    "imigrants",
+    "art",
+    "United States",
+    "trap",
     "startup",
 ]
 
 # Distribuição de interesses (tópicos mais populares têm mais usuários)
 USER_TOPICS_DISTRIBUTION = {
-    "tecnologia": 15,      # 15 usuários interessados (75%)
-    "política": 12,        # 12 usuários (60%)
-    "economia": 10,        # 10 usuários (50%)
-    "esportes": 14,        # 14 usuários (70%)
-    "saúde": 8,            # 8 usuários (40%)
-    "educação": 6,         # 6 usuários (30%)
-    "entretenimento": 11,  # 11 usuários (55%)
-    "ciência": 7,          # 7 usuários (35%)
-    "meio ambiente": 5,    # 5 usuários (25%)
-    "cultura": 9,          # 9 usuários (45%)
-    "internacional": 8,    # 8 usuários (40%)
-    "segurança": 4,        # 4 usuários (20%)
-    "negócios": 6,         # 6 usuários (30%)
-    "inovação": 10,        # 10 usuários (50%)
+    "technology": 15,      # 15 usuários interessados (75%)
+    "crypto": 12,        # 12 usuários (60%)
+    "economy": 10,        # 10 usuários (50%)
+    "sports": 14,        # 14 usuários (70%)
+    "health": 8,            # 8 usuários (40%)
+    "study": 6,         # 6 usuários (30%)
+    "artifical inteligence": 11,  # 11 usuários (55%)
+    "science": 7,          # 7 usuários (35%)
+    "business": 5,    # 5 usuários (25%)
+    "culture": 9,          # 9 usuários (45%)
+    "imigrants": 8,    # 8 usuários (40%)
+    "art": 4,        # 4 usuários (20%)
+    "United States": 6,         # 6 usuários (30%)
+    "trap": 10,        # 10 usuários (50%)
     "startup": 7,          # 7 usuários (35%)
 }
 

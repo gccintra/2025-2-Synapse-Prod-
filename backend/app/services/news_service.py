@@ -2,6 +2,7 @@ import os
 import requests
 import json
 import logging
+import time
 from datetime import datetime
 from newspaper import Article
 from sqlalchemy.exc import IntegrityError
@@ -50,6 +51,7 @@ class NewsService():
         from app.services.keyword_generation_service import KeywordGenerationService
         from app.utils.topic_search_cache import TopicSearchCache
         from app.utils.api_rate_limiter import APIRateLimiter
+        from app.utils.scraping_blacklist import ScrapingBlacklist
         from app.config.news_collection_config import get_config
 
         self.config = get_config()
@@ -58,6 +60,10 @@ class NewsService():
             max_calls=self.config["gemini_max_calls_per_minute"],
             window_seconds=self.config["gemini_rate_limit_window_seconds"]
         )
+
+        # Sistema de blacklist automático para scraping
+        self.scraping_blacklist = ScrapingBlacklist("backend/app/data/scraping_blacklist.json")
+        self.scraping_blacklist.load()
         self.prioritization_service = prioritization_service or TopicPrioritizationService(
             cache=self.cache,
             config=self.config
@@ -228,16 +234,43 @@ class NewsService():
             'max': max_articles
         }
 
-        try:
-            logging.info(f"GNews Search: query=\"{query}\", lang={language}, country={country}")
-            response = requests.get(self.api_endpoint_search, params=params)
-            response.raise_for_status()
-            articles = response.json().get('articles', [])
-            logging.info(f"GNews retornou {len(articles)} artigos")
-            return articles
-        except requests.exceptions.RequestException as e:
-            logging.error(f"Erro ao chamar GNews Search API: {e}", exc_info=True)
-            return []
+        # Retry simples se der erro 429
+        max_retries = 2
+        for attempt in range(max_retries):
+            try:
+                logging.info(f"GNews Search: query=\"{query}\", lang={language}, country={country}")
+                response = requests.get(self.api_endpoint_search, params=params)
+
+                # Se erro 429, aguardar e tentar novamente
+                if response.status_code == 429:
+                    if attempt < max_retries - 1:
+                        wait_time = 5
+                        logging.warning(f"Erro 429 (Too Many Requests). Aguardando {wait_time}s antes de tentar novamente...")
+                        time.sleep(wait_time)
+                        continue
+                    else:
+                        logging.error("Erro 429: limite de tentativas atingido")
+                        return []
+
+                response.raise_for_status()
+                articles = response.json().get('articles', [])
+                logging.info(f"GNews retornou {len(articles)} artigos")
+
+                # Delay entre chamadas
+                delay = self.config.get("gnews_delay_between_calls", 2)
+                time.sleep(delay)
+
+                return articles
+
+            except requests.exceptions.RequestException as e:
+                if attempt < max_retries - 1:
+                    logging.warning(f"Erro ao chamar GNews (tentativa {attempt + 1}/{max_retries}): {e}")
+                    time.sleep(5)
+                else:
+                    logging.error(f"Erro ao chamar GNews Search API: {e}", exc_info=True)
+                    return []
+
+        return []
 
     def call_top_headlines(self, category='general', language='pt', country='br', max_articles=10):
         """
@@ -260,16 +293,43 @@ class NewsService():
             'max': max_articles
         }
 
-        try:
-            logging.info(f"GNews Top-Headlines: category={category}, lang={language}, country={country}")
-            response = requests.get(self.api_endpoint, params=params)
-            response.raise_for_status()
-            articles = response.json().get('articles', [])
-            logging.info(f"GNews retornou {len(articles)} artigos")
-            return articles
-        except requests.exceptions.RequestException as e:
-            logging.error(f"Erro ao chamar GNews Top-Headlines API: {e}", exc_info=True)
-            return []
+        # Retry simples se der erro 429
+        max_retries = 2
+        for attempt in range(max_retries):
+            try:
+                logging.info(f"GNews Top-Headlines: category={category}, lang={language}, country={country}")
+                response = requests.get(self.api_endpoint, params=params)
+
+                # Se erro 429, aguardar e tentar novamente
+                if response.status_code == 429:
+                    if attempt < max_retries - 1:
+                        wait_time = 5
+                        logging.warning(f"Erro 429 (Too Many Requests). Aguardando {wait_time}s antes de tentar novamente...")
+                        time.sleep(wait_time)
+                        continue
+                    else:
+                        logging.error("Erro 429: limite de tentativas atingido")
+                        return []
+
+                response.raise_for_status()
+                articles = response.json().get('articles', [])
+                logging.info(f"GNews retornou {len(articles)} artigos")
+
+                # Delay entre chamadas
+                delay = self.config.get("gnews_delay_between_calls", 2)
+                time.sleep(delay)
+
+                return articles
+
+            except requests.exceptions.RequestException as e:
+                if attempt < max_retries - 1:
+                    logging.warning(f"Erro ao chamar GNews (tentativa {attempt + 1}/{max_retries}): {e}")
+                    time.sleep(5)
+                else:
+                    logging.error(f"Erro ao chamar GNews Top-Headlines API: {e}", exc_info=True)
+                    return []
+
+        return []
 
     def collect_news_intelligently(self):
         """
@@ -538,12 +598,21 @@ class NewsService():
         return self._topics_cache
 
     def scrape_article_content(self, url: str) -> str | None:
+        # Verificar se URL está na blacklist automática
+        if self.scraping_blacklist.is_blocked(url):
+            info = self.scraping_blacklist.get_blocked_info(url)
+            logging.warning(
+                f"Site na blacklist automática (bloqueado em {info.get('blocked_at')}): {url} "
+                f"- Motivo: {info.get('error_type')}, {info.get('error_count')} erro(s) registrado(s)"
+            )
+            return None
+
         try:
             logging.debug(f"Fazendo scraping de: {url}")
 
             config = Configuration()
             config.browser_user_agent = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Safari/537.36'
-            config.request_timeout = 15
+            config.request_timeout = 30  # Aumentado de 15s para 30s
             config.keep_article_html = True
 
             article = Article(url, config=config)
@@ -551,6 +620,41 @@ class NewsService():
             article.parse()
             return article.article_html
         except Exception as e:
+            error_str = str(e)
+
+            # Detectar tipo de erro e adicionar à blacklist automaticamente
+            error_type = None
+            reason = "Site blocks scraping or fails consistently"
+
+            if '403' in error_str or 'Forbidden' in error_str:
+                error_type = "403 Forbidden"
+                reason = "Site blocks scraping with 403 Forbidden"
+            elif '401' in error_str or 'Unauthorized' in error_str:
+                error_type = "401 Unauthorized"
+                reason = "Site requires authentication (401 Unauthorized)"
+            elif 'SSL' in error_str or 'certificate' in error_str.lower():
+                error_type = "SSL Certificate Error"
+                reason = "SSL certificate validation failed"
+            elif 'timed out' in error_str.lower() or 'timeout' in error_str.lower():
+                error_type = "Timeout"
+                reason = "Request timeout exceeded (30s)"
+            elif '429' in error_str or 'Too Many Requests' in error_str:
+                error_type = "429 Too Many Requests"
+                reason = "Site rate limiting detected"
+            elif '503' in error_str or 'Service Unavailable' in error_str:
+                # Não adicionar à blacklist - pode ser temporário
+                logging.error(f"Erro temporário (503) no scraping de {url}: {e}", exc_info=True)
+                return None
+
+            # Se detectou um tipo de erro crítico, adicionar à blacklist
+            if error_type:
+                self.scraping_blacklist.add_to_blacklist(
+                    url=url,
+                    error_type=error_type,
+                    error_message=error_str[:500],  # Limitar tamanho
+                    reason=reason
+                )
+
             logging.error(f"Erro no scraping de {url}: {e}", exc_info=True)
             return None
 

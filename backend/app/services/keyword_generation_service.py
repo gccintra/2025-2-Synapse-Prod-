@@ -126,17 +126,32 @@ class KeywordGenerationService:
         searches_per_topic = config["searches_per_topic"]
         keywords_per_search = config["keywords_per_search"]
 
-        prompt = f"""Gere palavras-chave para buscar notícias de cada tópico da lista e identifique o idioma/país correto.
+        prompt = f"""Gere palavras-chave SIMPLES e POPULARES para buscar notícias de cada tópico da lista.
 
-**Regras OBRIGATÓRIAS:**
+**Regras CRÍTICAS:**
 1. Para cada tópico, gere EXATAMENTE {searches_per_topic} GRUPOS de keywords
-2. Cada grupo deve ter EXATAMENTE {keywords_per_search} palavras-chave ou expressões curtas (máx 3 palavras)
-3. As keywords devem estar NO MESMO IDIOMA do tópico fornecido
-4. Detecte o idioma do tópico e retorne o código de idioma (pt para português, en para inglês)
-5. Para português, use country "br". Para inglês, use country "us"
-6. Seja específico, atual e relevante (tendências, termos populares)
-7. EVITE as keywords já usadas recentemente (listadas para cada tópico)
-8. Varie as keywords entre os grupos para cobrir diferentes aspectos do tópico
+2. Cada grupo deve ter EXATAMENTE {keywords_per_search} palavras-chave
+3. Use PALAVRAS SIMPLES e POPULARES que aparecem em manchetes de jornal
+4. EVITE jargões técnicos, termos muito específicos ou acadêmicos
+5. Prefira palavras GENÉRICAS que cobrem o tópico de forma ampla
+6. As keywords devem estar NO MESMO IDIOMA do tópico fornecido
+7. Detecte o idioma: "pt" para português, "en" para inglês
+8. Para português, use country "br". Para inglês, use country "us"
+9. EVITE as keywords já usadas recentemente (listadas para cada tópico)
+
+**IMPORTANTE - O que FAZER e o que NÃO FAZER:**
+
+❌ NÃO USE (muito específico/técnico):
+- "NBA playoffs OR major league soccer OR global sports events"
+- "Bitcoin price OR blockchain technology OR NFT market"
+- "AI ethics OR generative AI OR machine learning trends"
+- "trap music artists OR hip hop culture OR new trap releases"
+
+✅ USE (simples e popular):
+- "goal OR soccer"
+- "bitcoin OR crypto"
+- "artificial intelligence OR AI"
+- "music OR entertainment"
 
 **Formato de Saída OBRIGATÓRIO:**
 Retorne APENAS um objeto JSON sem nenhum texto adicional, markdown ou formatação.
@@ -144,36 +159,39 @@ A estrutura deve ser:
 {{
   "nome_do_topico": {{
     "keywords": [
-      ["keyword1", "keyword2", "keyword3"],
-      ["keyword4", "keyword5", "keyword6"]
+      ["keyword1", "keyword2"]
     ],
     "language": "pt",
     "country": "br"
-  }},
-  "outro_topico": {{
-    "keywords": [
-      ["keyword1", "keyword2", "keyword3"]
-    ],
-    "language": "en",
-    "country": "us"
   }}
 }}
 
-**Exemplo de Resposta Completa:**
+**Exemplos Práticos (SIGA ESTE PADRÃO):**
 {{
-  "tecnologia": {{
-    "keywords": [
-      ["inteligência artificial", "IA", "machine learning"]
-    ],
+  "sports": {{
+    "keywords": [["goal", "soccer"]],
+    "language": "en",
+    "country": "us"
+  }},
+  "crypto": {{
+    "keywords": [["bitcoin", "cryptocurrency"]],
+    "language": "en",
+    "country": "us"
+  }},
+  "technology": {{
+    "keywords": [["technology", "tech"]],
+    "language": "en",
+    "country": "us"
+  }},
+  "economia": {{
+    "keywords": [["economia", "mercado"]],
     "language": "pt",
     "country": "br"
   }},
-  "technology": {{
-    "keywords": [
-      ["artificial intelligence", "AI", "innovation"]
-    ],
-    "language": "en",
-    "country": "us"
+  "saúde": {{
+    "keywords": [["saúde", "medicina"]],
+    "language": "pt",
+    "country": "br"
   }}
 }}
 

@@ -16,7 +16,7 @@ NEWS_COLLECTION_CONFIG = {
     # ==========================================
     "topics_to_select": 4,  # Quantidade de tópicos prioritários a selecionar
     "searches_per_topic": 1,  # Quantidade de buscas por tópico (gnews_search_calls / topics_to_select)
-    "keywords_per_search": 5,  # Quantidade de keywords por grupo/busca
+    "keywords_per_search": 2,  # Quantidade de keywords por grupo/busca (REDUZIDO: queries menores = mais resultados)
 
     # ==========================================
     # SISTEMA DE CACHE
@@ -49,9 +49,9 @@ NEWS_COLLECTION_CONFIG = {
     # ==========================================
     # Usados quando não há usuários com preferências
     "default_topics": [
-        "tecnologia", "política", "economia", "saúde", "educação",
-        "esportes", "entretenimento", "ciência", "meio ambiente",
-        "segurança", "internacional", "cultura"
+        "technology", "politics", "economy", "health", "education",
+        "sports", "entertainment", "science", "environment",
+        "security", "international", "culture"
     ],
 
     # ==========================================
@@ -59,6 +59,7 @@ NEWS_COLLECTION_CONFIG = {
     # ==========================================
     "gnews_max_articles_per_call": 10,  # Máximo de artigos por chamada (limite da API)
     "gnews_top_headlines_category": "general",  # Categoria para top-headlines
+    "gnews_delay_between_calls": 2,  # Delay em segundos entre cada chamada (evita erro 429)
 
     # ==========================================
     # THROTTLING - GEMINI API
