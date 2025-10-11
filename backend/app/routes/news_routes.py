@@ -20,7 +20,6 @@ def get_news(user_id: int):
 def get_news_by_id(news_id: int):
     return news_controller.get_by_id(news_id)
 
-
 @news_bp.route("/<int:news_id>/favorite", methods=["POST"])
 @jwt_required()
 @get_user_id_from_token
@@ -33,3 +32,8 @@ def favorite_news(user_id, news_id):
 @get_user_id_from_token
 def unfavorite_news(user_id, news_id):
     return news_controller.unfavorite_news(user_id, news_id)
+
+@news_bp.route("/topic/<int:topic_id>", methods=["GET"])
+@jwt_required()
+def get_news_by_topic(topic_id: int):
+    return news_controller.get_by_topic(topic_id)

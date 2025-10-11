@@ -3,6 +3,7 @@ from sqlalchemy.exc import IntegrityError
 import logging
 from app.services.user_news_service import UserNews
 from app.services.news_service import NewsService
+from app.services.news_topics_service import NewsTopicsService
 from flask_jwt_extended import set_access_cookies, create_access_token, unset_jwt_cookies
 from app.models.exceptions import UserNotFoundError, EmailInUseError, NewsNotFoundError
 
@@ -11,6 +12,7 @@ class NewsController:
     def __init__(self):
         self.user_news_service = UserNews()
         self.news_service = NewsService()
+        self.news_topics_service = NewsTopicsService()
 
     def favorite_news(self, user_id, news_id):
         try:
@@ -64,3 +66,27 @@ class NewsController:
                 "data": None,
                 "error": str(e)
             }), 404
+    
+    def get_by_topic(self, topic_id: int):
+        try:
+            page = request.args.get('page', 1, type=int)
+            per_page = 10  # fixo conforme solicitado
+
+            items = self.news_topics_service.find_by_topic(topic_id, page, per_page)
+
+            return jsonify({
+                "success": True,
+                "message": "Notícias recuperadas com sucesso.",
+                "data": items,
+                "page": page,
+                "per_page": per_page,
+                "error": None,
+            }), 200
+        except Exception as e:
+            logging.error(f"Erro inesperado ao listar notícias por tópico: {e}", exc_info=True)
+            return jsonify({
+                "success": False,
+                "message": "Erro interno do servidor.",
+                "data": None,
+                "error": "Ocorreu um erro inesperado."
+            }), 500
