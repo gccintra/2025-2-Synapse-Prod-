@@ -1,5 +1,7 @@
 /** @type {import('tailwindcss').Config} */
-module.exports = {
+import typography from "@tailwindcss/typography";
+
+export default {
   content: ["./index.html", "./src/**/*.{js,ts,jsx,tsx}"],
   theme: {
     extend: {
@@ -8,9 +10,10 @@ module.exports = {
         montserrat: ["Montserrat", "sans-serif"],
       },
       fontSize: {
-        "64xl": "64px", // O tamanho personalizado para 64px
-        "160xl": "160px", // O tamanho personalizado para 160px
+        "64xl": "64px",
+        "160xl": "160px",
       },
     },
   },
+  plugins: [typography],
 };

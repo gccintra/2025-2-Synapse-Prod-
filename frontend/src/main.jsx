@@ -18,22 +18,25 @@ import AccountPage from "./pages/AccountPage";
 import PublicRoute from "./components/PublicRoute.jsx";
 import PrivateRoute from "./components/PrivateRoute.jsx";
 import FeedPage from "./pages/FeedPage.jsx";
+import NewsPage from "./pages/NewsPage.jsx";
 
 // Cria o objeto de configuração do roteador
 const router = createBrowserRouter([
-  // Rotas públicas normais
-
   {
     path: "/",
     element: <Navigate to="/login" replace />,
   },
   {
-    path: "/sobre", // A URL da página "sobre"
-    element: <AboutPage />, // Renderiza o componente AboutPage
+    path: "/sobre",
+    element: <AboutPage />,
   },
   {
     path: "/feed",
     element: <FeedPage />,
+  },
+  {
+    path: "/article/:id",
+    element: <NewsPage />,
   },
   {
     // Rotas públicas restritas (APENAS para usuários não logados)
