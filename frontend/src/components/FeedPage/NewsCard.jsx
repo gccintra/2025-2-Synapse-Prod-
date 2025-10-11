@@ -6,9 +6,10 @@ import Test2NewsImage from "../../assets/news-placeholder-2.jpg";
 const NewsCard = ({ news, isListItem = false }) => {
   if (isListItem) {
     return (
+      // Card da lista
       <Link
         to={`/article/${news.id}`}
-        className="flex items-start gap-4 border-b border-gray-200 hover:bg-gray-100 transition-colors cursor-pointer"
+        className="flex items-start gap-4 border-b border-gray-200 hover:bg-gray-200 transition-colors cursor-pointer"
       >
         <img
           src={TestNewsImage}
@@ -29,8 +30,9 @@ const NewsCard = ({ news, isListItem = false }) => {
     );
   }
   return (
+    // Card destaques
     <Link to={`/article/${news.id}`}>
-      <div className="text-base rounded-lg overflow-hidden transition-all duration-300 ease-in-out hover:shadow-xl hover:scale-[1.01] cursor-pointer font-montserrat h-full">
+      <div className="text-base rounded-lg overflow-hidden transition-all duration-300 ease-in-out hover:scale-[1.02] cursor-pointer font-montserrat h-full">
         {/* Imagem */}
         <img
           src={Test2NewsImage} // Imagem de teste
