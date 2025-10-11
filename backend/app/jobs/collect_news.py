@@ -49,7 +49,7 @@ def run_collection_job():
     - Throttling rigoroso para respeitar limites de API
     """
     from app import create_app
-    from app.services.news_service import NewsService
+    from app.services.news_collect_service import NewsCollectService
 
     app = create_app()
     with app.app_context():
@@ -58,10 +58,10 @@ def run_collection_job():
         logging.info("=" * 80)
 
         try:
-            news_service = NewsService()
+            news_collect_service = NewsCollectService()
 
             # Usar novo método de coleta inteligente
-            new_articles_count, new_sources_count = news_service.collect_news_intelligently()
+            new_articles_count, new_sources_count = news_collect_service.collect_news_intelligently()
 
             logging.info("=" * 80)
             logging.info("JOB FINALIZADO COM SUCESSO")

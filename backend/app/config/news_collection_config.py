@@ -7,16 +7,16 @@ NEWS_COLLECTION_CONFIG = {
     # ==========================================
     # QUANTIDADE DE CHAMADAS À API GNEWS
     # ==========================================
-    "gnews_calls_per_job": 5,
+    "gnews_calls_per_job": 10,
     "gnews_top_headlines_calls": 1,  # Chamada obrigatória ao top-headlines
-    "gnews_search_calls": 4,  # gnews_calls_per_job - gnews_top_headlines_calls
+    "gnews_search_calls": 9,  # gnews_calls_per_job - gnews_top_headlines_calls
 
     # ==========================================
     # DISTRIBUIÇÃO DE TÓPICOS E KEYWORDS
     # ==========================================
-    "topics_to_select": 4,  # Quantidade de tópicos prioritários a selecionar
+    "topics_to_select": 9,  # Quantidade de tópicos prioritários a selecionar
     "searches_per_topic": 1,  # Quantidade de buscas por tópico (gnews_search_calls / topics_to_select)
-    "keywords_per_search": 2,  # Quantidade de keywords por grupo/busca (REDUZIDO: queries menores = mais resultados)
+    "keywords_per_search": 4,  # Quantidade de keywords por grupo/busca (REDUZIDO: queries menores = mais resultados)
 
     # ==========================================
     # SISTEMA DE CACHE
