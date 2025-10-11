@@ -41,7 +41,7 @@ class UserNewsRepository:
             self.session.rollback()
             raise
 
-    def remove_favorite(self, user_id: int, news_id: int) -> bool:
+    def remove_favorite(self, user_id: int, news_id: int, is_favorite: bool = False) -> bool:
         try:
             stmt = select(UserNewsEntity).where(
                 UserNewsEntity.user_id == user_id,
@@ -50,8 +50,10 @@ class UserNewsRepository:
             entity = self.session.execute(stmt).scalar_one_or_none()
 
             if entity:
-                self.session.delete(entity)
+                entity.is_favorite = is_favorite
+                self.session.merge(entity)
                 self.session.commit()
+                self.session.refresh(entity)
                 return True
             else:
                 return False
