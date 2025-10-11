@@ -56,7 +56,7 @@ class NewsCollectService():
         )
 
         # Sistema de blacklist automático para scraping
-        self.scraping_blacklist = ScrapingBlacklist("backend/app/data/scraping_blacklist.json")
+        self.scraping_blacklist = ScrapingBlacklist("app/data/scraping_blacklist.json")
         self.scraping_blacklist.load()
         self.prioritization_service = prioritization_service or TopicPrioritizationService(
             cache=self.cache,

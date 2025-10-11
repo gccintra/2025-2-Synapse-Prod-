@@ -12,7 +12,7 @@ class NewsService():
 
     Nota: A lógica de coleta de notícias foi movida para NewsCollectService
     """
-    def __init__(self, news_repo: NewsRepository | None = None, user_news_repo: UserNewsRepository | None = None):
+    def __init__(self, news_repo: NewsRepository | None = None):
         self.news_repo = news_repo or NewsRepository(),
 
     # TODO: Implementar métodos de busca e apresentação:

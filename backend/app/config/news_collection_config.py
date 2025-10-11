@@ -23,7 +23,7 @@ NEWS_COLLECTION_CONFIG = {
     # ==========================================
     "cache_ttl_hours": 6,  # Tempo de vida das entradas no cache (em horas)
     "max_searches_per_topic_in_6h": 3,  # Máximo de buscas por tópico nas últimas 6 horas
-    "cache_file_path": "backend/app/data/topic_search_cache.json",
+    "cache_file_path": "app/data/topic_search_cache.json",
 
     # ==========================================
     # ALGORITMO DE PRIORIZAÇÃO (SCORING)
