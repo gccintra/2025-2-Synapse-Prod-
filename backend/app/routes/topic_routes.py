@@ -35,3 +35,21 @@ def list_my_topics(user_id: int):
 @get_user_id_from_token
 def detach_my_topic(user_id: int, topic_id: int):
     return topic_controller.detach_my_topic(user_id, topic_id)
+
+# AUTOCOMPLETE
+@topic_bp.route("/search", methods=["GET"])
+def search_topics():
+    query = request.args.get('q', '').strip()
+    limit = request.args.get('limit', 10, type=int)
+
+    if not query or len(query) == 0:
+        return jsonify({
+            "success": False,
+            "message": "Parâmetro 'q' é obrigatório.",
+            "data": None,
+            "error": "Query vazia"
+        }), 400
+
+    limit = min(limit, 50)
+
+    return topic_controller.search(query, limit)
