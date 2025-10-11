@@ -16,3 +16,9 @@ venv
 .DS_Store
 frontend/node_modules/
 
+# Dados dinâmicos do sistema de coleta
+backend/app/data/topic_search_cache.json
+backend/app/data/scraping_blacklist.json
+# Mas mantenha o README
+!backend/app/data/README.md
+
