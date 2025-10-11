@@ -20,15 +20,22 @@ class NewsService():
     def __init__(self, news_repo: NewsRepository | None = None):
         self.news_repo = news_repo or NewsRepository()
 
-    def get_news_by_id(self, news_id: int) -> News:
-        """
-        Busca uma notícia pelo seu ID.
-        Lança NewsNotFoundError se a notícia não for encontrada.
-        """
+    def get_news_by_id(self, news_id: int) -> dict:
         news = self.news_repo.find_by_id(news_id)
         if not news:
             raise NewsNotFoundError(f"Notícia com ID {news_id} não encontrada.")
-        return news
+
+        return {
+            "id": news.id,
+            "title": news.title,
+            "description": news.description,
+            "url": news.url,
+            "image_url": news.image_url,
+            "content": news.content,
+            "published_at": news.published_at.isoformat() if news.published_at else None,
+            "source_id": news.source_id,
+            "created_at": news.created_at.isoformat() if news.created_at else None
+        }
 
     def get_news_for_user(self, user_id: int, page: int = 1, per_page: int = 10):
         """
@@ -43,21 +50,35 @@ class NewsService():
             Dict com notícias, paginação e metadados
         """
         # TODO: Implementar filtros baseados nas preferências do usuário
-        # Por enquanto retorna todas as notícias paginadas
+        # Por enquanto retorna todas as notícias paginadas usando list_all do repositório
 
-        offset = (page - 1) * per_page
-        all_news = self.news_repo.find_all()
+        paginated_news = self.news_repo.list_all(page=page, per_page=per_page)
 
-        total = len(all_news)
-        paginated_news = all_news[offset:offset + per_page]
+        # Converter objetos News para dicionários
+        news_list = []
+        for news in paginated_news:
+            news_list.append({
+                "id": news.id,
+                "title": news.title,
+                "description": news.description,
+                "url": news.url,
+                "image_url": news.image_url,
+                "content": news.content,
+                "published_at": news.published_at.isoformat() if news.published_at else None,
+                "source_id": news.source_id,
+                "created_at": news.created_at.isoformat() if news.created_at else None
+            })
+
+        # TODO: Calcular total real (por enquanto aproximado)
+        total = len(paginated_news) * page  # Estimativa
 
         return {
-            "news": [news.to_dict() for news in paginated_news],
+            "news": news_list,
             "pagination": {
                 "page": page,
                 "per_page": per_page,
                 "total": total,
-                "pages": (total + per_page - 1) // per_page
+                "pages": page  # Aproximado
             }
         }
 

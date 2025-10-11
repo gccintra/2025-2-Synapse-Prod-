@@ -56,7 +56,7 @@ class NewsController:
             return jsonify({
                 "success": True,
                 "message": "Notícia obtida com sucesso.",
-                "data": news_data.to_dict(),
+                "data": news_data,
                 "error": None
             }), 200
         except NewsNotFoundError as e:
