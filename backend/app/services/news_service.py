@@ -7,6 +7,7 @@ from newspaper import Article
 from sqlalchemy.exc import IntegrityError
 from newspaper.configuration import Configuration
 from app.repositories.news_repository import NewsRepository
+from app.repositories.user_news_repository import UserNewsRepository
 from app.repositories.news_source_repository import NewsSourceRepository
 from app.repositories.topic_repository import TopicRepository
 from app.repositories.news_topic_repository import NewsTopicRepository
@@ -32,7 +33,8 @@ class NewsService():
         topic_repo: TopicRepository | None = None,
         news_topic_repo: NewsTopicRepository | None = None,
         ai_service: AIService | None = None,
-        similarity_service: TopicSimilarityService | None = None
+        similarity_service: TopicSimilarityService | None = None,
+        user_news_repo: UserNewsRepository | None = None
     ):
         self.news_repo = news_repo or NewsRepository()
         self.news_sources_repo = news_source_repo or NewsSourceRepository()
@@ -43,6 +45,7 @@ class NewsService():
         self.gnews_api_key = os.getenv('GNEWS_API_KEY')
         self.api_endpoint = "https://gnews.io/api/v4/top-headlines"
         self.api_endpoint_search = "https://gnews.io/api/v4/search"
+        self.user_news_repo = user_news_repo or UserNewsRepository()
 
         # Cache de tópicos existentes (TTL de 5 minutos)
         self._topics_cache = None
@@ -214,6 +217,11 @@ class NewsService():
             logging.error(f"Erro no scraping de {url}: {e}", exc_info=True)
             return None
 
+    def favorite_news(self, user_id, news_id):
+        return self.user_news_repo.set_favorite(user_id, news_id, is_favorite=True)
+
+    def unfavorite_news(self, user_id, news_id):
+        return self.user_news_repo.remove_favorite(user_id, news_id)
     def _extract_topics_from_content_batch(self, articles_data: list[dict], min_topics: int = 3) -> dict[int, list[str]]:
         if not articles_data:
             return {}
