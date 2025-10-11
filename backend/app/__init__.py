@@ -7,6 +7,7 @@ from flask_swagger_ui import get_swaggerui_blueprint
 from app.routes.user_routes import user_bp
 from app.routes.topic_routes import topic_bp
 from app.routes.news_source_routes import news_source_bp
+from app.routes.news_routes import news_bp
 
 def create_app(config_overrides=None):
     app = Flask(__name__)
@@ -44,13 +45,14 @@ def create_app(config_overrides=None):
     jwt = JWTManager(app)
 
     from app.entities import (user_entity, topic_entity, user_topic_entity, 
-                              news_entity, news_source_entity, news_topic_entity, user_news_sources_entity)
+                              news_entity, news_source_entity, news_topic_entity, user_news_sources_entity, user_news_entity)
     
     with app.app_context():
         db.create_all()
 
     app.register_blueprint(user_bp, url_prefix="/users")
     app.register_blueprint(topic_bp, url_prefix="/topics")
+    app.register_blueprint(news_bp, url_prefix="/news")
     app.register_blueprint(news_source_bp, url_prefix="/news_sources")
 
     return app
