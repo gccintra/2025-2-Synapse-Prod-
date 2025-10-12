@@ -30,6 +30,10 @@ class NewsValidationError(DomainError):
     def __init__(self, field: str, message: str):
         super().__init__(f"{field}: {message}")
 
+class NewsNotFoundError(DomainError):
+    """Lançado quando uma notícia não é encontrada."""
+    pass
+
 class NewsSourceNotFoundError(DomainError):
     """Lançado quando uma fonte de notícia não é encontrada."""
     pass

@@ -51,3 +51,16 @@ class NewsRepository:
         except SQLAlchemyError as e:
             logging.error(f"Erro de banco ao listar notícias: {e}", exc_info=True)
             raise
+
+    def find_by_topic(self, news_id: int, topic_id: int) -> list[NewsEntity]:
+        try:
+            stmt = (
+                select(NewsEntity)
+                .where(NewsEntity.id == news_id)
+                .where(NewsEntity.topic_id == topic_id)
+            )
+            entities = self.session.execute(stmt).scalars().all()
+            return entities
+        except SQLAlchemyError as e:
+            logging.error(f"Erro de banco ao buscar notícias por tópico: {e}", exc_info=True)
+            raise
