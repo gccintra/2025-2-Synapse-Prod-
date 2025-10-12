@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import HeaderNewsPage from "../components/NewsPage/HeaderNewsPage";
+import NewsPageSkeleton from "../components/NewsPage/NewsPageSkeleton";
 import { useParams } from "react-router-dom";
 
 const MOCK_ARTICLE_HTML =
@@ -37,17 +38,11 @@ const NewsPage = () => {
 
   // Função de segurança para HTML
   const createMarkup = (htmlContent) => {
-    // **AVISO DE SEGURANÇA:** Você deveria usar uma biblioteca como DOMPurify
-    // aqui para sanitizar o HTML e prevenir ataques XSS.
     return { __html: htmlContent };
   };
 
   if (loading || !articleData) {
-    return (
-      <div className="flex justify-center items-center h-screen">
-        <p>Carregando notícia...</p>
-      </div>
-    );
+    return <NewsPageSkeleton />;
   }
 
   return (

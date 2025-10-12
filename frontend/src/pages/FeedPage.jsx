@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from "react";
 import HeaderFeedPage from "../components/FeedPage/HeaderFeedPage";
 import NewsCard from "../components/FeedPage/NewsCard";
-import NewsCardSkeleton from "../components/FeedPage/NewsCardSkeleton";
 
 const MOCK_NEWS_DATA = [
   {
@@ -89,7 +88,7 @@ const FeedPage = () => {
 
       {/* Main Content Container */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-4">
-        {/* 2. Tags de Filtro */}
+        {/* Filtros */}
         <div className="flex gap-4 mb-8">
           {categories.map((category) => (
             <button
@@ -105,30 +104,28 @@ const FeedPage = () => {
           ))}
         </div>
 
-        {/* 3. Área Principal do Feed */}
-        {loading ? (
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <NewsCardSkeleton type="large" />
-            <NewsCardSkeleton type="medium" />
-            <NewsCardSkeleton type="medium" />
-          </div>
-        ) : (
-          <>
-            {/* Grid para os 3 primeiros cards (Destaques) */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mt-12 mb-12">
-              {MOCK_NEWS_DATA.slice(0, 3).map((news) => (
+        {/* Grid para os 3 primeiros cards (Destaques) */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mt-12 mb-12">
+          {loading
+            ? // Renderiza 3 cards em estado de carregamento
+              Array.from({ length: 3 }).map((_, index) => (
+                <NewsCard key={index} isLoading={true} />
+              ))
+            : MOCK_NEWS_DATA.slice(0, 3).map((news) => (
                 <NewsCard key={news.id} news={news} />
               ))}
-            </div>
+        </div>
 
-            {/* Layout em Lista para os demais (Corpo do Feed) */}
-            <div className="space-y-6">
-              {MOCK_NEWS_DATA.slice(3).map((news) => (
+        {/* Layout em Lista para os demais (Corpo do Feed) */}
+        <div className="space-y-0">
+          {loading
+            ? Array.from({ length: 2 }).map((_, index) => (
+                <NewsCard key={index} isListItem={true} isLoading={true} />
+              ))
+            : MOCK_NEWS_DATA.slice(3).map((news) => (
                 <NewsCard key={news.id} news={news} isListItem={true} />
               ))}
-            </div>
-          </>
-        )}
+        </div>
       </main>
     </div>
   );
