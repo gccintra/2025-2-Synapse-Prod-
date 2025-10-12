@@ -10,7 +10,7 @@ function getCookie(name) {
   if (parts.length === 2) return parts.pop().split(";").shift();
 }
 
-const HeaderEditAccount = ({ userEmail }) => {
+const HeaderEditAccount = ({ userEmail, backTo = "/feed", backText = "Back to feed" }) => {
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const navigate = useNavigate();
 
@@ -26,7 +26,7 @@ const HeaderEditAccount = ({ userEmail }) => {
         credentials: "include",
       });
     } finally {
-      navigate("/"); // redireciona para login, mesmo se a chamada falhar
+      navigate("/login"); // redireciona para login, mesmo se a chamada falhar
     }
   };
 
@@ -35,12 +35,17 @@ const HeaderEditAccount = ({ userEmail }) => {
       <header className="flex justify-between items-center p-6 bg-white border-b border-gray-300 relative">
         {/* Lado esquerdo: Botão "Back" */}
         <Link
-          to="/account"
+          to={backTo}
           className="flex items-center text-gray-800 hover:text-gray-600"
         >
           <img src={BackIcon} alt="Ícone de Voltar" className="w-5 h-5 mr-2" />
-          <span className="font-medium font-montserrat">Back</span>
+          <span className="font-medium font-montserrat">{backText}</span>
         </Link>
+
+        {/* Meio: Logo Synapse */}
+        <h1 className="text-lg font-bold text-black font-rajdhani">
+          Synapse
+        </h1>
 
         {/* Lado direito: E-mail do usuário + seta + dropdown */}
         <div className="relative">
@@ -57,6 +62,14 @@ const HeaderEditAccount = ({ userEmail }) => {
           </button>
           {dropdownOpen && (
             <div className="absolute right-0 mt-2 w-32 bg-white border border-gray-200 rounded-xl shadow-lg z-10 text-xs font-montserrat">
+              <Link
+                to="/account"
+                className="block px-4 py-2 text-gray-800 hover:bg-gray-100 font-montserrat"
+                onClick={() => setDropdownOpen(false)}
+              >
+                My Account
+              </Link>
+              <hr className="border-gray-200" />
               <button
                 onClick={handleLogout}
                 className="block w-full text-left px-4 py-2 text-gray-800 hover:bg-gray-100 font-montserrat"

@@ -1,8 +1,10 @@
 import logging
-from sqlalchemy import select
+from sqlalchemy import select, func
 from sqlalchemy.exc import SQLAlchemyError
+from sqlalchemy.orm import joinedload
 from app.extensions import db
 from app.entities.news_entity import NewsEntity
+from app.entities.news_source_entity import NewsSourceEntity
 from app.models.news import News
 
 class NewsRepository:
@@ -38,15 +40,26 @@ class NewsRepository:
             logging.error(f"Erro de banco ao buscar notícia por URL: {e}", exc_info=True)
             raise
 
+    def count_all(self) -> int:
+        """Conta o total de notícias no banco de dados."""
+        try:
+            stmt = select(func.count(NewsEntity.id))
+            result = self.session.execute(stmt).scalar()
+            return result or 0
+        except SQLAlchemyError as e:
+            logging.error(f"Erro de banco ao contar notícias: {e}", exc_info=True)
+            raise
+
     def list_all(self, page: int = 1, per_page: int = 20) -> list[News]:
         try:
             stmt = (
                 select(NewsEntity)
+                .options(joinedload(NewsEntity.source))  # Carregar fonte junto
                 .order_by(NewsEntity.published_at.desc())
                 .offset((page - 1) * per_page)
                 .limit(per_page)
             )
-            entities = self.session.execute(stmt).scalars().all()
+            entities = self.session.execute(stmt).scalars().unique().all()
             return [News.from_entity(e) for e in entities]
         except SQLAlchemyError as e:
             logging.error(f"Erro de banco ao listar notícias: {e}", exc_info=True)

@@ -25,7 +25,7 @@ const HeaderFeedPage = ({ userEmail }) => {
         credentials: "include",
       });
     } finally {
-      navigate("/"); // redireciona para login, mesmo se a chamada falhar
+      navigate("/login"); // redireciona para login, mesmo se a chamada falhar
     }
   };
 
@@ -54,6 +54,14 @@ const HeaderFeedPage = ({ userEmail }) => {
           </button>
           {dropdownOpen && (
             <div className="absolute right-0 mt-2 w-32 bg-white border border-gray-200 rounded-xl shadow-lg z-10 text-xs font-montserrat">
+              <Link
+                to="/account"
+                className="block px-4 py-2 text-gray-800 hover:bg-gray-100 font-montserrat"
+                onClick={() => setDropdownOpen(false)}
+              >
+                My Account
+              </Link>
+              <hr className="border-gray-200" />
               <button
                 onClick={handleLogout}
                 className="block w-full text-left px-4 py-2 text-gray-800 hover:bg-gray-100 font-montserrat"

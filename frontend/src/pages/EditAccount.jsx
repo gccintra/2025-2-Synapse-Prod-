@@ -159,7 +159,11 @@ function EditAccount() {
 
   return (
     <>
-      <HeaderEditAccount userEmail={formData.email} />
+      <HeaderEditAccount
+        userEmail={formData.email}
+        backTo="/account"
+        backText="Back to account"
+      />
       {/* Container principal da página de edição */}
       <div className="min-h-screen flex flex-col justify-start items-center bg-[#f5f5f5] pt-16">
         <div className="w-full max-w-lg">

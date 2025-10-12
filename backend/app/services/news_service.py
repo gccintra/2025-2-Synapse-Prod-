@@ -25,7 +25,7 @@ class NewsService():
         if not news:
             raise NewsNotFoundError(f"Notícia com ID {news_id} não encontrada.")
 
-        return {
+        news_dict = {
             "id": news.id,
             "title": news.title,
             "description": news.description,
@@ -36,6 +36,12 @@ class NewsService():
             "source_id": news.source_id,
             "created_at": news.created_at.isoformat() if news.created_at else None
         }
+
+        # Incluir nome da fonte se disponível
+        if news.source_name:
+            news_dict["source_name"] = news.source_name
+
+        return news_dict
 
     def get_news_for_user(self, user_id: int, page: int = 1, per_page: int = 10):
         """
@@ -52,12 +58,16 @@ class NewsService():
         # TODO: Implementar filtros baseados nas preferências do usuário
         # Por enquanto retorna todas as notícias paginadas usando list_all do repositório
 
+        # Buscar notícias paginadas
         paginated_news = self.news_repo.list_all(page=page, per_page=per_page)
+
+        # Contar total de notícias
+        total_count = self.news_repo.count_all()
 
         # Converter objetos News para dicionários
         news_list = []
         for news in paginated_news:
-            news_list.append({
+            news_dict = {
                 "id": news.id,
                 "title": news.title,
                 "description": news.description,
@@ -67,18 +77,25 @@ class NewsService():
                 "published_at": news.published_at.isoformat() if news.published_at else None,
                 "source_id": news.source_id,
                 "created_at": news.created_at.isoformat() if news.created_at else None
-            })
+            }
 
-        # TODO: Calcular total real (por enquanto aproximado)
-        total = len(paginated_news) * page  # Estimativa
+            # Incluir nome da fonte se disponível
+            if news.source_name:
+                news_dict["source_name"] = news.source_name
+
+            news_list.append(news_dict)
+
+        # Calcular total de páginas
+        import math
+        total_pages = math.ceil(total_count / per_page) if total_count > 0 else 1
 
         return {
             "news": news_list,
             "pagination": {
                 "page": page,
                 "per_page": per_page,
-                "total": total,
-                "pages": page  # Aproximado
+                "total": total_count,
+                "pages": total_pages
             }
         }
 

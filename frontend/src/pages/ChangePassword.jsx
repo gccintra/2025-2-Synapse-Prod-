@@ -134,7 +134,11 @@ function ChangePassword() {
 
   return (
     <>
-      <HeaderEditAccount userEmail={userEmail} />
+      <HeaderEditAccount
+        userEmail={userEmail}
+        backTo="/account"
+        backText="Back to account"
+      />
       <div className="h-[calc(100vh-4.625rem)] flex flex-col justify-start items-center bg-[#f5f5f5] pt-16">
         <div className="w-full max-w-lg">
           <div className="w-full text-center">
