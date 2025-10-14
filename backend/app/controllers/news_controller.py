@@ -50,9 +50,9 @@ class NewsController:
                 "error": str(e)
             }), 500
 
-    def get_by_id(self, news_id: int):
+    def get_by_id(self, user_id: int, news_id: int):
         try:
-            news_data = self.news_service.get_news_by_id(news_id)
+            news_data = self.news_service.get_news_by_id(user_id, news_id)
             return jsonify({
                 "success": True,
                 "message": "Notícia obtida com sucesso.",
@@ -67,12 +67,12 @@ class NewsController:
                 "error": str(e)
             }), 404
     
-    def get_by_topic(self, topic_id: int):
+    def get_by_topic(self, user_id: int, topic_id: int):
         try:
             page = request.args.get('page', 1, type=int)
             per_page = 10  # fixo conforme solicitado
 
-            items = self.news_topics_service.find_by_topic(topic_id, page, per_page)
+            items = self.news_topics_service.find_by_topic(topic_id, page, per_page, user_id=user_id)
 
             return jsonify({
                 "success": True,
