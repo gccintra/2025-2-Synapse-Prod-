@@ -3,22 +3,37 @@ const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
 // Configuração base para fetch
 const defaultOptions = {
-  credentials: 'include', // Inclui cookies de autenticação
+  credentials: "include", // Inclui cookies de autenticação
   headers: {
-    'Content-Type': 'application/json',
+    "Content-Type": "application/json",
   },
 };
+
+// Função auxiliar para ler um cookie pelo nome
+function getCookie(name) {
+  const value = `; ${document.cookie}`;
+  const parts = value.split(`; ${name}=`);
+  if (parts.length === 2) return parts.pop().split(";").shift();
+  return null;
+}
 
 // Função auxiliar para fazer requisições
 async function apiRequest(endpoint, options = {}) {
   const url = `${API_BASE_URL}${endpoint}`;
+  const method = options.method || "GET";
+
+  // Adiciona o token CSRF automaticamente para métodos que alteram dados
+  const csrfMethods = ["POST", "PUT", "DELETE", "PATCH"];
+  if (csrfMethods.includes(method.toUpperCase())) {
+    const csrfToken = getCookie("csrf_access_token");
+    if (csrfToken) {
+      defaultOptions.headers["X-CSRF-TOKEN"] = csrfToken;
+    }
+  }
+
   const config = {
     ...defaultOptions,
     ...options,
-    headers: {
-      ...defaultOptions.headers,
-      ...options.headers,
-    },
   };
 
   try {
@@ -26,7 +41,7 @@ async function apiRequest(endpoint, options = {}) {
     const data = await response.json();
 
     if (!response.ok) {
-      throw new Error(data.error || data.message || 'Erro na requisição');
+      throw new Error(data.error || data.message || "Request error");
     }
 
     return data;
@@ -39,7 +54,7 @@ async function apiRequest(endpoint, options = {}) {
 // API de Topics
 export const topicsAPI = {
   // Buscar tópicos do usuário
-  getUserTopics: () => apiRequest('/topics/list'),
+  getUserTopics: () => apiRequest("/topics/list"),
 
   // Buscar tópicos (autocomplete)
   searchTopics: (query, limit = 10) =>
@@ -61,15 +76,15 @@ export const newsAPI = {
 
   // Favoritar notícia
   favoriteNews: (newsId) =>
-    apiRequest(`/news/${newsId}/favorite`, { method: 'POST' }),
+    apiRequest(`/news/${newsId}/favorite`, { method: "POST" }),
 
   // Desfavoritar notícia
   unfavoriteNews: (newsId) =>
-    apiRequest(`/news/${newsId}/favorite`, { method: 'PUT' }),
+    apiRequest(`/news/${newsId}/favorite`, { method: "PUT" }),
 };
 
 // API de Users
 export const usersAPI = {
   // Buscar perfil do usuário
-  getUserProfile: () => apiRequest('/users/profile'),
+  getUserProfile: () => apiRequest("/users/profile"),
 };

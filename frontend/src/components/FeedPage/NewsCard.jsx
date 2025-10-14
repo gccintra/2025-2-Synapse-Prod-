@@ -1,20 +1,40 @@
 import React, { forwardRef, useState } from "react";
 import { Link } from "react-router-dom";
+import { toast } from "react-toastify";
 import TestNewsImage from "../../assets/news-placeholder.jpg";
 import Test2NewsImage from "../../assets/news-placeholder-2.jpg";
 import { NewsMetadata } from "../../utils/dateUtils";
+import { newsAPI } from "../../services/api";
 
 const NewsCard = forwardRef(
   ({ news, isListItem = false, isLoading = false }, ref) => {
-    const [isSaved, setIsSaved] = useState(false);
+    // Inicializa o estado com base na propriedade da API
+    const [isSaved, setIsSaved] = useState(news?.is_favorited || false);
+    const [isSaving, setIsSaving] = useState(false); // Estado de carregamento para o botão
     const LinkComponent = isLoading ? "div" : Link;
 
     // Impede que o clique no ícone navegue para a notícia
-    const handleSaveClick = (e) => {
+    const handleSaveClick = async (e) => {
       e.stopPropagation();
       e.preventDefault();
-      setIsSaved(!isSaved);
-      // Aqui você implementaria a chamada à API para salvar/remover a notícia
+
+      if (isSaving) return; // Previne múltiplos cliques
+      setIsSaving(true);
+
+      try {
+        if (isSaved) {
+          await newsAPI.unfavoriteNews(news.id);
+          toast.info("News removed from your favorites.");
+        } else {
+          await newsAPI.favoriteNews(news.id);
+          toast.success("News successfully saved!");
+        }
+        setIsSaved(!isSaved); // Atualiza o estado visual
+      } catch (error) {
+        toast.error(error.message || "Error saving news item.");
+      } finally {
+        setIsSaving(false);
+      }
     };
 
     if (isListItem) {
@@ -67,14 +87,15 @@ const NewsCard = forwardRef(
           {!isLoading && (
             <button
               onClick={handleSaveClick}
+              disabled={isSaving}
               className={`absolute top-3 right-3 z-10 p-1.5 text-gray-600 hover:text-black transition-all duration-200 ${
                 isSaved ? "opacity-100" : "opacity-0 group-hover:opacity-100"
-              }`}
+              } ${isSaving ? "cursor-wait" : ""}`}
               aria-label="Salvar notícia"
             >
               <svg
                 xmlns="http://www.w3.org/2000/svg"
-                className={`h-5 w-5 ${
+                className={`h-5 w-5 transition-colors ${
                   isSaved ? "text-black" : "text-gray-600"
                 }`}
                 fill={isSaved ? "currentColor" : "none"}
@@ -118,14 +139,15 @@ const NewsCard = forwardRef(
           {!isLoading && (
             <button
               onClick={handleSaveClick}
+              disabled={isSaving}
               className={`absolute top-3 right-3 z-10 p-2 bg-white/70 backdrop-blur-sm rounded-full text-gray-700 hover:bg-white hover:text-black transition-all duration-200 ${
                 isSaved ? "opacity-100" : "opacity-0 group-hover:opacity-100"
-              }`}
+              } ${isSaving ? "cursor-wait" : ""}`}
               aria-label="Salvar notícia"
             >
               <svg
                 xmlns="http://www.w3.org/2000/svg"
-                className={`h-5 w-5 ${
+                className={`h-5 w-5 transition-colors ${
                   isSaved ? "text-black" : "text-gray-600"
                 }`}
                 fill={isSaved ? "currentColor" : "none"}

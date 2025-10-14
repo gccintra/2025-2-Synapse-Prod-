@@ -1,9 +1,10 @@
 // src/pages/NewsPage.jsx
 
 import React, { useState, useEffect } from "react";
+import { useParams } from "react-router-dom";
+import { toast } from "react-toastify";
 import HeaderNewsPage from "../components/NewsPage/HeaderNewsPage";
 import NewsPageSkeleton from "../components/NewsPage/NewsPageSkeleton";
-import { useParams } from "react-router-dom";
 import { newsAPI } from "../services/api";
 import { formatDateLong } from "../utils/dateUtils";
 
@@ -13,6 +14,7 @@ const NewsPage = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [isSaved, setIsSaved] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
 
   useEffect(() => {
     const fetchNewsData = async () => {
@@ -40,6 +42,9 @@ const NewsPage = () => {
             newsData.description ||
             "Conteúdo não disponível",
         });
+
+        // Define o estado inicial do botão de salvar
+        setIsSaved(newsData.is_favorited || false);
       } catch (err) {
         console.error("Erro ao carregar notícia:", err);
         setError(err.message || "Erro ao carregar a notícia");
@@ -57,8 +62,24 @@ const NewsPage = () => {
   };
 
   // Função para lidar com o clique no botão de salvar
-  const handleSaveClick = () => {
-    setIsSaved(!isSaved);
+  const handleSaveClick = async () => {
+    if (isSaving) return;
+    setIsSaving(true);
+
+    try {
+      if (isSaved) {
+        await newsAPI.unfavoriteNews(newsId);
+        toast.info("News removed from your favorites.");
+      } else {
+        await newsAPI.favoriteNews(newsId);
+        toast.success("News successfully saved!");
+      }
+      setIsSaved(!isSaved);
+    } catch (error) {
+      toast.error(error.message || "Erro ao salvar notícia.");
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   if (loading) {
@@ -141,13 +162,16 @@ const NewsPage = () => {
             {/* --- ÍCONE DE SALVAR --- */}
             <button
               onClick={handleSaveClick}
-              className="p-2 rounded-full hover:bg-gray-100 transition-colors focus:outline-none focus:ring-2 focus:ring-gray-400"
+              disabled={isSaving}
+              className={`p-2 rounded-full hover:bg-gray-100 transition-colors focus:outline-none focus:ring-2 focus:ring-gray-400 ${
+                isSaving ? "cursor-wait" : ""
+              }`}
               aria-label="Salvar notícia"
             >
               <svg
                 xmlns="http://www.w3.org/2000/svg"
-                className={`h-6 w-6 ${
-                  isSaved ? "text-black" : "text-gray-600"
+                className={`h-6 w-6 transition-colors ${
+                  isSaved ? "text-black" : "text-gray-500"
                 }`}
                 fill={isSaved ? "currentColor" : "none"}
                 viewBox="0 0 24 24"
