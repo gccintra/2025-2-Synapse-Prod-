@@ -72,7 +72,7 @@ class NewsController:
             page = request.args.get('page', 1, type=int)
             per_page = 10  # fixo conforme solicitado
 
-            items = self.news_topics_service.find_by_topic(topic_id, page, per_page, user_id=user_id)
+            items = self.news_topics_service.find_by_topic(topic_id, page, per_page)
 
             return jsonify({
                 "success": True,
