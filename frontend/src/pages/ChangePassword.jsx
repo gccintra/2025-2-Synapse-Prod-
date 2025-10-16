@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
-import Header from "../components/HeaderEditAccount";
+import HeaderEditAccount from "../components/HeaderEditAccount";
 import LockIcon from "../icons/lock-regular-full.svg";
 import SeeEye from "../icons/eye-regular-full.svg";
 import BlockedEye from "../icons/eye-slash-regular-full.svg";
@@ -134,7 +134,11 @@ function ChangePassword() {
 
   return (
     <>
-      <Header userEmail={userEmail} />
+      <HeaderEditAccount
+        userEmail={userEmail}
+        backTo="/account"
+        backText="Back to account"
+      />
       <div className="h-[calc(100vh-4.625rem)] flex flex-col justify-start items-center bg-[#f5f5f5] pt-16">
         <div className="w-full max-w-lg">
           <div className="w-full text-center">
@@ -155,11 +159,7 @@ function ChangePassword() {
                 New Password
                 <div className="relative mt-1">
                   <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
-                    <img
-                    src={LockIcon}
-                    alt="lock icon"
-                    className="h-5 w-5"
-                    />
+                    <img src={LockIcon} alt="lock icon" className="h-5 w-5" />
                   </div>
                   <input
                     id="newPassword"
@@ -168,7 +168,11 @@ function ChangePassword() {
                     value={formData.newPassword}
                     onChange={handleChange}
                     placeholder="enter your password.."
-                    className={`w-full border rounded py-2 px-9 focus:outline-none focus:ring-1 font-montserrat ${errors.newPassword ? "border-red-500 focus:ring-red-500" : "border-gray-800 focus:ring-black"}`}
+                    className={`w-full border rounded py-2 px-9 focus:outline-none focus:ring-1 font-montserrat ${
+                      errors.newPassword
+                        ? "border-red-500 focus:ring-red-500"
+                        : "border-gray-800 focus:ring-black"
+                    }`}
                   />
                   <button
                     type="button"
@@ -176,9 +180,9 @@ function ChangePassword() {
                     className="absolute inset-y-0 right-0 flex items-center pr-3 text-gray-400 hover:text-gray-600"
                   >
                     <img
-                    src={showPassword.new ? BlockedEye : SeeEye}
-                    alt="Show/Hide password"
-                    className="h-5 w-5"
+                      src={showPassword.new ? BlockedEye : SeeEye}
+                      alt="Show/Hide password"
+                      className="h-5 w-5"
                     />
                   </button>
                 </div>
@@ -198,11 +202,7 @@ function ChangePassword() {
                 Confirm your Password
                 <div className="relative mt-1">
                   <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
-                    <img
-                    src={LockIcon}
-                    alt="lock icon"
-                    className="h-5 w-5"
-                    />
+                    <img src={LockIcon} alt="lock icon" className="h-5 w-5" />
                   </div>
                   <input
                     id="confirmPassword"
@@ -211,7 +211,11 @@ function ChangePassword() {
                     value={formData.confirmPassword}
                     onChange={handleChange}
                     placeholder="enter your password.."
-                    className={`w-full border rounded py-2 px-9 focus:outline-none focus:ring-1 font-montserrat ${errors.confirmPassword ? "border-red-500 focus:ring-red-500" : "border-gray-800 focus:ring-black"}`}
+                    className={`w-full border rounded py-2 px-9 focus:outline-none focus:ring-1 font-montserrat ${
+                      errors.confirmPassword
+                        ? "border-red-500 focus:ring-red-500"
+                        : "border-gray-800 focus:ring-black"
+                    }`}
                   />
                   <button
                     type="button"
@@ -219,9 +223,9 @@ function ChangePassword() {
                     className="absolute inset-y-0 right-0 flex items-center pr-3 text-gray-400 hover:text-gray-600"
                   >
                     <img
-                    src={showPassword.confirm ? BlockedEye : SeeEye}
-                    alt="Show/Hide password"
-                    className="h-5 w-5"
+                      src={showPassword.confirm ? BlockedEye : SeeEye}
+                      alt="Show/Hide password"
+                      className="h-5 w-5"
                     />
                   </button>
                 </div>
@@ -241,7 +245,6 @@ function ChangePassword() {
               {loading ? "Confirming..." : "Confirm"}
             </button>
           </form>
-
         </div>
       </div>
     </>

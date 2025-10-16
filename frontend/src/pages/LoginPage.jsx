@@ -65,7 +65,7 @@ function LoginPage() {
       if (response.ok) {
         // O backend retorna os dados do usuário no campo 'data'
         toast.success(`Login successful! Welcome, ${data.data.full_name}.`);
-        navigate("/account");
+        navigate("/");
       } else {
         toast.error(data.error || "An unknown error occurred.");
       }

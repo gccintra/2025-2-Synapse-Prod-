@@ -16,6 +16,7 @@ class News:
         description: str | None = None,
         image_url: str | None = None,
         created_at: datetime | None = None,
+        source_name: str | None = None,
     ):
         self.id = id
         self.title = title
@@ -26,6 +27,7 @@ class News:
         self.published_at = published_at
         self.source_id = source_id
         self.created_at = created_at
+        self.source_name = source_name
 
     @property
     def title(self) -> str:
@@ -101,6 +103,12 @@ class News:
     def from_entity(cls, entity: NewsEntity) -> "News":
         if not entity:
             return None
+
+        # Extrair nome da fonte se disponível
+        source_name = None
+        if hasattr(entity, 'source') and entity.source:
+            source_name = entity.source.name
+
         return cls(
             id=entity.id,
             title=entity.title,
@@ -111,6 +119,7 @@ class News:
             published_at=entity.published_at,
             source_id=entity.source_id,
             created_at=entity.created_at,
+            source_name=source_name,
         )
 
     def to_orm(self) -> NewsEntity:

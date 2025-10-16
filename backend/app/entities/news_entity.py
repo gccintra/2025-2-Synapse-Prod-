@@ -1,5 +1,5 @@
 from datetime import datetime
-from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy import ForeignKey, Text
 from app.extensions import db
 
@@ -15,5 +15,8 @@ class NewsEntity(db.Model):
     published_at: Mapped[datetime] = mapped_column(db.DateTime(timezone=True), nullable=False)
     
     source_id: Mapped[int] = mapped_column(ForeignKey("news_sources.id"), nullable=False)
-    
+
     created_at = mapped_column(db.DateTime(timezone=True), nullable=False, default=datetime.utcnow)
+
+    # Relacionamento com fonte
+    source = relationship("NewsSourceEntity", lazy="select")
