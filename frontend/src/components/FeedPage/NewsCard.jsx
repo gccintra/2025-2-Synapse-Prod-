@@ -11,6 +11,7 @@ const NewsCard = forwardRef(
     // Inicializa o estado com base na propriedade da API
     const [isSaved, setIsSaved] = useState(news?.is_favorited || false);
     const [isSaving, setIsSaving] = useState(false); // Estado de carregamento para o botão
+    const [isClicked, setIsClicked] = useState(false); // Estado para a animação de clique
     const LinkComponent = isLoading ? "div" : Link;
 
     // Impede que o clique no ícone navegue para a notícia
@@ -19,6 +20,10 @@ const NewsCard = forwardRef(
       e.preventDefault();
 
       if (isSaving) return; // Previne múltiplos cliques
+
+      setIsClicked(true); // Ativa a animação
+      setTimeout(() => setIsClicked(false), 300); // Reseta a animação após 300ms
+
       setIsSaving(true);
 
       try {
@@ -97,7 +102,7 @@ const NewsCard = forwardRef(
                 xmlns="http://www.w3.org/2000/svg"
                 className={`h-5 w-5 transition-colors ${
                   isSaved ? "text-black" : "text-gray-600"
-                }`}
+                } ${isClicked ? "animate-pop-in" : ""}`} // Aplica a animação aqui
                 fill={isSaved ? "currentColor" : "none"}
                 viewBox="0 0 24 24"
                 stroke="black"
@@ -149,7 +154,7 @@ const NewsCard = forwardRef(
                 xmlns="http://www.w3.org/2000/svg"
                 className={`h-5 w-5 transition-colors ${
                   isSaved ? "text-black" : "text-gray-600"
-                }`}
+                } ${isClicked ? "animate-pop-in" : ""}`} // E aqui também
                 fill={isSaved ? "currentColor" : "none"}
                 viewBox="0 0 24 24"
                 stroke="black"
