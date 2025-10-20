@@ -40,3 +40,9 @@ def get_news_by_topic(user_id: int, topic_id: int):
 @get_user_id_from_token
 def get_for_you_news(user_id: int):
     return news_controller.get_for_you_news(user_id)
+
+@news_bp.route("/saved", methods=["GET"])
+@jwt_required()
+@get_user_id_from_token
+def get_favorite_news(user_id):
+    return news_controller.get_favorite_news(user_id)

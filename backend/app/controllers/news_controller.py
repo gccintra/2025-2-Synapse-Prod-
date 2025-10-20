@@ -92,7 +92,7 @@ class NewsController:
             per_page = request.args.get('per_page', 10, type=int)
 
             result = self.news_service.get_for_you_news(user_id, page, per_page)
- 
+
             return jsonify({
                 "success": True,
                 "message": "Feed personalizado obtido com sucesso.",
@@ -107,3 +107,20 @@ class NewsController:
                 "data": None,
                 "error": str(e)
             }), 500
+
+    def get_favorite_news(self, user_id: int):
+        try:
+            news_data = self.news_service.get_favorite_news(user_id)
+            return jsonify({
+                "success": True,
+                "message": "Notícias favoritas obtida com sucesso.",
+                "data": news_data,
+                "error": None
+            }), 200
+        except NewsNotFoundError as e:
+            return jsonify({
+                "success": False,
+                "message": "Notícias favoritas não encontrada.",
+                "data": None,
+                "error": str(e)
+            }), 404
