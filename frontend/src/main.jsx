@@ -26,6 +26,9 @@ const router = createBrowserRouter([
     path: "/",
     element: <Navigate to="/feed" replace />,
   },
+  { path: "/feed", 
+    element: <FeedPage /> 
+  },
   {
     path: "/sobre",
     element: <AboutPage />,
@@ -48,7 +51,6 @@ const router = createBrowserRouter([
     // Rotas privadas (apenas para usuários logados)
     element: <PrivateRoute />,
     children: [
-      { path: "/feed", element: <FeedPage /> },
       { path: "/article/:id", element: <NewsPage /> },
       { path: "/account", element: <AccountPage /> },
       { path: "/edit-account", element: <EditAccount /> },

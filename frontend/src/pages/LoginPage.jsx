@@ -205,7 +205,9 @@ function LoginPage() {
           World,
         </h2>
         <h2 className="ml-8 text-160xl font-bold leading-none font-rajdhani">
-          Faster.
+          <Link to="/feed" className="hover:text-gray-300 transition-colors duration-200">
+            <button>Faster.</button>
+          </Link>
         </h2>
       </div>
     </div>
