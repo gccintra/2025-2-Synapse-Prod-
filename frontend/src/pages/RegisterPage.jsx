@@ -277,7 +277,7 @@ function RegisterPage() {
           <p className="mt-4 text-center text-sm text-black border-t border-[#111] pt-3">
             Already have an account?{" "}
             <Link
-              to="/"
+              to="/login"
               className="font-medium text-[#111] no-underline hover:underline hover:bg-[#1c1c1c] hover:text-[#fff] pt-0.2 px-0.5"
             >
               Login here
