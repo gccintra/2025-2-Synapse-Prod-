@@ -9,6 +9,11 @@ from app.routes.topic_routes import topic_bp
 from app.routes.news_source_routes import news_source_bp
 from app.routes.news_routes import news_bp
 
+STANDARD_TOPICS = [
+    'Technology', 'Crypto', 'Games', 'Economy', 'Business', 'Health',
+    'Science', 'Entertainment', 'World'
+]
+
 def create_app(config_overrides=None):
     app = Flask(__name__)
 
@@ -44,11 +49,32 @@ def create_app(config_overrides=None):
     db.init_app(app)
     jwt = JWTManager(app)
 
-    from app.entities import (user_entity, topic_entity, user_topic_entity,
-                              news_entity, news_source_entity, news_topic_entity, user_news_sources_entity, user_news_entity)
+    from app.entities import (custom_topic_entity, news_entity, news_source_entity, topic_entity, user_entity, user_preferred_custom_topics, user_preferred_news_sources_entity, user_saved_news_entity)
 
     with app.app_context():
         db.create_all()
+
+        from app.models.topic import Topic
+        from app.repositories.topic_repository import TopicRepository
+
+        print("Verificando e inicializando tópicos padrão...")
+        topic_repo = TopicRepository()
+
+        existing_topic_names = {t.name.lower() for t in topic_repo.list_all()}
+
+        new_topics_created_count = 0
+        for topic_name in STANDARD_TOPICS:
+            if topic_name.lower() not in existing_topic_names:
+                try:
+                    topic = Topic(name=topic_name, state=1)  
+                    created_topic = topic_repo.create(topic)
+                    print(f"Tópico padrão criado: '{created_topic.name}' (ID={created_topic.id})")
+                    new_topics_created_count += 1
+                except Exception as e:
+                    print(f"Erro ao criar tópico padrão '{topic_name}': {e}")
+
+        if new_topics_created_count == 0:
+            print("Todos os tópicos padrão já existem.")
 
     app.register_blueprint(user_bp, url_prefix="/users")
     app.register_blueprint(topic_bp, url_prefix="/topics")

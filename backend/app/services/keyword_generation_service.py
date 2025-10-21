@@ -7,39 +7,17 @@ import json
 import logging
 from typing import Dict, List, Tuple
 from app.services.ai_service import AIService
-from app.utils.topic_search_cache import TopicSearchCache
 from app.utils.api_rate_limiter import APIRateLimiter
-from app.config.news_collection_config import get_config
 
 
 class KeywordGenerationService:
-    """
-    Serviço responsável por:
-    1. Gerar keywords para múltiplos tópicos em uma única chamada de IA
-    2. Detectar idioma e país de cada tópico
-    3. Construir queries booleanas com operadores OR
-    """
-
     def __init__(
         self,
-        ai_service: AIService = None,
-        cache: TopicSearchCache = None,
-        rate_limiter: APIRateLimiter = None,
-        config: Dict = None
+        ai_service: AIService | None = None,
+        rate_limiter: APIRateLimiter | None = None
     ):
-        """
-        Inicializa o serviço de geração de keywords.
-
-        Args:
-            ai_service: Serviço de IA (se None, cria um novo)
-            cache: Cache de buscas (se None, não usa cache)
-            rate_limiter: Rate limiter para Gemini (se None, não usa throttling)
-            config: Configurações (se None, usa padrão)
-        """
         self.ai_service = ai_service or AIService()
-        self.cache = cache
         self.rate_limiter = rate_limiter
-        self.config = config or get_config()
 
         logging.info("KeywordGenerationService inicializado")
 
@@ -66,29 +44,16 @@ class KeywordGenerationService:
 
         logging.info(f"Gerando keywords para {len(topic_names)} tópicos em batch")
 
-        # Preparar informações de cada tópico
-        topics_info = {}
-        for topic_name in topic_names:
-            used_keywords = []
-            if self.cache:
-                used_keywords = self.cache.get_used_keywords(
-                    topic_name,
-                    hours=self.config["cache_ttl_hours"]
-                )
-
-            topics_info[topic_name] = {
-                "used_keywords": used_keywords
-            }
-
         # Construir prompt
-        prompt = self._build_batch_prompt(topics_info)
+        prompt = self._build_batch_prompt(topic_names)
 
         # Aguardar se necessário (throttling)
         if self.rate_limiter:
             self.rate_limiter.wait_if_needed()
 
-        # Chamar IA
+        # Chamar IA com tratamento específico de timeout
         try:
+            logging.info("Chamando API Gemini para geração de keywords...")
             response = self.ai_service.generate_content(prompt)
 
             # Registrar chamada
@@ -109,49 +74,42 @@ class KeywordGenerationService:
             return validated
 
         except Exception as e:
-            logging.error(f"Erro ao gerar keywords: {e}", exc_info=True)
+            error_msg = str(e).lower()
+
+            # Verificar se é erro de timeout
+            if any(timeout_keyword in error_msg for timeout_keyword in ['timeout', 'timed out', '504', 'deadline']):
+                logging.warning(f"Timeout da API Gemini detectado: {e}")
+                logging.info("Utilizando keywords hardcoded como fallback devido ao timeout")
+            else:
+                logging.error(f"Erro ao gerar keywords: {e}", exc_info=True)
+                logging.info("Utilizando keywords hardcoded como fallback devido ao erro")
+
             return self._fallback_keywords(topic_names)
 
-    def _build_batch_prompt(self, topics_info: Dict[str, Dict]) -> str:
+    def _build_batch_prompt(self, topic_names: List[str]) -> str:
         """
         Constrói o prompt para geração de keywords em batch.
 
         Args:
-            topics_info: {topic_name: {"used_keywords": [...]}}
+            topic_names: Lista de nomes de tópicos.
 
         Returns:
             Prompt formatado
         """
-        config = self.config
-        searches_per_topic = config["searches_per_topic"]
-        keywords_per_search = config["keywords_per_search"]
+        keywords_per_topic = 5 
 
-        prompt = f"""Gere palavras-chave SIMPLES e POPULARES para buscar notícias de cada tópico da lista.
+        prompt = f"""Para cada tópico da lista, gere {keywords_per_topic} palavras-chave que APARECEM EM MANCHETES REAIS de jornais e sites de notícias.
 
-**Regras CRÍTICAS:**
-1. Para cada tópico, gere EXATAMENTE {searches_per_topic} GRUPOS de keywords
-2. Cada grupo deve ter EXATAMENTE {keywords_per_search} palavras-chave
-3. Use PALAVRAS SIMPLES e POPULARES que aparecem em manchetes de jornal
-4. EVITE jargões técnicos, termos muito específicos ou acadêmicos
-5. Prefira palavras GENÉRICAS que cobrem o tópico de forma ampla
-6. As keywords devem estar NO MESMO IDIOMA do tópico fornecido
-7. Detecte o idioma: "pt" para português, "en" para inglês
-8. Para português, use country "br". Para inglês, use country "us"
-9. EVITE as keywords já usadas recentemente (listadas para cada tópico)
-
-**IMPORTANTE - O que FAZER e o que NÃO FAZER:**
-
-❌ NÃO USE (muito específico/técnico):
-- "NBA playoffs OR major league soccer OR global sports events"
-- "Bitcoin price OR blockchain technology OR NFT market"
-- "AI ethics OR generative AI OR machine learning trends"
-- "trap music artists OR hip hop culture OR new trap releases"
-
-✅ USE (simples e popular):
-- "goal OR soccer"
-- "bitcoin OR crypto"
-- "artificial intelligence OR AI"
-- "music OR entertainment"
+**Regras OBRIGATÓRIAS:**
+1. Use APENAS termos que jornalistas usam em manchetes (nomes de empresas, pessoas famosas, eventos populares).
+2. EVITE jargão técnico, acadêmico ou termos muito específicos (ex: "ESG reporting", "Supply chain resilience").
+3. PREFIRA nomes próprios: empresas (Apple, Google), pessoas (CEOs, políticos), lugares, eventos.
+4. As keywords devem estar no mesmo idioma do tópico.
+5. Para tópicos em português, o país é 'br'. Para inglês, o país é 'us'.
+6. CADA KEYWORD DEVE TER NO MÁXIMO 4 PALAVRAS.
+7. A query final (keywords separadas por OR) deve ter no máximo 200 caracteres.
+8. USE APENAS LETRAS, NÚMEROS E ESPAÇOS nas keywords.
+9. EVITE hífens, vírgulas, pontos ou outros caracteres especiais.
 
 **Formato de Saída OBRIGATÓRIO:**
 Retorne APENAS um objeto JSON sem nenhum texto adicional, markdown ou formatação.
@@ -159,44 +117,26 @@ A estrutura deve ser:
 {{
   "nome_do_topico": {{
     "keywords": [
-      ["keyword1", "keyword2"]
+      "keyword1", "keyword2", "keyword3", "keyword4", "keyword5"
     ],
     "language": "pt",
     "country": "br"
   }}
 }}
 
-**Exemplos Práticos (SIGA ESTE PADRÃO):**
+**Exemplo de Resposta Completa:**
 {{
-  "sports": {{
-    "keywords": [["goal", "soccer"]],
+  "Water": {{
+    "keywords": [
+      "Sea", "Ocean", "Whale", "Fish"
+    ],
     "language": "en",
     "country": "us"
-  }},
-  "crypto": {{
-    "keywords": [["bitcoin", "cryptocurrency"]],
-    "language": "en",
-    "country": "us"
-  }},
-  "technology": {{
-    "keywords": [["technology", "tech"]],
-    "language": "en",
-    "country": "us"
-  }},
-  "economia": {{
-    "keywords": [["economia", "mercado"]],
-    "language": "pt",
-    "country": "br"
-  }},
-  "saúde": {{
-    "keywords": [["saúde", "medicina"]],
-    "language": "pt",
-    "country": "br"
   }}
 }}
 
-**Tópicos e keywords já usadas:**
-{json.dumps(topics_info, indent=2, ensure_ascii=False)}
+**Tópicos para gerar keywords:**
+{json.dumps(topic_names, indent=2, ensure_ascii=False)}
 
 **Seu JSON de resposta:**"""
 
@@ -212,7 +152,6 @@ A estrutura deve ser:
         Returns:
             Dicionário parseado com keywords, language e country
         """
-        # Limpar resposta (remover markdown se houver)
         cleaned = response.strip()
 
         if cleaned.startswith("```json"):
@@ -225,7 +164,6 @@ A estrutura deve ser:
 
         cleaned = cleaned.strip()
 
-        # Parse JSON
         try:
             parsed = json.loads(cleaned)
             return parsed
@@ -249,16 +187,11 @@ A estrutura deve ser:
         Returns:
             Dicionário validado e corrigido com keywords, language e country
         """
-        config = self.config
-        searches_per_topic = config["searches_per_topic"]
-        keywords_per_search = config["keywords_per_search"]
-
         validated = {}
 
         for topic_name in expected_topics:
             topic_lower = topic_name.lower()
 
-            # Buscar no dict (case-insensitive)
             topic_data = None
             for key, value in keywords_dict.items():
                 if key.lower() == topic_lower:
@@ -268,46 +201,30 @@ A estrutura deve ser:
             # Se não encontrou, usar fallback
             if not topic_data or not isinstance(topic_data, dict):
                 logging.warning(f"IA não retornou dados para '{topic_name}'. Usando fallback.")
-                lang, country = self._detect_language_fallback(topic_name)
                 validated[topic_lower] = {
                     "keywords": self._fallback_keywords_for_topic(topic_name),
-                    "language": lang,
-                    "country": country
+                    "language": "en",
+                    "country": "us"
                 }
                 continue
 
-            # Extrair keywords
             keywords_groups = topic_data.get("keywords", [])
             language = topic_data.get("language", "en")
             country = topic_data.get("country", "us")
 
-            # Validar estrutura de keywords
             if not isinstance(keywords_groups, list):
                 logging.warning(f"Formato de keywords inválido para '{topic_name}'. Usando fallback.")
                 keywords_groups = self._fallback_keywords_for_topic(topic_name)
+            
+   
+            if any(not isinstance(kw, str) for kw in keywords_groups):
+                logging.warning(f"Keywords para '{topic_name}' não são strings. Usando fallback.")
+                keywords_groups = self._fallback_keywords_for_topic(topic_name)
 
-            # Garantir quantidade correta de grupos
-            while len(keywords_groups) < searches_per_topic:
-                keywords_groups.append([topic_name] * keywords_per_search)
-
-            keywords_groups = keywords_groups[:searches_per_topic]
-
-            # Validar cada grupo
-            for i, group in enumerate(keywords_groups):
-                if not isinstance(group, list):
-                    keywords_groups[i] = [topic_name] * keywords_per_search
-                    continue
-
-                # Garantir quantidade correta de keywords
-                while len(group) < keywords_per_search:
-                    group.append(topic_name)
-
-                keywords_groups[i] = group[:keywords_per_search]
-
-            # Validar language e country
-            if language not in config["supported_languages"]:
-                logging.warning(f"Idioma '{language}' não suportado para '{topic_name}'. Usando fallback.")
-                language, country = self._detect_language_fallback(topic_name)
+            if language not in ["pt", "en"]:
+                logging.warning(f"Idioma '{language}' não suportado para '{topic_name}'. Usando padrão.")
+                language = "en"
+                country = "us"
 
             validated[topic_lower] = {
                 "keywords": keywords_groups,
@@ -319,86 +236,137 @@ A estrutura deve ser:
 
     def _fallback_keywords(self, topic_names: List[str]) -> Dict[str, Dict]:
         """
-        Gera keywords de fallback para todos os tópicos.
+        Gera keywords de fallback para todos os tópicos usando keywords hardcoded.
 
         Args:
             topic_names: Lista de tópicos
 
         Returns:
-            Dicionário com keywords, language e country fallback
+            Dicionário com keywords hardcoded, language e country fallback
         """
         result = {}
         for topic_name in topic_names:
-            lang, country = self._detect_language_fallback(topic_name)
             result[topic_name.lower()] = {
-                "keywords": self._fallback_keywords_for_topic(topic_name),
-                "language": lang,
-                "country": country
+                "keywords": self._get_hardcoded_keywords(topic_name),
+                "language": "en",
+                "country": "us"
             }
         return result
 
-    def _fallback_keywords_for_topic(self, topic_name: str) -> List[List[str]]:
+    def _fallback_keywords_for_topic(self, topic_name: str) -> List[str]:
         """
         Gera keywords de fallback para um tópico.
 
         Args:
             topic_name: Nome do tópico
-
-        Returns:
-            Lista de grupos de keywords
         """
-        config = self.config
-        searches_per_topic = config["searches_per_topic"]
-        keywords_per_search = config["keywords_per_search"]
+        # Simplesmente retorna o nome do tópico como a única keyword.
+        return [topic_name]
 
-        # Simplesmente repetir o nome do tópico
-        return [
-            [topic_name] * keywords_per_search
-            for _ in range(searches_per_topic)
-        ]
-
-    def _detect_language_fallback(self, topic_name: str) -> Tuple[str, str]:
+    def _get_hardcoded_keywords(self, topic_name: str) -> List[str]:
         """
-        Detecta idioma e país de um tópico como fallback (quando IA falha).
+        Retorna keywords hardcoded para tópicos padrão.
 
-        Atualmente suporta apenas PT e EN.
+        Essas são keywords populares que aparecem frequentemente em manchetes
+        e garantem que sempre tenhamos resultados mesmo quando a IA falha.
 
         Args:
             topic_name: Nome do tópico
 
         Returns:
-            Tupla (language, country) ex: ("pt", "br")
+            Lista de keywords hardcoded
         """
-        # Caracteres específicos do português
-        pt_chars = "áàâãéêíóôõúçÁÀÂÃÉÊÍÓÔÕÚÇ"
+        # Keywords simples e populares que aparecem frequentemente em manchetes reais
+        hardcoded_keywords = {
+            'Technology': ['AI', 'software', 'hardware'],
+            'Crypto': ['Bitcoin', 'blockchain', 'NFT'],
+            'Games': ['console', 'eSports', 'gameplay'],
+            'Economy': ['inflation', 'GDP', 'central bank'],
+            'Business': ['CEO', 'M&A', 'earnings'],
+            'Health': ['disease', 'vaccine', 'hospital'],
+            'Science': ['NASA', 'fossil', 'physics'],
+            'Entertainment': ['movie', 'music', 'series'],
+            'World': ['geopolitics', 'war', 'diplomacy']
+        }
 
-        if any(char in pt_chars for char in topic_name):
-            return ("pt", "br")
+        topic_lower = topic_name.lower()
 
-        # Default: inglês
-        return ("en", "us")
+        # Retornar keywords do tópico ou keywords genéricas se não encontrado
+        if topic_lower in hardcoded_keywords:
+            return hardcoded_keywords[topic_lower]
+        else:
+            # Fallback genérico: usar o próprio nome do tópico
+            return [topic_name]
 
     def build_boolean_query(self, keywords: List[str]) -> str:
         """
-        Constrói uma query booleana usando operador OR.
+        Constrói uma query booleana usando operador OR com aspas duplas.
+
+        IMPORTANTE: Cada keyword é envolvida em aspas duplas para que a GNews API
+        trate frases multi-palavra corretamente (ex: "Apple iPhone" OR "Google AI").
 
         Args:
             keywords: Lista de keywords
 
         Returns:
-            Query formatada ex: "IA OR inteligência artificial OR machine learning"
+            Query formatada ex: '"Apple iPhone" OR "Google AI" OR "Microsoft Windows"'
         """
         if not keywords:
             return ""
 
-        # Filtrar keywords vazias
-        valid_keywords = [kw.strip() for kw in keywords if kw and kw.strip()]
+        valid_keywords = []
+        for kw in keywords:
+            if kw and kw.strip():
+                sanitized = self._sanitize_keyword(kw.strip())
+                if sanitized:  
+                    quoted_keyword = f'"{sanitized}"'
+                    valid_keywords.append(quoted_keyword)
 
         if not valid_keywords:
             return ""
 
-        # Juntar com OR
         query = " OR ".join(valid_keywords)
+        original_length = len(query)
 
-        logging.debug(f"Query booleana construída: {query}")
-        return query
+        if len(query) <= 200:
+            logging.debug(f"Query booleana construída ({len(query)} chars): {query}")
+            return query
+
+        logging.warning(f"Query muito longa ({original_length} chars), aplicando truncamento...")
+
+        truncated_keywords = []
+        for keyword in valid_keywords:
+            test_query = " OR ".join(truncated_keywords + [keyword])
+            if len(test_query) <= 200:
+                truncated_keywords.append(keyword)
+            else:
+                break
+
+        if not truncated_keywords:
+            truncated_keywords = [valid_keywords[0]]
+
+        final_query = " OR ".join(truncated_keywords)
+
+        logging.warning(f"Query truncada: {original_length} → {len(final_query)} chars "
+                       f"({len(valid_keywords)} → {len(truncated_keywords)} keywords)")
+        logging.debug(f"Query final: {final_query}")
+
+        return final_query
+
+    def _sanitize_keyword(self, keyword: str) -> str:
+        if not keyword:
+            return ""
+
+        sanitized = str(keyword)
+        sanitized = sanitized.replace("-", " ").replace("_", " ")
+        sanitized = sanitized.replace('"', '').replace("'", "")
+
+        import re
+        sanitized = re.sub(r'[^a-zA-Z0-9\s]', ' ', sanitized)
+        sanitized = ' '.join(sanitized.split())
+
+        # Limitar comprimento (GNews tem limites)
+        if len(sanitized) > 100:
+            sanitized = sanitized[:100].strip()
+
+        return sanitized.strip()

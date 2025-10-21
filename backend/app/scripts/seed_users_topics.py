@@ -17,7 +17,7 @@ from app import create_app
 from app.extensions import db
 from app.entities.user_entity import UserEntity
 from app.entities.topic_entity import TopicEntity
-from app.entities.user_topic_entity import UserTopicEntity
+from backend.app.entities.user_preferred_custom_topics import UserTopicEntity
 from app.models.user import User
 from app.models.topic import Topic
 from app.repositories.user_repository import UserRepository

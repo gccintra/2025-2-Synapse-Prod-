@@ -3,7 +3,7 @@ from sqlalchemy.exc import SQLAlchemyError
 from app.extensions import db
 from app.entities.user_preferred_custom_topics import UserPreferredCustomTopicEntity
 
-class UsersTopicsRepository:
+class UserPreferredCustomTopicRepository:
     def __init__(self, session=None):
         self.session = session or db.session
 
@@ -37,3 +37,11 @@ class UsersTopicsRepository:
         return self.session.execute(
             select(UserPreferredCustomTopicEntity.topic_id).filter_by(user_id=user_id)
         ).scalars().all()
+
+    def count_by_user(self, user_id: int) -> int:
+        """Conta quantos tópicos um usuário tem associado."""
+        try:
+            return self.session.query(UserPreferredCustomTopicEntity).filter_by(user_id=user_id).count()
+        except SQLAlchemyError:
+            self.session.rollback()
+            raise

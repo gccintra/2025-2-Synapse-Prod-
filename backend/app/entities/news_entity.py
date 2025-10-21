@@ -14,9 +14,16 @@ class NewsEntity(db.Model):
     content: Mapped[str] = mapped_column(Text, nullable=False) 
     published_at: Mapped[datetime] = mapped_column(db.DateTime(timezone=True), nullable=False)
     
-    source_id: Mapped[int] = mapped_column(ForeignKey("news_sources.id"), nullable=False)
+    source_id: Mapped[int] = mapped_column(ForeignKey("news_sources.id", ondelete="CASCADE"), nullable=False)
+    topic_id: Mapped[int] = mapped_column(ForeignKey("topics.id", ondelete="SET NULL"), nullable=True)
 
     created_at = mapped_column(db.DateTime(timezone=True), nullable=False, default=datetime.utcnow)
 
-    # Relacionamento com fonte
     source = relationship("NewsSourceEntity", lazy="select")
+    topic = relationship("TopicEntity", lazy="select")
+
+    saved_by_users = relationship(
+        "UserEntity",
+        secondary="user_saved_news",
+        back_populates="saved_news"
+    )

@@ -1,8 +1,3 @@
-"""
-Sistema de throttling/rate limiting para controlar chamadas à API do Gemini.
-Garante que não ultrapassaremos o limite de 10 chamadas por minuto.
-"""
-
 import time
 import logging
 from typing import List

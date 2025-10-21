@@ -6,11 +6,10 @@ import { useState, useEffect, useCallback, useRef } from 'react';
  * @param {Function} fetchFunction - Função que busca os dados (deve receber page e perPage)
  * @param {Object} options - Opções do hook
  * @param {number} options.perPage - Itens por página (padrão: 10)
- * @param {Array} options.dependencies - Dependências que resetam os dados
  * @returns {Object} - Estado e funções do infinite scroll
  */
 export const useInfiniteScroll = (fetchFunction, options = {}) => {
-  const { perPage = 10, dependencies = [] } = options;
+  const { perPage = 10 } = options;
 
   const [data, setData] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -82,13 +81,6 @@ export const useInfiniteScroll = (fetchFunction, options = {}) => {
       loadMore();
     }
   }, [loadMore]);
-
-  // Resetar quando dependências mudarem
-  useEffect(() => {
-    if (!isInitialLoad.current) {
-      reset();
-    }
-  }, dependencies);
 
   // Ref callback para o último elemento
   const lastElementRef = useCallback(node => {

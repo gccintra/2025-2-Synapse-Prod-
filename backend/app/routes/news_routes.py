@@ -8,12 +8,6 @@ news_bp = Blueprint("news", __name__)
 news_controller = NewsController()
 
 
-@news_bp.route("/", methods=["GET"])
-@jwt_required()
-@get_user_id_from_token
-def get_news(user_id: int):
-    return news_controller.get_news(user_id)
-
 
 @news_bp.route("/<int:news_id>", methods=["GET"])
 @jwt_required()
@@ -35,5 +29,14 @@ def unfavorite_news(user_id, news_id):
     return news_controller.unfavorite_news(user_id, news_id)
 
 @news_bp.route("/topic/<int:topic_id>", methods=["GET"])
-def get_news_by_topic(topic_id: int):
-    return news_controller.get_by_topic(topic_id)
+@jwt_required()
+@get_user_id_from_token
+def get_news_by_topic(user_id: int, topic_id: int):
+    return news_controller.get_by_topic(user_id, topic_id)
+
+
+@news_bp.route("/for-you", methods=["GET"])
+@jwt_required()
+@get_user_id_from_token
+def get_for_you_news(user_id: int):
+    return news_controller.get_for_you_news(user_id)
