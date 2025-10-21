@@ -35,7 +35,7 @@ class NewsService():
         self.user_news_source_repo = user_news_source_repo or UserNewsSourceRepository()
         self.user_custom_topic_service = UserCustomTopicService()
 
-    def get_news_by_id(self, user_id: int, news_id: int) -> dict:
+    def get_news_by_id(self, user_id: Optional[int], news_id: int) -> dict:
         news = self.news_repo.find_by_id(news_id, user_id=user_id)
         if not news:
             raise NewsNotFoundError(f"Notícia com ID {news_id} não encontrada.")

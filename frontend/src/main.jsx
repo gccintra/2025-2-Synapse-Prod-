@@ -30,8 +30,12 @@ const router = createBrowserRouter([
     element: <FeedPage /> 
   },
   {
-    path: "/sobre",
+    path: "/about",
     element: <AboutPage />,
+  },
+  { 
+    path: "/article/:id",
+     element: <NewsPage /> 
   },
   {
     // Rotas públicas restritas (APENAS para usuários não logados)
@@ -51,7 +55,6 @@ const router = createBrowserRouter([
     // Rotas privadas (apenas para usuários logados)
     element: <PrivateRoute />,
     children: [
-      { path: "/article/:id", element: <NewsPage /> },
       { path: "/account", element: <AccountPage /> },
       { path: "/edit-account", element: <EditAccount /> },
       { path: "/change-password", element: <ChangePassword /> },
