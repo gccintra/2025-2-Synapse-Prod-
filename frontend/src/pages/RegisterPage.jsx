@@ -81,7 +81,7 @@ function RegisterPage() {
       if (response.ok) {
         toast.success(`User registered successfully! Redirecting to login...`);
         setTimeout(() => {
-          navigate("/");
+          navigate("/login");
         }, 2000);
       } else {
         toast.error(data.error || "An unknown error occurred.");
