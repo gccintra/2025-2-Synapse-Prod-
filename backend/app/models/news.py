@@ -10,13 +10,15 @@ class News:
         title: str,
         url: str,
         published_at: datetime,
-        source_id: int,
+        source_id: int, 
         content: str,
+        topic_id: int | None = None,
         id: int | None = None,
         description: str | None = None,
         image_url: str | None = None,
         created_at: datetime | None = None,
         source_name: str | None = None,
+        topic_name: str | None = None,
     ):
         self.id = id
         self.title = title
@@ -26,8 +28,10 @@ class News:
         self.content = content
         self.published_at = published_at
         self.source_id = source_id
+        self.topic_id = topic_id
         self.created_at = created_at
         self.source_name = source_name
+        self.topic_name = topic_name
 
     @property
     def title(self) -> str:
@@ -99,6 +103,16 @@ class News:
             raise NewsValidationError("source_id", "deve ser um inteiro positivo.")
         self._source_id = value
 
+    @property
+    def topic_id(self) -> int:
+        return self._topic_id
+
+    @topic_id.setter
+    def topic_id(self, value: int):
+        if not value or not isinstance(value, int) or value <= 0:
+            raise NewsValidationError("topic_id", "deve ser um inteiro positivo.")
+        self._topic_id = value
+
     @classmethod
     def from_entity(cls, entity: NewsEntity) -> "News":
         if not entity:
@@ -109,6 +123,11 @@ class News:
         if hasattr(entity, 'source') and entity.source:
             source_name = entity.source.name
 
+        # Extrair nome do tópico se disponível
+        topic_name = None
+        if hasattr(entity, 'topic') and entity.topic:
+            topic_name = entity.topic.name
+
         return cls(
             id=entity.id,
             title=entity.title,
@@ -118,8 +137,10 @@ class News:
             content=entity.content,
             published_at=entity.published_at,
             source_id=entity.source_id,
+            topic_id=entity.topic_id,
             created_at=entity.created_at,
             source_name=source_name,
+            topic_name=topic_name,
         )
 
     def to_orm(self) -> NewsEntity:
@@ -132,5 +153,6 @@ class News:
             content=self.content,
             published_at=self.published_at,
             source_id=self.source_id,
+            topic_id=self.topic_id,
             created_at=self.created_at,
         )

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import HeaderFeedPage from "../components/FeedPage/HeaderFeedPage";
 import NewsCard from "../components/FeedPage/NewsCard";
 import { topicsAPI, usersAPI, newsAPI } from "../services/api";
@@ -6,6 +6,7 @@ import { useInfiniteScroll } from "../hooks/useInfiniteScroll";
 
 
 const FeedPage = () => {
+  const isInitialMount = useRef(true);
   const [userData, setUserData] = useState({ email: "" });
   const [initialLoading, setInitialLoading] = useState(true);
   const [topics, setTopics] = useState([]);
@@ -17,7 +18,8 @@ const FeedPage = () => {
     if (selectedTopic) {
       return newsAPI.getNewsByTopic(selectedTopic.id, page, perPage);
     } else {
-      return newsAPI.getUserNews(page, perPage);
+      // Feed personalizado "For You" com ranking baseado em preferências do usuário
+      return newsAPI.getForYouNews(page, perPage);
     }
   };
 
@@ -28,9 +30,8 @@ const FeedPage = () => {
     hasMore,
     error: newsError,
     lastElementRef,
-    reset: resetNews
+    reset: resetNews,
   } = useInfiniteScroll(fetchNews, {
-    dependencies: [selectedTopic], // Reset quando o tópico mudar
     perPage: 10
   });
 
@@ -43,7 +44,7 @@ const FeedPage = () => {
         // Buscar dados do usuário e tópicos em paralelo
         const [userResponse, topicsResponse] = await Promise.allSettled([
           usersAPI.getUserProfile(),
-          topicsAPI.getUserTopics()
+          topicsAPI.getStandardTopics()
         ]);
 
         // Processar dados do usuário
@@ -68,6 +69,16 @@ const FeedPage = () => {
 
     fetchInitialData();
   }, []);
+
+  // Efeito para resetar o feed quando o tópico muda
+  useEffect(() => {
+    // Pular o reset na montagem inicial para evitar a dupla chamada
+    if (isInitialMount.current) {
+      isInitialMount.current = false;
+      return;
+    }
+    resetNews();
+  }, [selectedTopic]);
 
   return (
     <div className="bg-gray-50 min-h-screen">
@@ -110,7 +121,7 @@ const FeedPage = () => {
                     : "bg-white hover:bg-gray-300 [font-weight:500]"
                 }`}
               >
-                {topic.name}
+                {topic.name.charAt(0).toUpperCase() + topic.name.slice(1)}
               </button>
             ))
           )}

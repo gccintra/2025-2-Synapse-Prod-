@@ -34,8 +34,6 @@ class NewsSourceService():
         try:
             self.user_source_repo.attach(user_id, source_id)
         except IntegrityError as e:
-            # Se o attach falhar por IntegrityError, pode ser que a associação já exista (race condition)
-            # ou que o user_id/source_id seja inválido. O repo já lida com NewsSourceAlreadyAttachedError.
             raise e
 
     def detach_source_from_user(self, user_id: int, source_id: int):

@@ -53,12 +53,19 @@ async function apiRequest(endpoint, options = {}) {
 
 // API de Topics
 export const topicsAPI = {
-  // Buscar tópicos do usuário
-  getUserTopics: () => apiRequest("/topics/list"),
+  // --- Tópicos Padrão ---
+  // Lista todos os tópicos padrão do sistema
+  getStandardTopics: () => apiRequest("/topics/standard"),
 
-  // Buscar tópicos (autocomplete)
-  searchTopics: (query, limit = 10) =>
-    apiRequest(`/topics/search?q=${encodeURIComponent(query)}&limit=${limit}`),
+  // --- Tópicos Customizados (Preferências do Usuário) ---
+  // Lista os tópicos preferidos do usuário
+  getPreferredTopics: () => apiRequest("/topics/custom"),
+  addPreferredTopic: (name) =>
+    apiRequest("/topics/custom", { method: "POST", body: JSON.stringify({ name }) }),
+
+  // Remove um tópico das preferências do usuário
+  removePreferredTopic: (topicId) =>
+    apiRequest(`/topics/custom/${topicId}`, { method: "DELETE" }),
 };
 
 // API de News
@@ -66,6 +73,10 @@ export const newsAPI = {
   // Buscar notícias do usuário (feed principal)
   getUserNews: (page = 1, perPage = 10) =>
     apiRequest(`/news/?page=${page}&per_page=${perPage}`),
+
+  // Buscar feed personalizado "For You" (com ranking baseado em preferências)
+  getForYouNews: (page = 1, perPage = 10) =>
+    apiRequest(`/news/for-you?page=${page}&per_page=${perPage}`),
 
   // Buscar notícias por tópico
   getNewsByTopic: (topicId, page = 1, perPage = 10) =>
@@ -87,4 +98,21 @@ export const newsAPI = {
 export const usersAPI = {
   // Buscar perfil do usuário
   getUserProfile: () => apiRequest("/users/profile"),
+};
+
+// API de News Sources
+export const newsSourcesAPI = {
+  // Lista todas as fontes disponíveis no sistema
+  getAllSources: () => apiRequest("/news_sources/list_all"),
+
+  // Lista as fontes que o usuário marcou como preferidas
+  getAttachedSources: () => apiRequest("/news_sources/list_all_attached_sources"),
+
+  // Associa uma fonte ao usuário
+  attachSource: (sourceId) =>
+    apiRequest("/news_sources/attach", { method: "POST", body: JSON.stringify({ source_id: sourceId }) }),
+
+  // Desassocia uma fonte do usuário
+  detachSource: (sourceId) =>
+    apiRequest(`/news_sources/detach/${sourceId}`, { method: "DELETE" }),
 };

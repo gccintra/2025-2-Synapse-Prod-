@@ -1,6 +1,6 @@
 from datetime import date
 from typing import Optional
-from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 from app.extensions import db
 
 class UserEntity(db.Model):
@@ -11,4 +11,10 @@ class UserEntity(db.Model):
     email: Mapped[str] = mapped_column(db.String(120), unique=True, nullable=False)
     birthdate: Mapped[Optional[date]] = mapped_column(db.Date, nullable=True)
     password_hash: Mapped[str] = mapped_column(db.String(200), nullable=False)
+    created_at: Mapped[date] = mapped_column(db.Date, nullable=False, server_default=db.func.now())
 
+    saved_news = relationship(
+        "NewsEntity",
+        secondary="user_saved_news",
+        back_populates="saved_by_users"
+    )

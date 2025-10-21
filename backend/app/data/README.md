@@ -1,102 +1,194 @@
-# Diretório de Dados Dinâmicos
+# Diretório de Dados - Sistema Simplificado
 
-Este diretório contém arquivos JSON gerados e atualizados automaticamente pelo sistema de coleta de notícias.
+Este diretório faz parte da estrutura do sistema de coleta de notícias, mas atualmente **não contém arquivos dinâmicos** devido à simplificação da arquitetura.
 
-## Arquivos
+## Estado Atual do Sistema
 
-### `topic_search_cache.json`
-**Descrição**: Cache de buscas por tópico nas últimas 6 horas.
+O sistema de coleta foi **simplificado** e não utiliza mais cache complexo ou armazenamento local extensivo de dados temporários.
 
-**Estrutura**:
+### Arquivos Não Mais Utilizados
+
+❌ **`topic_search_cache.json`** - **REMOVIDO**
+- **Motivo**: Sistema de priorização e cache complexo foi eliminado
+- **Substituto**: Não há cache - cada execução processa todos os tópicos ativos
+- **Benefício**: Menos complexidade, sempre processamento completo
+
+### Arquivos Ativos (Localizados Externamente)
+
+✅ **`/tmp/scraping_blacklist.json`** - **ATIVO**
+- **Localização**: `/tmp/scraping_blacklist.json` (não neste diretório)
+- **Descrição**: Lista de domínios bloqueados automaticamente por falharem no scraping
+- **Gerenciamento**: Automático via `app/utils/scraping_blacklist.py`
+
+## Arquivos de Dados Externos
+
+### `/tmp/scraping_blacklist.json`
+
+**Estrutura Atual**:
 ```json
 {
-  "tecnologia": {
-    "searches": [
-      {
-        "keywords": ["IA", "machine learning"],
-        "timestamp": "2025-10-10T14:00:00",
-        "language": "pt",
-        "country": "br",
-        "news_found": 8
-      }
-    ]
+  "blocked_domains": {
+    "bloomberg.com": {
+      "reason": "403 Forbidden",
+      "blocked_at": "2025-10-21T02:34:22.095Z",
+      "attempts": 3
+    },
+    "nytimes.com": {
+      "reason": "403 Forbidden",
+      "blocked_at": "2025-10-21T02:36:06.607Z",
+      "attempts": 5
+    },
+    "seekingalpha.com": {
+      "reason": "403 Forbidden",
+      "blocked_at": "2025-10-21T02:33:38.775Z",
+      "attempts": 2
+    }
   }
 }
 ```
 
-**Propósito**:
-- Evitar buscar o mesmo tópico repetidamente
-- Registrar keywords já utilizadas
-- Aplicar penalidades de cache no algoritmo de priorização
-
-**Gerenciamento**:
-- Automaticamente limpo a cada 6 horas
-- Lido e salvo em cada execução do job
-
----
-
-### `scraping_blacklist.json`
-**Descrição**: Lista de domínios bloqueados automaticamente por falharem no scraping.
-
-**Estrutura**:
-```json
-{
-  "seekingalpha.com": {
-    "blocked_at": "2025-10-10T20:39:07.557Z",
-    "error_type": "403 Forbidden",
-    "error_count": 2,
-    "last_url": "https://seekingalpha.com/news/...",
-    "last_error_message": "Article download failed with 403...",
-    "reason": "Site blocks scraping with 403 Forbidden",
-    "updated_at": "2025-10-10T21:15:23.891Z"
-  }
-}
-```
-
-**Propósito**:
-- Evitar tentar fazer scraping de sites que bloqueiam consistentemente
-- Registrar informações detalhadas para análise humana posterior
-- Economizar tempo e recursos
-
-**Tipos de Erro que Adicionam à Blacklist**:
+**Tipos de Bloqueio Automático**:
 - `403 Forbidden` - Site bloqueia scraping explicitamente
-- `401 Unauthorized` - Requer autenticação/paywall
-- `SSL Certificate Error` - Certificado inválido ou expirado
-- `Timeout (30s)` - Site muito lento ou não responde
-- `429 Too Many Requests` - Rate limiting do site
+- `SSL Error` - Certificados inválidos ou problemas SSL
+- `Timeout Error` - Sites que não respondem em 30s
+- `Network Error` - Problemas de conectividade
 
-**Gerenciamento**:
-- Domínios adicionados automaticamente quando erros críticos ocorrem
-- Remoção manual via código após análise
-- Contador de erros incrementado para domínios recorrentes
+**Visualização**:
+```bash
+# Ver blacklist atual
+cat /tmp/scraping_blacklist.json | jq
+
+# Ver estatísticas
+cat /tmp/scraping_blacklist.json | jq '.blocked_domains | length'
+
+# Ver domínios bloqueados recentemente
+cat /tmp/scraping_blacklist.json | jq '.blocked_domains | to_entries[] | select(.value.blocked_at > "2025-10-21") | .key'
+```
+
+## Dados Simplificados
+
+### O que mudou com a simplificação:
+
+#### ❌ Removido:
+- **Cache de buscas por tópico** (topic_search_cache.json)
+- **Sistema de priorização** (não há mais pontuação de tópicos)
+- **Histórico de execuções** (logs são suficientes)
+- **Métricas complexas** (estatísticas via logs)
+
+#### ✅ Mantido:
+- **Blacklist automática** de domínios problemáticos
+- **Logs estruturados** para monitoramento
+- **Rate limiting** simples e eficaz
+
+### Vantagens da Abordagem Atual:
+
+1. **Menos Estado**: Sem arquivos de cache complexos para gerenciar
+2. **Stateless**: Cada execução é independente
+3. **Mais Confiável**: Menos arquivos para corromper ou dessincronizar
+4. **Mais Simples**: Fácil de entender e debugar
+
+## Monitoramento de Dados
+
+### Via Logs (Recomendado)
+
+O sistema atual monitora dados através de **logs estruturados**:
+
+```bash
+# Ver execução mais recente
+docker logs synapse-backend | grep "JOB DE COLETA"
+
+# Ver estatísticas da última execução
+docker logs synapse-backend | grep "RESUMO" -A 10
+
+# Ver domínios bloqueados em tempo real
+docker logs synapse-backend | grep "BLOQUEADO AUTOMATICAMENTE"
+```
+
+### Via Banco de Dados
+
+Dados persistentes estão no **banco de dados**:
+
+```sql
+-- Tópicos ativos
+SELECT id, name, is_active FROM topics WHERE is_active = true;
+
+-- Estatísticas de notícias por tópico
+SELECT t.name, COUNT(n.id) as news_count
+FROM topics t
+LEFT JOIN news n ON t.id = n.topic_id
+GROUP BY t.name;
+
+-- Notícias coletadas nas últimas 24h
+SELECT COUNT(*) FROM news WHERE created_at > NOW() - INTERVAL '24 hours';
+```
+
+## Limpeza e Manutenção
+
+### Resetar Blacklist (se necessário)
+
+```bash
+# Limpar blacklist (o sistema recriará automaticamente)
+sudo rm /tmp/scraping_blacklist.json
+
+# Ou resetar conteúdo
+echo '{"blocked_domains": {}}' | sudo tee /tmp/scraping_blacklist.json
+```
+
+### Verificação de Integridade
+
+```bash
+# Verificar se sistema está funcionando
+docker exec synapse-backend python -c "
+from app.services.news_collect_service import NewsCollectService
+from app.utils.scraping_blacklist import ScrapingBlacklist
+
+print('Sistema de coleta: OK')
+print('Blacklist:', ScrapingBlacklist.get_blocked_count(), 'domínios bloqueados')
+"
+```
+
+## Migração do Sistema Anterior
+
+Se você está migrando do sistema anterior complexo:
+
+### Arquivos Antigos para Remover:
+
+```bash
+# Cache antigo (não mais utilizado)
+rm -f backend/app/data/topic_search_cache.json
+
+# Configurações antigas (refatoradas)
+rm -f backend/app/config/news_collection_config.py
+```
+
+### Verificar Limpeza:
+
+```bash
+# Verificar se diretório data está limpo
+ls -la backend/app/data/
+
+# Deve mostrar apenas:
+# README.md (este arquivo)
+# Possivelmente .gitkeep ou estar vazio
+```
 
 ---
 
-## Observações Importantes
+## Considerações Finais
 
-⚠️ **Não commitar no Git**: Estes arquivos contêm dados dinâmicos e devem estar no `.gitignore`.
+O sistema atual prioriza **simplicidade e confiabilidade** sobre recursos complexos:
 
-📊 **Análise Manual**: Os arquivos podem ser visualizados a qualquer momento para análise:
-```bash
-# Ver cache de buscas
-cat backend/app/data/topic_search_cache.json | jq
+- ✅ **Menos arquivos de estado** = menos pontos de falha
+- ✅ **Processamento sempre completo** = sem dependência de cache
+- ✅ **Logs centralizados** = monitoramento mais fácil
+- ✅ **Blacklist automática** = proteção contra sites problemáticos
 
-# Ver blacklist de scraping
-cat backend/app/data/scraping_blacklist.json | jq
-
-# Ver estatísticas da blacklist (via código)
-# scraping_blacklist.get_statistics()
-```
-
-🔧 **Limpeza Manual**: Se necessário, limpar os arquivos manualmente:
-```bash
-# Resetar cache (o sistema recriará)
-echo '{}' > backend/app/data/topic_search_cache.json
-
-# Resetar blacklist (o sistema recriará)
-echo '{}' > backend/app/data/scraping_blacklist.json
-```
+Para análise avançada de dados, utilize:
+1. **Logs do Docker** para execução e performance
+2. **Banco de dados** para estatísticas de conteúdo
+3. **Blacklist em /tmp/** para problemas de scraping
 
 ---
 
-**Última atualização**: 2025-10-10
+**Última atualização**: 2025-10-21
+**Versão**: Sistema Simplificado v2.0

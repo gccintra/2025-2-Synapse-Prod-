@@ -1,13 +1,13 @@
-# Manual de Coleta Manual de Notícias
+# Manual de Execução da Coleta de Notícias
 
 ## Introdução
 
-O script `manual_news_collection.py` permite executar a coleta de notícias manualmente através da linha de comando, com total controle sobre os parâmetros de configuração. É ideal para:
+O sistema de coleta de notícias usa uma abordagem **simplificada e confiável** que pode ser executada manualmente a qualquer momento. É ideal para:
 
 - 🧪 **Testes e debugging** do sistema de coleta
-- 🔬 **Experimentação** com diferentes configurações
-- 🎯 **Coletas pontuais** com parâmetros específicos
-- 📊 **Análise de desempenho** com configurações variadas
+- 🔄 **Execução sob demanda** quando necessário
+- 📊 **Monitoramento de funcionamento** do sistema
+- 🛠️ **Troubleshooting** de problemas
 
 ## Requisitos
 
@@ -16,370 +16,363 @@ O script `manual_news_collection.py` permite executar a coleta de notícias manu
 - Variáveis de ambiente configuradas:
   - `GNEWS_API_KEY` - Chave da API GNews
   - `DATABASE_URL` - URL do banco PostgreSQL
-  - `GEMINI_API_KEY` - Chave da API Google Gemini (para categorização)
+  - `GEMINI_API_KEY` - Chave da API Google Gemini (para keywords)
 
-## Instalação
+## Sistema Atual (Simplificado)
 
-O script está localizado em `backend/app/scripts/manual_news_collection.py` e pode ser executado diretamente:
+O sistema atual usa **apenas uma abordagem** de coleta:
+
+### collect_news_simple()
+1. **Busca todos os tópicos ativos** no banco de dados
+2. **Gera keywords em batch** usando Gemini AI (1 chamada)
+3. **Para cada tópico**: busca notícias no GNews + salva no banco
+4. **Sem cache, sem priorização, sem configurações complexas**
+
+---
+
+## Execução Manual
+
+### Comando Principal
 
 ```bash
-# Dentro do container Docker
-docker exec synapse-backend python -m app.scripts.manual_news_collection
+# Dentro do container Docker (recomendado)
+docker exec synapse-backend python /app/backend/app/jobs/collect_news.py
 
-# Ou com ambiente virtual ativado
+# Ou via module
+docker exec synapse-backend python -m app.jobs.collect_news
+
+# Execução local (se ambiente configurado)
 cd backend
-python -m app.scripts.manual_news_collection
+python -m app.jobs.collect_news
 ```
 
-## Uso Básico
-
-### Coleta Inteligente (Padrão)
+### Verificação Rápida
 
 ```bash
-python -m app.scripts.manual_news_collection
+# Verificar se container está rodando
+docker ps | grep synapse-backend
+
+# Verificar logs em tempo real
+docker logs -f synapse-backend
+
+# Testar conectividade
+docker exec synapse-backend python -c "
+from app.repositories.topic_repository import TopicRepository
+print('Topics ativos:', len(TopicRepository().get_all_active()))
+"
 ```
 
-Este comando executa a coleta inteligente usando as configurações padrão definidas em `news_collection_config.py`.
+---
 
-### Ver Ajuda
+## Saída do Sistema
 
-```bash
-python -m app.scripts.manual_news_collection --help
-```
-
-## Modos de Operação
-
-### Modo Intelligent (Recomendado)
-
-Utiliza o algoritmo de coleta inteligente que:
-- Prioriza tópicos baseado em métricas de usuários
-- Gera keywords automaticamente via IA
-- Gerencia cache de buscas
-- Categoriza notícias em batch
-
-```bash
-python -m app.scripts.manual_news_collection --mode intelligent
-```
-
-### Modo Legacy
-
-Utiliza o método legado de coleta, mais simples e direto:
-
-```bash
-python -m app.scripts.manual_news_collection --mode legacy --topics technology sports
-```
-
-## Parâmetros Disponíveis
-
-### Parâmetros Gerais
-
-| Parâmetro | Tipo | Descrição | Padrão |
-|-----------|------|-----------|---------|
-| `--mode` | `intelligent\|legacy` | Modo de coleta | `intelligent` |
-| `--verbose` | flag | Ativa logs detalhados | `false` |
-| `--dry-run` | flag | Simula sem salvar no banco | `false` |
-
-### Parâmetros de Configuração
-
-| Parâmetro | Tipo | Descrição | Padrão (config) |
-|-----------|------|-----------|-----------------|
-| `--topics-count` | int | Número de tópicos a selecionar | `9` |
-| `--search-calls` | int | Número de chamadas de search | `9` |
-| `--max-articles` | int | Artigos máximos por chamada | `10` |
-| `--keywords-per-search` | int | Keywords por busca | `4` |
-
-### Parâmetros de Idioma/País
-
-| Parâmetro | Tipo | Descrição | Padrão (config) |
-|-----------|------|-----------|-----------------|
-| `--language` | str | Código do idioma (pt, en) | `en` |
-| `--country` | str | Código do país (br, us) | `us` |
-| `--category` | str | Categoria top-headlines | `general` |
-
-### Parâmetros do Modo Legacy
-
-| Parâmetro | Tipo | Descrição | Exemplo |
-|-----------|------|-----------|---------|
-| `--topics` | list | Tópicos específicos | `technology sports` |
-
-### Flags Especiais
-
-| Flag | Descrição |
-|------|-----------|
-| `--skip-cache` | Ignora cache de buscas (força busca nova) |
-| `--dry-run` | Modo simulação (não salva no banco) |
-| `--verbose` | Logs detalhados (DEBUG level) |
-
-## Exemplos Práticos
-
-### 1. Coleta Inteligente Padrão
-
-```bash
-python -m app.scripts.manual_news_collection
-```
-
-Executa com todas as configurações padrão.
-
-### 2. Coleta Reduzida para Testes
-
-```bash
-python -m app.scripts.manual_news_collection \
-  --topics-count 3 \
-  --search-calls 5 \
-  --max-articles 5 \
-  --verbose
-```
-
-Coleta menor e mais rápida para testes.
-
-### 3. Coleta em Português/Brasil
-
-```bash
-python -m app.scripts.manual_news_collection \
-  --language pt \
-  --country br \
-  --category general \
-  --verbose
-```
-
-Foca em notícias brasileiras em português.
-
-### 4. Coleta em Inglês/EUA
-
-```bash
-python -m app.scripts.manual_news_collection \
-  --language en \
-  --country us \
-  --category technology
-```
-
-Foca em notícias de tecnologia dos EUA.
-
-### 5. Coleta Intensiva
-
-```bash
-python -m app.scripts.manual_news_collection \
-  --topics-count 15 \
-  --search-calls 20 \
-  --max-articles 10 \
-  --keywords-per-search 6
-```
-
-Coleta mais abrangente (consome mais créditos da API).
-
-### 6. Modo Legacy com Tópicos Específicos
-
-```bash
-python -m app.scripts.manual_news_collection \
-  --mode legacy \
-  --topics technology sports entertainment
-```
-
-Usa método legado com tópicos específicos.
-
-### 7. Ignorar Cache (Forçar Nova Busca)
-
-```bash
-python -m app.scripts.manual_news_collection \
-  --skip-cache \
-  --verbose
-```
-
-Ignora cache e força novas buscas para todos os tópicos.
-
-### 8. Modo Dry-Run (Simulação)
-
-```bash
-python -m app.scripts.manual_news_collection \
-  --dry-run \
-  --verbose
-```
-
-Simula a coleta sem salvar nada no banco (útil para testes).
-
-### 9. Coleta Completa com Todos os Parâmetros
-
-```bash
-python -m app.scripts.manual_news_collection \
-  --mode intelligent \
-  --topics-count 10 \
-  --search-calls 15 \
-  --max-articles 10 \
-  --keywords-per-search 5 \
-  --language pt \
-  --country br \
-  --category general \
-  --skip-cache \
-  --verbose
-```
-
-Exemplo completo com todos os parâmetros customizados.
-
-## Modo Dry-Run
-
-O modo dry-run é ideal para testar configurações sem afetar o banco de dados:
-
-```bash
-python -m app.scripts.manual_news_collection --dry-run --verbose
-```
-
-**Funcionalidades do dry-run:**
-- ✅ Executa toda a lógica de coleta
-- ✅ Chama APIs externas (GNews, Gemini)
-- ✅ Processa e valida dados
-- ❌ **NÃO** salva artigos no banco
-- ❌ **NÃO** salva fontes no banco
-- ❌ **NÃO** cria associações
-
-**Nota:** O modo dry-run ainda está em desenvolvimento e pode não funcionar completamente.
-
-## Saída do Script
-
-O script exibe três seções de informação:
-
-### 1. Configurações
+### 1. Logs de Início
 
 ```
 ================================================================================
-CONFIGURAÇÕES DA COLETA
+JOB DE COLETA SIMPLIFICADA INICIADO
 ================================================================================
-Modo: INTELLIGENT
-Tópicos a selecionar: 9
-Chamadas de search: 9
-Keywords por busca: 4
-Artigos por chamada: 10
-Idioma: pt
-País: br
-Categoria top-headlines: general
-================================================================================
+AIService inicializado com sucesso (modelo=gemini-2.5-flash, timeout=60s).
+KeywordGenerationService inicializado
 ```
 
-### 2. Logs de Execução
+### 2. Processamento por Etapas
 
 ```
-2025-10-11 14:30:00 - INFO - [1/8] Carregando cache...
-2025-10-11 14:30:01 - INFO - [2/8] Selecionando 9 tópicos prioritários...
-2025-10-11 14:30:02 - INFO - Tópicos selecionados: ['tecnologia', 'política', ...]
+================================================================================
+INICIANDO COLETA SIMPLIFICADA DE NOTÍCIAS
+================================================================================
+[1/3] Buscando tópicos ativos do banco de dados...
+Encontrados 8 tópicos ativos: ['technology', 'politics', 'business', ...]
+
+[2/3] Coletando notícias para 8 tópicos...
+    Gerando keywords para todos os tópicos em batch...
+Keywords geradas para 8 tópicos
+
+  [1/8] Buscando notícias para o tópico: 'technology' (ID=1)
+    Query para 'technology': "Apple iPhone" OR "Google AI" OR "Microsoft Windows"
+GNews retornou 10 artigos
+    Search encontrou: 10 artigos
+
+  [2/8] Buscando notícias para o tópico: 'politics' (ID=2)
+    Query para 'politics': "Joe Biden" OR "Donald Trump" OR "US Congress"
 ...
 ```
 
-### 3. Resumo Final
+### 3. Processamento de Artigos
+
+```
+[3/3] Processando e salvando notícias...
+  Processando 10 artigos do tópico 'technology'...
+    Notícia salva: 'Apple iPhone 17 Pro vs Apple iPhone 16...' → tópico 'technology' (ID=1)
+    Notícia salva: 'Wikipedia blames ChatGPT for falling traffic...' → tópico 'technology' (ID=1)
+⚠️  DOMÍNIO BLOQUEADO AUTOMATICAMENTE: 'bloomberg.com' (erro: 403 Forbidden)
+...
+```
+
+### 4. Resumo Final
 
 ```
 ================================================================================
-RESUMO DA COLETA
+COLETA SIMPLIFICADA FINALIZADA!
+RESUMO:
+  - Tópicos processados: 8 (do banco de dados)
+  - Estratégia: 1 busca por tópico com keywords de IA em batch
+  - Chamadas GNews: 8
+  - Artigos coletados: 80
+  - Novos artigos salvos: 57
+  - Novas fontes: 13
 ================================================================================
-Novos artigos: 45
-Novas fontes: 3
-Tempo decorrido: 125.34s
-================================================================================
+JOB FINALIZADO COM SUCESSO
+Resumo: 57 notícias e 13 fontes salvas
 ```
+
+---
+
+## Consumo de APIs
+
+### Por Execução (8 tópicos ativos):
+
+| API | Chamadas | Uso do Limite | Observações |
+|-----|----------|---------------|-------------|
+| **GNews** | 8 | ~8% do limite diário | 1 call por tópico ativo |
+| **Gemini** | 1 | ~0.5% do limite diário | Batch keyword generation |
+
+### Rate Limiting Automático:
+- **GNews**: 2 segundos entre chamadas
+- **Gemini**: 60 segundos timeout
+- **Retry**: Automático para erros 429
+
+---
 
 ## Troubleshooting
 
-### Erro: GNEWS_API_KEY não configurada
+### ❌ Erro: GNEWS_API_KEY não configurada
 
 ```
-ValueError: A variável de ambiente GNEWS_API_KEY não foi configurada.
+KeyError: 'GNEWS_API_KEY'
 ```
 
-**Solução:** Configure a variável de ambiente no arquivo `.env`:
-
+**Solução:** Configure no arquivo `.env`:
 ```bash
 GNEWS_API_KEY=sua_chave_aqui
 ```
 
-### Erro: Limite de API atingido (429)
+### ❌ Erro: Limite de API atingido (429)
 
 ```
-Error 429: Too Many Requests
+HTTPError: 429 Client Error: Too Many Requests
 ```
-
-**Solução:**
-- Aguarde alguns minutos antes de tentar novamente
-- Reduza `--search-calls` para fazer menos chamadas
-- Verifique seu plano da API GNews
-
-### Erro: Banco de dados não acessível
-
-```
-SQLALCHEMY ERROR: could not connect to server
-```
-
-**Solução:**
-- Verifique se os containers Docker estão rodando: `docker compose ps`
-- Inicie os containers: `docker compose up -d`
-- Verifique a variável `DATABASE_URL` no `.env`
-
-### Script muito lento
 
 **Soluções:**
-- Reduza `--topics-count` e `--search-calls`
-- Reduza `--max-articles`
-- Use `--verbose` para identificar gargalos
-- Verifique logs para sites com scraping lento (blacklist automática)
+- Aguarde alguns minutos antes de tentar novamente
+- Verifique seu plano da API GNews (100 calls/day gratuito)
+- Monitor de uso: https://gnews.io/dashboard
 
-### Nenhum artigo coletado
+### ❌ Erro: Banco de dados não acessível
+
+```
+sqlalchemy.exc.OperationalError: could not connect to server
+```
+
+**Solução:**
+```bash
+# Verificar containers
+docker compose ps
+
+# Reiniciar se necessário
+docker compose down
+docker compose up -d
+
+# Verificar DATABASE_URL no .env
+```
+
+### ❌ Erro: Gemini API falhando
+
+```
+GoogleAPIError: 403 Forbidden
+```
+
+**Soluções:**
+- Verifique `GEMINI_API_KEY` no `.env`
+- Confirme que API está ativa no Google Cloud Console
+- Verifique cotas/billing no projeto
+
+### ⚠️ Poucos artigos coletados
 
 **Causas possíveis:**
-1. **Artigos já existem no banco**: Tente `--skip-cache`
-2. **Parâmetros muito restritivos**: Ajuste idioma/país/categoria
-3. **Falha no scraping**: Verifique logs com `--verbose`
+1. **Artigos duplicados**: URLs já existem no banco
+2. **Sites bloqueados**: Muitos domínios na blacklist
+3. **Keywords muito específicas**: IA gerou termos muito restritivos
 
-## Notas Técnicas
+**Debugging:**
+```bash
+# Ver blacklist atual
+docker exec synapse-backend cat /tmp/scraping_blacklist.json | jq '.blocked_domains | length'
 
-### Overrides de Configuração
+# Ver domínios bloqueados
+docker exec synapse-backend cat /tmp/scraping_blacklist.json | jq '.blocked_domains | keys'
 
-O script **não modifica** o arquivo `news_collection_config.py`. Todos os parâmetros são aplicados temporariamente apenas para a execução atual.
+# Contar notícias no banco
+docker exec synapse-backend python -c "
+from app.repositories.news_repository import NewsRepository
+print('Total de notícias:', NewsRepository().count_all())
+"
+```
 
-### Cache de Tópicos
+### 📊 Sistema muito lento
 
-O cache de buscas é mantido entre execuções. Use `--skip-cache` para ignorá-lo temporariamente.
+**Otimizações:**
+1. **Blacklist crescendo**: Sites problemáticos são bloqueados automaticamente
+2. **Rate limiting**: 2s por chamada GNews é necessário
+3. **Scraping timeout**: Sites lentos são abandonados após 30s
 
-### Throttling da API
-
-O script respeita automaticamente os limites de rate limiting:
-- **GNews**: 2s de delay entre chamadas
-- **Gemini**: 10 chamadas/minuto máximo
-
-### Categorização por IA
-
-A categorização de notícias usa o Google Gemini e é feita em batch para otimização:
-- 1 chamada para extração de tópicos
-- 1 chamada para verificação de similaridade (se necessário)
-
-### Blacklist Automática
-
-Sites que falham consistentemente no scraping são automaticamente adicionados à blacklist para não desperdiçar tempo em chamadas futuras.
-
-## Próximos Passos
-
-Após executar a coleta manual, você pode:
-
-1. **Verificar no banco de dados:**
-   ```sql
-   SELECT COUNT(*) FROM news;
-   SELECT * FROM news ORDER BY created_at DESC LIMIT 10;
-   ```
-
-2. **Testar API:**
-   ```bash
-   curl http://localhost:5001/api/news
-   ```
-
-3. **Ver no frontend:**
-   ```
-   http://localhost:5173
-   ```
-
-## Referências
-
-- [Documentação GNews API](https://gnews.io/docs/v4)
-- [Configurações do Sistema](../app/config/news_collection_config.py)
-- [NewsCollectService](../app/services/news_collect_service.py)
-- [Cron Job de Coleta](../app/jobs/collect_news.py)
+**Tempo esperado**: 2-4 minutos para 8 tópicos
 
 ---
 
-**Última atualização:** 2025-10-11
-**Versão:** 1.0.0
+## Verificação Pós-Execução
+
+### 1. Verificar no Banco de Dados
+
+```sql
+-- Últimas notícias coletadas
+SELECT title, created_at, source_id
+FROM news
+ORDER BY created_at DESC
+LIMIT 10;
+
+-- Contagem por tópico
+SELECT t.name, COUNT(n.id) as news_count
+FROM topics t
+LEFT JOIN news n ON t.id = n.topic_id
+GROUP BY t.name
+ORDER BY news_count DESC;
+
+-- Notícias das últimas 24h
+SELECT COUNT(*) FROM news
+WHERE created_at > NOW() - INTERVAL '24 hours';
+```
+
+### 2. Testar APIs
+
+```bash
+# Testar endpoint de notícias
+curl http://localhost:5001/api/news | jq '.news | length'
+
+# Testar feed personalizado
+curl -H "Authorization: Bearer SEU_TOKEN" \
+     http://localhost:5001/api/news/for-you | jq '.news | length'
+
+# Verificar tópicos
+curl http://localhost:5001/api/topics | jq '.topics | length'
+```
+
+### 3. Verificar Frontend
+
+```bash
+# Abrir no navegador
+open http://localhost:5173
+
+# Ou testar conectividade
+curl -I http://localhost:5173
+```
+
+---
+
+## Configurações do Sistema
+
+### Parâmetros Hardcoded
+
+O sistema atual usa valores fixos (sem arquivo de config):
+
+```python
+# GNews Search Parameters
+search_params = {
+    'lang': 'en',        # Inglês fixo
+    'country': 'us',     # Estados Unidos fixo
+    'max': 10,           # 10 artigos por tópico
+}
+
+# Rate Limiting
+GNEWS_DELAY = 2          # 2 segundos entre calls
+SCRAPING_TIMEOUT = 30    # 30s timeout para scraping
+GEMINI_TIMEOUT = 60      # 60s timeout para IA
+```
+
+### Modificar Comportamento
+
+Para alterar parâmetros, edite diretamente:
+- **NewsCollectService**: `backend/app/services/news_collect_service.py`
+- **Palavras-chave**: Prompt no `KeywordGenerationService`
+- **Rate limiting**: `backend/app/utils/api_rate_limiter.py`
+
+---
+
+## Dados Gerados
+
+### Blacklist Automática
+
+**Localização**: `/tmp/scraping_blacklist.json`
+
+```bash
+# Ver blacklist
+docker exec synapse-backend cat /tmp/scraping_blacklist.json | jq
+
+# Limpar blacklist (se necessário)
+docker exec synapse-backend rm /tmp/scraping_blacklist.json
+```
+
+### Logs Persistentes
+
+```bash
+# Ver logs históricos
+docker logs synapse-backend | grep "JOB DE COLETA" -A 20
+
+# Logs em tempo real
+docker logs -f synapse-backend
+```
+
+---
+
+## Próximos Passos
+
+### Automatização
+
+Para execução automática, configure cron:
+
+```bash
+# Editar crontab
+crontab -e
+
+# Executar a cada 6 horas
+0 */6 * * * docker exec synapse-backend python /app/backend/app/jobs/collect_news.py
+```
+
+### Monitoramento
+
+Monitore execuções via:
+1. **Logs Docker**: Sucesso/falhas da execução
+2. **Banco de dados**: Volume de notícias coletadas
+3. **Blacklist**: Crescimento de domínios bloqueados
+
+### Melhorias Futuras
+
+1. **Detecção de duplicatas por título** (planejado)
+2. **Múltiplas fontes** além do GNews
+3. **Configurações via variáveis de ambiente**
+4. **Dashboard de monitoramento**
+
+---
+
+## Referências
+
+- [Sistema de Coleta - Documentação Principal](../SISTEMA_COLETA_NOTICIAS.md)
+- [GNews API Documentation](https://gnews.io/docs/v4)
+- [NewsCollectService](../app/services/news_collect_service.py)
+- [Job Principal](../app/jobs/collect_news.py)
+
+---
+
+**Última atualização**: 2025-10-21
+**Versão**: Sistema Simplificado v2.0

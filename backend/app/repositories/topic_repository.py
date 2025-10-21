@@ -37,16 +37,3 @@ class TopicRepository:
         es = self.session.execute(stmt).scalars().all()
         return [Topic.from_entity(e) for e in es]
 
-    def search_by_name(self, query: str, limit: int = 10) -> list[Topic]:
-        try:
-            stmt = (
-                select(TopicEntity)
-                .filter(TopicEntity.name.ilike(f"%{query}%"))
-                .order_by(TopicEntity.name)
-                .limit(limit)
-            )
-            es = self.session.execute(stmt).scalars().all()
-            return [Topic.from_entity(e) for e in es]
-        except SQLAlchemyError as e:
-            logging.error(f"Erro de banco ao buscar tópicos por nome: {e}", exc_info=True)
-            raise

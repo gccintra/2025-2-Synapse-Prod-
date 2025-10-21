@@ -5,6 +5,7 @@ import { toast } from "react-toastify";
 import HeaderEditAccount from "../components/HeaderEditAccount";
 import PreferredTopics from "../components/PreferredTopics";
 import AddSource from "../pages/AddSource";
+import { usersAPI, topicsAPI, newsSourcesAPI } from "../services/api";
 
 const InfoRow = ({ label, value, action, actionLink }) => (
   <div className="flex justify-between items-center py-3">
@@ -146,49 +147,24 @@ const AccountPage = () => {
       setLoading(true);
       setError(null);
       try {
-        const apiUrl = import.meta.env.VITE_API_BASE_URL;
         // Busca de dados do perfil, tópicos e fontes em paralelo
-        const [profileResponse, topicsResponse, sourcesResponse] =
-          await Promise.all([
-            fetch(`${apiUrl}/users/profile`, {
-              method: "GET",
-              headers: { "Content-Type": "application/json" },
-              credentials: "include",
-            }),
-            fetch(`${apiUrl}/topics/list`, {
-              method: "GET",
-              headers: { "Content-Type": "application/json" },
-              credentials: "include",
-            }),
-            fetch(`${apiUrl}/news_sources/list_all_attached_sources`, {
-              method: "GET",
-              headers: { "Content-Type": "application/json" },
-              credentials: "include",
-            }),
-          ]);
+        const [profileRes, topicsRes, sourcesRes] = await Promise.all([
+          usersAPI.getUserProfile(),
+          topicsAPI.getPreferredTopics(),
+          newsSourcesAPI.getAttachedSources(),
+        ]);
 
-        const profileData = await profileResponse.json();
-        const topicsData = await topicsResponse.json();
-        const sourcesData = await sourcesResponse.json();
+        setUserData({
+          full_name: profileRes.data.full_name,
+          email: profileRes.data.email,
+          birthdate: profileRes.data.birthdate,
+          // A resposta de tópicos agora tem uma estrutura aninhada
+          preferred_topics: topicsRes.data.topics || [],
+          preferred_sources: sourcesRes.data || [],
+        });
 
-        if (profileResponse.ok && topicsResponse.ok && sourcesResponse.ok) {
-          setUserData({
-            full_name: profileData.data.full_name,
-            email: profileData.data.email,
-            birthdate: profileData.data.birthdate,
-            preferred_topics: topicsData.data || [],
-            preferred_sources: sourcesData.data || [],
-          });
-        } else {
-          const errorMsg =
-            profileData.error ||
-            sourcesData.error ||
-            topicsData.error ||
-            "Não foi possível carregar os dados.";
-          setError(errorMsg);
-        }
       } catch (err) {
-        setError("Erro de conexão ao buscar dados do usuário.");
+        setError(err.message || "Erro de conexão ao buscar dados do usuário.");
       } finally {
         setLoading(false);
       }
@@ -207,36 +183,22 @@ const AccountPage = () => {
     setTopicError("");
 
     try {
-      const apiUrl = import.meta.env.VITE_API_BASE_URL;
-      const csrfToken = getCookie("csrf_access_token");
-      const response = await fetch(`${apiUrl}/topics/create`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "X-CSRF-TOKEN": csrfToken,
-        },
-        body: JSON.stringify({ name: newTopic.trim() }),
-        credentials: "include",
-      });
+      const result = await topicsAPI.addPreferredTopic(newTopic.trim());
 
-      const result = await response.json();
-      if (response.ok) {
-        // Adiciona o novo tópico apenas se ele já não estiver na lista (caso de re-associação)
-        if (
-          !userData.preferred_topics.some((t) => t.id === result.data.topic.id)
-        ) {
-          setUserData((currentUserData) => ({
-            ...currentUserData,
-            preferred_topics: [
-              ...currentUserData.preferred_topics,
-              result.data.topic,
-            ],
-          }));
-        }
-        setNewTopic("");
-      } else {
-        setTopicError(result.error || "Error adding topic.");
+      // Adiciona o novo tópico apenas se ele já não estiver na lista (caso de re-associação)
+      if (
+        !userData.preferred_topics.some((t) => t.id === result.data.topic.id)
+      ) {
+        setUserData((currentUserData) => ({
+          ...currentUserData,
+          preferred_topics: [
+            ...currentUserData.preferred_topics,
+            result.data.topic,
+          ],
+        }));
       }
+      setNewTopic("");
+      toast.success(result.message);
     } catch (err) {
       setTopicError("Connection error. Try again.");
     }
@@ -244,25 +206,15 @@ const AccountPage = () => {
   // Função para deletar um tópico da lista pelo seu ID.
   const handleDeleteTopic = async (topicId) => {
     try {
-      const apiUrl = import.meta.env.VITE_API_BASE_URL;
-      const csrfToken = getCookie("csrf_access_token");
-      const response = await fetch(`${apiUrl}/topics/delete/${topicId}`, {
-        method: "DELETE",
-        headers: { "X-CSRF-TOKEN": csrfToken },
-        credentials: "include",
-      });
+      await topicsAPI.removePreferredTopic(topicId);
 
-      if (response.ok) {
-        setUserData((currentUserData) => ({
-          ...currentUserData,
-          preferred_topics: currentUserData.preferred_topics.filter(
-            (topic) => topic.id !== topicId
-          ),
-        }));
-      } else {
-        const result = await response.json();
-        toast.error(result.error || "Could not remove topic.");
-      }
+      setUserData((currentUserData) => ({
+        ...currentUserData,
+        preferred_topics: currentUserData.preferred_topics.filter(
+          (topic) => topic.id !== topicId
+        ),
+      }));
+      toast.success("Topic removed successfully.");
     } catch (err) {
       toast.error("Connection error when removing topic.");
     }
