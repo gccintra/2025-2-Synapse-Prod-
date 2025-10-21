@@ -109,7 +109,7 @@ useEffect(() => {
             </Link>
             <Link 
               to="/registrar"
-              className="ml-4 text-gray-300 border-2 border-solid font-bold py-2 px-4 rounded hover:bg-gray-100 transition-colors duration-200 font-montserrat text-sm"
+              className="ml-4 text-black border border-black font-bold py-2 px-4 rounded hover:bg-gray-100 transition-colors duration-200 font-montserrat text-sm"
             >
               Sign Up
             </Link>
