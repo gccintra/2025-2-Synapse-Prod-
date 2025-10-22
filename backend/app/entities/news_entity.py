@@ -27,3 +27,9 @@ class NewsEntity(db.Model):
         secondary="user_saved_news",
         back_populates="saved_news"
     )
+    
+    read_by_users = relationship(
+        "UserReadHistoryEntity", 
+        back_populates="news", 
+        cascade="all, delete-orphan"
+    )
