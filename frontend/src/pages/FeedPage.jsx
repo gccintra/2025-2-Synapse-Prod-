@@ -197,7 +197,11 @@ const FeedPage = () => {
             ? news
                 .slice(0, 3)
                 .map((newsItem) => (
-                  <NewsCard key={newsItem.id} news={newsItem} />
+                  <NewsCard
+                    key={newsItem.id}
+                    news={newsItem}
+                    isLoggedIn={isLoggedIn}
+                  />
                 ))
             : null}
         </div>
@@ -217,6 +221,7 @@ const FeedPage = () => {
                     key={newsItem.id}
                     news={newsItem}
                     isListItem={true}
+                    isLoggedIn={isLoggedIn}
                     ref={isLastItem ? lastElementRef : undefined}
                   />
                 );

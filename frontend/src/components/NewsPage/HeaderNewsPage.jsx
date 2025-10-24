@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import { toast } from "react-toastify";
 import BackIcon from "../../icons/back-svgrepo-com.svg";
 import ArrowDownIcon from "../../icons/arrow-down.svg";
 import { usersAPI } from "../../services/api";
@@ -44,6 +45,7 @@ const HeaderNewsPage = () => {
         headers: { "X-CSRF-TOKEN": csrfToken },
         credentials: "include",
       });
+      toast.success("Logout realizado com sucesso!");
     } finally {
       navigate("/login"); // redireciona para login, mesmo se a chamada falhar
     }
