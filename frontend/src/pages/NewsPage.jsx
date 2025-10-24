@@ -75,7 +75,7 @@ const NewsPage = () => {
   const handleSaveClick = async () => {
     // Adiciona a verificação de login
     if (!isLoggedIn) {
-      toast.warn("Para salvar uma notícia, você precisa estar logado.");
+      toast.warn("To save a news story, you need to be logged in.");
       return;
     }
 
