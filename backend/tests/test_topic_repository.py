@@ -2,7 +2,6 @@ import pytest
 from sqlalchemy.exc import IntegrityError
 from app.repositories.topic_repository import TopicRepository
 from app.models.topic import Topic
-from app.entities.news_topic_entity import NewsTopicEntity
 
 @pytest.fixture
 def topic_repository(db):
