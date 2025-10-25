@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import HeaderFeedPage from "../components/FeedPage/HeaderFeedPage";
+import HeaderEditAccount from "../components/HeaderEditAccount";
 import SavedNewsCard from "../components/SavedNews/SavedNewsCard";
 import RemoveConfirmationModal from "../components/SavedNews/RemoveConfirmationModal";
 import SavedNewsCardSkeleton from "../components/SavedNews/SavedNewsCardSkeleton";
@@ -21,7 +21,11 @@ const SavedNewsPage = () => {
 
         const savedNewsResponse = await newsAPI.getSavedNews();
 
-        if (savedNewsResponse && savedNewsResponse.data && Array.isArray(savedNewsResponse.data.news)) {
+        if (
+          savedNewsResponse &&
+          savedNewsResponse.data &&
+          Array.isArray(savedNewsResponse.data.news)
+        ) {
           const mappedNews = savedNewsResponse.data.news.map((newsItem) => ({
             id: newsItem.id,
             title: newsItem.title,
@@ -53,7 +57,9 @@ const SavedNewsPage = () => {
       setShowModal(false);
       try {
         await newsAPI.unfavoriteNews(newsToRemove);
-        setSavedNews((prevNews) => prevNews.filter((news) => news.id !== newsToRemove));
+        setSavedNews((prevNews) =>
+          prevNews.filter((news) => news.id !== newsToRemove)
+        );
         console.log(`Notícia ${newsToRemove} removida com sucesso.`);
       } catch (error) {
         console.error("Failed to remove news from backend:", error);
@@ -64,27 +70,37 @@ const SavedNewsPage = () => {
 
   return (
     <div className="bg-gray-50 min-h-screen flex flex-col font-montserrat">
-      <HeaderFeedPage userEmail={userData.email} />
+      <HeaderEditAccount userEmail={userData.email} />
 
       <main className="flex-grow max-w-6xl mx-auto sm:px-6 lg:px-8 mt-12 w-full">
-        <h1 className="p-3 text-3xl font-medium text-gray-900 font-montserrat text-center">Your saved news</h1>
+        <h1 className="p-3 text-3xl font-medium text-gray-900 font-montserrat text-center">
+          Your saved news
+        </h1>
 
         {loading ? (
           <div className="flex flex-wrap justify-center gap-8 mt-12 p-4">
             {Array.from({ length: 6 }).map((_, index) => (
-              <div key={index} className="w-full sm:w-1/2 md:w-1/3 lg:w-[30%] xl:w-1/4">
+              <div
+                key={index}
+                className="w-full sm:w-1/2 md:w-1/3 lg:w-[30%] xl:w-1/4"
+              >
                 <SavedNewsCardSkeleton />
               </div>
             ))}
           </div>
         ) : savedNews.length === 0 ? (
           <div className="text-center py-16">
-            <p className="text-xl text-gray-600 mb-4">Você ainda não salvou nenhuma notícia.</p>
+            <p className="text-xl text-gray-600 mb-4">
+              Você ainda não salvou nenhuma notícia.
+            </p>
           </div>
         ) : (
           <div className="p-4 flex flex-wrap justify-center gap-8 mt-12">
             {savedNews.map((news) => (
-              <div key={news.id} className="w-full sm:w-1/2 md:w-1/3 lg:w-[30%] xl:w-1/4">
+              <div
+                key={news.id}
+                className="w-full sm:w-1/2 md:w-1/3 lg:w-[30%] xl:w-1/4"
+              >
                 <SavedNewsCard news={news} onRemove={handleConfirmRemove} />
               </div>
             ))}
@@ -92,7 +108,11 @@ const SavedNewsPage = () => {
         )}
       </main>
 
-      <RemoveConfirmationModal isOpen={showModal} onClose={() => setShowModal(false)} onConfirm={handleRemoveNews} />
+      <RemoveConfirmationModal
+        isOpen={showModal}
+        onClose={() => setShowModal(false)}
+        onConfirm={handleRemoveNews}
+      />
     </div>
   );
 };
