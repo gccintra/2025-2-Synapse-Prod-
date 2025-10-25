@@ -3,6 +3,7 @@ import logging
 from app.services.user_service import UserService
 from app.services.news_service import NewsService
 from app.models.exceptions import NewsNotFoundError, NewsSourceAlreadyAttachedError
+from typing import Optional
 
 
 class NewsController:
@@ -47,7 +48,7 @@ class NewsController:
                 "error": str(e)
             }), 500
 
-    def get_by_id(self, user_id: int, news_id: int):
+    def get_by_id(self, user_id: Optional[int], news_id: int):
         try:
             news_data = self.news_service.get_news_by_id(user_id, news_id)
             return jsonify({
@@ -64,7 +65,7 @@ class NewsController:
                 "error": str(e)
             }), 404
     
-    def get_by_topic(self, user_id: int, topic_id: int):
+    def get_by_topic(self, user_id: Optional[int], topic_id: int):
         try:
             page = request.args.get('page', 1, type=int)
             per_page = 10

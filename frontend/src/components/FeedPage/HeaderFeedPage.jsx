@@ -1,5 +1,6 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import { useAuth } from "../../hooks/useAuth";
 import ArrowDownIcon from "../../icons/arrow-down.svg";
 
 // Função auxiliar para ler um cookie pelo nome
@@ -9,11 +10,36 @@ function getCookie(name) {
   if (parts.length === 2) return parts.pop().split(";").shift();
 }
 
-const HeaderFeedPage = ({ userEmail }) => {
+const HeaderFeedPage = ({ }) => {
+  const { isAuthenticated } = useAuth();
+  const [userEmail, setUserEmail] = useState("");
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const navigate = useNavigate();
 
-  // Função de logout
+  // buscar o e-mail Apenas para usuários logados.  
+useEffect(() => {
+  if (isAuthenticated) {
+    const fetchUserData = async () => {
+      try {
+        const apiUrl = import.meta.env.VITE_API_BASE_URL;
+        const response = await fetch(`${apiUrl}/users/profile`, { 
+          credentials: "include",
+        });
+  if (response.ok) {
+          const data = await response.json();
+          setUserEmail(data.data.email);
+        } else {
+          console.error("falha na autenticação ao buscar o perfil do usuário");
+        }
+      } catch (error) {
+        console.error("Erro ao buscar dados do usuário:", error);
+      }
+    };
+        fetchUserData();
+    }
+    }, [isAuthenticated]); 
+  
+// Função de logout
   const handleLogout = async () => {
     try {
       const apiUrl = import.meta.env.VITE_API_BASE_URL;
@@ -25,7 +51,7 @@ const HeaderFeedPage = ({ userEmail }) => {
         credentials: "include",
       });
     } finally {
-      navigate("/login"); // redireciona para login, mesmo se a chamada falhar
+      window.location.href = "/login";
     }
   };
 
@@ -43,6 +69,8 @@ const HeaderFeedPage = ({ userEmail }) => {
 
         {/* Lado direito: Dropdown */}
         <div className="relative">
+          {isAuthenticated ? (
+            <div>
           <button
             className="flex items-center rounded-md text-gray-800 hover:text-gray-600 focus:outline-none text-base font-montserrat"
             onClick={() => setDropdownOpen((open) => !open)}
@@ -80,6 +108,23 @@ const HeaderFeedPage = ({ userEmail }) => {
             </div>
           )}
         </div>
+  ) : ( // Se não autenticado, mostrar o botão do diogo(rs) para login
+          <>
+            <Link 
+              to="/login"
+              className="bg-black text-white font-bold py-2 px-4 rounded hover:bg-gray-800 transition-colors duration-200 font-montserrat text-sm"
+            >
+              Login
+            </Link>
+            <Link 
+              to="/registrar"
+              className="ml-4 text-black border border-black font-bold py-2 px-4 rounded hover:bg-gray-100 transition-colors duration-200 font-montserrat text-sm"
+            >
+              Sign Up
+            </Link>
+          </>
+        )}
+      </div>
       </header>
       <div className="w-full h-px bg-gray-200"></div>
     </>

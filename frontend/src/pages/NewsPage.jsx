@@ -4,8 +4,9 @@ import React, { useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
 import { toast } from "react-toastify";
 import HeaderNewsPage from "../components/NewsPage/HeaderNewsPage";
-import NewsPageSkeleton from "../components/NewsPage/NewsPageSkeleton";
+import NewsPageSkeleton from "../components/NewsPage/NewsPageSkeleton"; // Importe o usersAPI
 import { newsAPI } from "../services/api";
+import { usersAPI } from "../services/api";
 import { formatDateLong } from "../utils/dateUtils";
 
 const NewsPage = () => {
@@ -15,6 +16,7 @@ const NewsPage = () => {
   const [error, setError] = useState(null);
   const [isSaved, setIsSaved] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
 
   useEffect(() => {
     const fetchNewsData = async () => {
@@ -28,10 +30,15 @@ const NewsPage = () => {
         setLoading(true);
         setError(null);
 
-        const response = await newsAPI.getNewsById(newsId);
-        const newsData = response.data;
+        // Busca a notícia e o status de login em paralelo
+        const [newsResponse, authResponse] = await Promise.allSettled([
+          newsAPI.getNewsById(newsId),
+          usersAPI.getUserProfile(), // Verifica se o usuário está logado
+        ]);
 
         // Adaptar os dados da API para o formato esperado
+        if (newsResponse.status === "rejected") throw newsResponse.reason;
+        const newsData = newsResponse.value.data;
         setArticleData({
           title: newsData.title,
           image: newsData.image_url || "https://via.placeholder.com/800x400",
@@ -45,6 +52,9 @@ const NewsPage = () => {
 
         // Define o estado inicial do botão de salvar
         setIsSaved(newsData.is_favorited || false);
+
+        // Define o status de login
+        setIsLoggedIn(authResponse.status === "fulfilled");
       } catch (err) {
         console.error("Erro ao carregar notícia:", err);
         setError(err.message || "Erro ao carregar a notícia");
@@ -63,6 +73,12 @@ const NewsPage = () => {
 
   // Função para lidar com o clique no botão de salvar
   const handleSaveClick = async () => {
+    // Adiciona a verificação de login
+    if (!isLoggedIn) {
+      toast.warn("To save a news story, you need to be logged in.");
+      return;
+    }
+
     if (isSaving) return;
     setIsSaving(true);
 
@@ -83,13 +99,13 @@ const NewsPage = () => {
   };
 
   if (loading) {
-    return <NewsPageSkeleton />;
+    return <NewsPageSkeleton isLoggedIn={isLoggedIn} />;
   }
 
   if (error) {
     return (
       <div className="bg-white min-h-screen">
-        <HeaderNewsPage />
+        <HeaderNewsPage isLoggedIn={isLoggedIn} />
         <main className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 pt-10 pb-20">
           <div className="text-center py-12">
             <h1 className="text-2xl font-bold text-gray-900 mb-4">
@@ -111,7 +127,7 @@ const NewsPage = () => {
   if (!articleData) {
     return (
       <div className="bg-white min-h-screen">
-        <HeaderNewsPage />
+        <HeaderNewsPage isLoggedIn={isLoggedIn} />
         <main className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 pt-10 pb-20">
           <div className="text-center py-12">
             <h1 className="text-2xl font-bold text-gray-900 mb-4">
@@ -135,7 +151,7 @@ const NewsPage = () => {
   return (
     <div className="bg-white min-h-screen">
       {/* Header da Página de Notícias (mantendo o email do usuário) */}
-      <HeaderNewsPage />
+      <HeaderNewsPage isLoggedIn={isLoggedIn} />
 
       <main className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 pt-10 pb-20">
         {/* Imagem de Destaque */}

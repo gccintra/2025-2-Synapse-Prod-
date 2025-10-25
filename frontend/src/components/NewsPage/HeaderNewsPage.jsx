@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import { toast } from "react-toastify";
 import BackIcon from "../../icons/back-svgrepo-com.svg";
 import ArrowDownIcon from "../../icons/arrow-down.svg";
 import { usersAPI } from "../../services/api";
@@ -14,6 +15,7 @@ function getCookie(name) {
 const HeaderNewsPage = () => {
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [userEmail, setUserEmail] = useState("");
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
   const navigate = useNavigate();
 
   // Buscar dados do usuário
@@ -22,8 +24,10 @@ const HeaderNewsPage = () => {
       try {
         const response = await usersAPI.getUserProfile();
         setUserEmail(response.data.email || "");
+        setIsAuthenticated(true);
       } catch (err) {
         console.error("Failed to fetch user data:", err);
+        setIsAuthenticated(false);
       }
     };
 
@@ -41,6 +45,7 @@ const HeaderNewsPage = () => {
         headers: { "X-CSRF-TOKEN": csrfToken },
         credentials: "include",
       });
+      toast.success("Logout realizado com sucesso!");
     } finally {
       navigate("/login"); // redireciona para login, mesmo se a chamada falhar
     }
@@ -62,26 +67,46 @@ const HeaderNewsPage = () => {
         <h1 className="text-lg font-bold text-black font-rajdhani">Synapse</h1>
 
         {/* Lado direito: Menu do usuário */}
-        <div className="relative">
-          <button
-            className="flex items-center rounded-md text-gray-800 hover:text-gray-600 focus:outline-none text-sm font-montserrat"
-            onClick={() => setDropdownOpen((open) => !open)}
-          >
-            <span className="font-medium font-montserrat">{userEmail}</span>
-            <img
-              src={ArrowDownIcon}
-              alt="Ícone de Seta para Baixo"
-              className="ml-2 w-4 h-4"
-            />
-          </button>
-          {dropdownOpen && (
-            <div className="absolute right-0 mt-2 w-32 bg-white border border-gray-200 rounded-xl shadow-lg z-10 text-xs font-montserrat">
-              <Link
-                to="/account"
-                className="block px-4 py-2 text-gray-800 hover:bg-gray-100 font-montserrat"
-                onClick={() => setDropdownOpen(false)}
+        <div className="relative flex items-center">
+          {isAuthenticated ? (
+            <>
+              <button
+                className="flex items-center rounded-md text-gray-800 hover:text-gray-600 focus:outline-none text-sm font-montserrat"
+                onClick={() => setDropdownOpen((open) => !open)}
               >
-                My Account
+                <span className="font-medium font-montserrat">{userEmail}</span>
+                <img
+                  src={ArrowDownIcon}
+                  alt="Ícone de Seta para Baixo"
+                  className="ml-2 w-4 h-4"
+                />
+              </button>
+              {dropdownOpen && (
+                <div className="absolute right-0 mt-8 w-32 bg-white border border-gray-200 rounded-xl shadow-lg z-10 text-xs font-montserrat">
+                  <Link
+                    to="/account"
+                    className="block px-4 py-2 text-gray-800 hover:bg-gray-100 font-montserrat"
+                    onClick={() => setDropdownOpen(false)}
+                  >
+                    My Account
+                  </Link>
+                  <hr className="border-gray-200" />
+                  <button
+                    onClick={handleLogout}
+                    className="block w-full text-left px-4 py-2 text-gray-800 hover:bg-gray-100 font-montserrat"
+                  >
+                    Logout
+                  </button>
+                </div>
+              )}
+            </>
+          ) : (
+            <>
+              <Link
+                to="/login"
+                className="bg-black text-white font-bold py-2 px-4 rounded hover:bg-gray-800 transition-colors duration-200 font-montserrat text-sm"
+              >
+                Login
               </Link>
               <button>
                 <Link
@@ -96,10 +121,14 @@ const HeaderNewsPage = () => {
               <button
                 onClick={handleLogout}
                 className="block w-full text-left px-4 py-2 text-gray-800 hover:bg-gray-100 font-montserrat"
+
+              <Link
+                to="/registrar"
+                className="ml-4 text-black border border-black font-bold py-2 px-4 rounded hover:bg-gray-100 transition-colors duration-200 font-montserrat text-sm"
               >
-                Logout
-              </button>
-            </div>
+                Sign Up
+              </Link>
+            </>
           )}
         </div>
       </header>
