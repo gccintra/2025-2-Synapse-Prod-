@@ -7,7 +7,10 @@ import { NewsMetadata } from "../../utils/dateUtils";
 import { newsAPI } from "../../services/api";
 
 const NewsCard = forwardRef(
-  ({ news, isListItem = false, isLoading = false }, ref) => {
+  (
+    { news, isListItem = false, isLoading = false, isLoggedIn = false },
+    ref
+  ) => {
     // Inicializa o estado com base na propriedade da API
     const [isSaved, setIsSaved] = useState(news?.is_favorited || false);
     const [isSaving, setIsSaving] = useState(false); // Estado de carregamento para o botão
@@ -18,6 +21,12 @@ const NewsCard = forwardRef(
     const handleSaveClick = async (e) => {
       e.stopPropagation();
       e.preventDefault();
+
+      // 1. Verifica se o usuário NÃO está logado
+      if (!isLoggedIn) {
+        toast.warn("To save a news story, you need to be logged in.");
+        return; // Interrompe a execução
+      }
 
       if (isSaving) return; // Previne múltiplos cliques
 
