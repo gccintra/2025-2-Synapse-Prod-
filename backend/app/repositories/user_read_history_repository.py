@@ -1,7 +1,7 @@
 from sqlalchemy.exc import SQLAlchemyError, IntegrityError
 from sqlalchemy.orm import joinedload
-from sqlalchemy import func, select
-from datetime import datetime 
+from sqlalchemy import func, select, and_, desc
+from datetime import datetime, timedelta, time 
 import logging
 
 from app.extensions import db
@@ -14,8 +14,15 @@ class UserReadHistoryRepository:
     def __init__(self, session=None):
         self.session = session or db.session
 
-    def create(self, user_id: int, news_id: int) -> UserReadHistoryEntity:
+    def create(self, user_id: int, news_id: int) -> tuple[UserReadHistoryEntity, bool]:
         try:
+            existing_history = self.find_today_read(user_id, news_id)
+            
+            if existing_history:
+                logging.info(f"Registro de leitura já existe hoje (user_id={user_id}, news_id={news_id}). Atualizando read_at.")
+                updated_history = self.update_read_at(existing_history)
+                return updated_history, False
+            
             user_exists = self.session.query(
                 self.session.query(UserEntity).filter_by(id=user_id).exists()
             ).scalar()
@@ -42,7 +49,7 @@ class UserReadHistoryRepository:
             
             logging.info(f"Histórico de leitura criado: user_id={user_id}, news_id={news_id}, read_at={history_entity.read_at}")
             
-            return history_entity
+            return history_entity, True
             
         except (UserNotFoundError, NewsNotFoundError):
             self.session.rollback()
@@ -55,5 +62,45 @@ class UserReadHistoryRepository:
             self.session.rollback()
             logging.error(f"Erro de banco ao criar histórico: {e}", exc_info=True)
             raise Exception("Erro ao salvar histórico de leitura no banco de dados.")
+        
+    def update_read_at(self, history_entity: UserReadHistoryEntity) -> UserReadHistoryEntity:
+        try:
+            history_entity.read_at = datetime.now()
+            self.session.commit()
+            self.session.refresh(history_entity)
+            
+            logging.info(f"Histórico atualizado: user_id={history_entity.user_id}, news_id={history_entity.news_id}, read_at={history_entity.read_at}")
+            
+            return history_entity
+            
+        except SQLAlchemyError as e:
+            self.session.rollback()
+            logging.error(f"Erro ao atualizar histórico: {e}", exc_info=True)
+            raise Exception("Erro ao atualizar histórico de leitura.")
+        
+    def find_today_read(self, user_id: int, news_id: int) -> UserReadHistoryEntity | None:
+        try:
+            today_start = datetime.combine(datetime.today(), time.min)
+            today_end = datetime.combine(datetime.today(), time.max)
+            
+            stmt = (
+                select(UserReadHistoryEntity)
+                .where(
+                    and_(
+                        UserReadHistoryEntity.user_id == user_id,
+                        UserReadHistoryEntity.news_id == news_id,
+                        UserReadHistoryEntity.read_at >= today_start,
+                        UserReadHistoryEntity.read_at <= today_end
+                    )
+                )
+                .order_by(desc(UserReadHistoryEntity.read_at))
+            )
+            
+            result = self.session.execute(stmt).scalar_one_or_none()
+            return result
+            
+        except SQLAlchemyError as e:
+            logging.error(f"Erro ao buscar histórico do dia: {e}", exc_info=True)
+            raise Exception("Erro ao verificar histórico do dia.")
 
    
