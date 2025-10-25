@@ -23,7 +23,7 @@ def save_history_news(user_id: int, news_id: int):
 @jwt_required()
 @get_user_id_from_token
 def get_history_news(user_id: int):
-    return news_controller.get_for_you_news(user_id)
+    return news_controller.get_history_news(user_id)
 
 @news_bp.route("/<int:news_id>/favorite", methods=["POST"])
 @jwt_required()

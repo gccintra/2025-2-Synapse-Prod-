@@ -322,3 +322,65 @@ class NewsService():
         except Exception as e:
             logging.error(f"Erro inesperado ao salvar noticia como lida (user_id={user_id}, news_id={news_id}): {e}", exc_info=True)
             raise Exception("Ocorreu um erro interno ao marcar noticia como lida.")
+    
+    def get_history_news(self, user_id: int, page: int = 1, per_page: int = 10) -> dict:
+        try:
+            results, total_count = self.user_history_repo.get_user_history(
+                user_id=user_id,
+                page=page,
+                per_page=per_page
+            )
+            
+            news_list = []
+            for history_entity, news_entity in results:
+                news_model = News.from_entity(news_entity)
+                
+                from app.entities.user_saved_news_entity import UserSavedNewsEntity
+                favorite_check = db.session.query(UserSavedNewsEntity).filter_by(
+                    user_id=user_id,
+                    news_id=news_model.id,
+                    is_favorite=True
+                ).first()
+                
+                news_dict = {
+                    "id": news_model.id,
+                    "title": news_model.title,
+                    "description": news_model.description,
+                    "url": news_model.url,
+                    "image_url": news_model.image_url,
+                    "content": news_model.content,
+                    "published_at": news_model.published_at.isoformat() if news_model.published_at else None,
+                    "source_id": news_model.source_id,
+                    "topic_id": news_model.topic_id,
+                    "created_at": news_model.created_at.isoformat() if news_model.created_at else None,
+                    "is_favorited": favorite_check is not None,
+                    "read_at": history_entity.read_at.isoformat(),
+                }
+                
+                if news_model.source_name:
+                    news_dict["source_name"] = news_model.source_name
+                
+                if news_model.topic_name:
+                    news_dict["topic_name"] = news_model.topic_name
+                
+                news_list.append(news_dict)
+            
+            total_pages = math.ceil(total_count / per_page) if total_count > 0 else 1
+            
+            logging.info(f"Histórico formatado: user_id={user_id}, total_news={len(news_list)}, total={total_count}")
+            
+            return {
+                "news": news_list,
+                "pagination": {
+                    "page": page,
+                    "per_page": per_page,
+                    "total": total_count,
+                    "pages": total_pages,
+                    "has_next": page < total_pages,
+                    "has_prev": page > 1
+                }
+            }
+            
+        except Exception as e:
+            logging.error(f"Erro ao buscar histórico de leitura: {e}", exc_info=True)
+            raise Exception(f"Erro ao buscar histórico: {str(e)}")

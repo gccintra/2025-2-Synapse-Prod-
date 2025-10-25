@@ -104,3 +104,49 @@ class UserReadHistoryRepository:
             raise Exception("Erro ao verificar histórico do dia.")
 
    
+    def get_user_history(
+            self, 
+            user_id: int, 
+            page: int = 1, 
+            per_page: int = 10
+        ) -> tuple[list[tuple[UserReadHistoryEntity, NewsEntity]], int]:
+        try:
+            stmt = (
+                select(UserReadHistoryEntity, NewsEntity)
+                .join(NewsEntity, UserReadHistoryEntity.news_id == NewsEntity.id)
+                .where(UserReadHistoryEntity.user_id == user_id)
+                .options(joinedload(NewsEntity.source))
+                .order_by(desc(UserReadHistoryEntity.read_at))
+            )
+            
+            count_stmt = (
+                select(func.count())
+                .select_from(UserReadHistoryEntity)
+                .where(UserReadHistoryEntity.user_id == user_id)
+            )
+            total = self.session.execute(count_stmt).scalar() or 0
+            
+            paginated_stmt = stmt.offset((page - 1) * per_page).limit(per_page)
+            
+            results = self.session.execute(paginated_stmt).all()
+            
+            logging.info(f"Histórico buscado: user_id={user_id}, page={page}, total={total}")
+            
+            return results, total
+            
+        except SQLAlchemyError as e:
+            logging.error(f"Erro ao buscar histórico do usuário: {e}", exc_info=True)
+            raise Exception("Erro ao buscar histórico de leitura.")
+
+    def count_user_history(self, user_id: int) -> int:
+        try:
+            stmt = (
+                select(func.count())
+                .select_from(UserReadHistoryEntity)
+                .where(UserReadHistoryEntity.user_id == user_id)
+            )
+            result = self.session.execute(stmt).scalar()
+            return result or 0
+        except SQLAlchemyError as e:
+            logging.error(f"Erro ao contar histórico: {e}", exc_info=True)
+            raise Exception("Erro ao contar histórico.")

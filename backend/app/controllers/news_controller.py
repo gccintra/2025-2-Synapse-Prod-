@@ -131,3 +131,31 @@ class NewsController:
             return jsonify({"success": True, "message": "Noticia acessada.", "data": {"news_id": news_id}, "error": None}), 200
         except Exception as e:
              return jsonify({"success": False, "message": "Erro salvar acesso a noticia.", "data": None, "error": str(e)}), 500
+
+    def get_history_news(self, user_id: int):
+        try:
+            page = request.args.get('page', 1, type=int)
+            per_page = request.args.get('per_page', 10, type=int)
+            
+            if page < 1:
+                page = 1
+            if per_page < 1 or per_page > 100:
+                per_page = 10
+            
+            result = self.news_service.get_history_news(user_id, page, per_page)
+            
+            return jsonify({
+                "success": True,
+                "message": "Histórico de notícias obtido com sucesso.",
+                "data": result,
+                "error": None
+            }), 200
+            
+        except Exception as e:
+            logging.error(f"Erro ao obter histórico: {e}", exc_info=True)
+            return jsonify({
+                "success": False,
+                "message": "Erro ao buscar histórico de notícias.",
+                "data": None,
+                "error": str(e)
+            }), 500
