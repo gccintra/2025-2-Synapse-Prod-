@@ -264,3 +264,56 @@ class NewsService():
                 "pages": total_pages
             }
         }
+
+    def get_favorite_news(self, user_id: int, page: int = 1, per_page: int = 20) -> dict:
+        """
+        Retorna as notícias favoritas de um usuário.
+
+        Args:
+            user_id: ID do usuário
+            page: Número da página (começa em 1)
+            per_page: Quantidade de itens por página
+
+        Returns:
+            Dict com notícias favoritas, paginação e metadados
+        """
+        paginated_news = self.news_repo.list_favorites_by_user(user_id, page, per_page)
+
+        # Para contar o total, vamos buscar todas as favoritas (sem paginação) e contar
+        all_favorites = self.news_repo.list_favorites_by_user(user_id, page=1, per_page=1000000)
+        total_count = len(all_favorites)
+
+        news_list = []
+        for news in paginated_news:
+            news_dict = {
+                "id": news.id,
+                "title": news.title,
+                "description": news.description,
+                "url": news.url,
+                "image_url": news.image_url,
+                "content": news.content,
+                "published_at": news.published_at.isoformat() if news.published_at else None,
+                "source_id": news.source_id,
+                "created_at": news.created_at.isoformat() if news.created_at else None,
+                "is_favorited": True,  # Sempre True já que são favoritas
+            }
+
+            if news.source_name:
+                news_dict["source_name"] = news.source_name
+
+            if news.topic_name:
+                news_dict["topic_name"] = news.topic_name
+
+            news_list.append(news_dict)
+
+        total_pages = math.ceil(total_count / per_page) if total_count > 0 else 1
+
+        return {
+            "news": news_list,
+            "pagination": {
+                "page": page,
+                "per_page": per_page,
+                "total": total_count,
+                "pages": total_pages
+            }
+        }

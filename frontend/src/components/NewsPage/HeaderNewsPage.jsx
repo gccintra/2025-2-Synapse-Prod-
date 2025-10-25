@@ -108,6 +108,20 @@ const HeaderNewsPage = () => {
               >
                 Login
               </Link>
+              <button>
+                <Link
+                  to="/saved-news"
+                  className="block w-full text-left px-4 py-2 text-gray-800 hover:bg-gray-100 font-montserrat"
+                  onClick={() => setDropdownOpen(false)}
+                >
+                  Saved News
+                </Link>
+              </button>
+              <hr className="border-gray-200" />
+              <button
+                onClick={handleLogout}
+                className="block w-full text-left px-4 py-2 text-gray-800 hover:bg-gray-100 font-montserrat"
+
               <Link
                 to="/registrar"
                 className="ml-4 text-black border border-black font-bold py-2 px-4 rounded hover:bg-gray-100 transition-colors duration-200 font-montserrat text-sm"

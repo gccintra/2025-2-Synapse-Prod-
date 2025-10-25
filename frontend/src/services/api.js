@@ -92,6 +92,11 @@ export const newsAPI = {
   // Desfavoritar notícia
   unfavoriteNews: (newsId) =>
     apiRequest(`/news/${newsId}/favorite`, { method: "PUT" }),
+
+  // Busca as noticias favoritas por usuario
+  getSavedNews: () => 
+    apiRequest(`/news/saved`, { method: "GET" }),
+
 };
 
 // API de Users
