@@ -2,38 +2,33 @@ from app.repositories.news_repository import NewsRepository
 from app.repositories.news_source_repository import NewsSourceRepository
 from app.repositories.topic_repository import TopicRepository
 from app.repositories.user_news_source_repository import UserNewsSourceRepository
+from app.repositories.user_read_history_repository import UserReadHistoryRepository
 from app.services.user_custom_topic_service import UserCustomTopicService
+from app.models.exceptions import UserNotFoundError, NewsNotFoundError
 from app.repositories.user_preferred_custom_topic_repository import UserPreferredCustomTopicRepository
 from app.models.news import News, NewsValidationError
 from app.models.news_source import NewsSource, NewsSourceValidationError
 from app.models.exceptions import NewsNotFoundError
 from app.extensions import db
 from typing import Optional
+import logging
 import math
 
 
 class NewsService():
-    """
-    Serviço responsável pela apresentação e busca de notícias.
-
-    Responsabilidades:
-    - Buscar notícias no banco de dados
-    - Filtrar notícias por tópico, fonte, data
-    - Paginar resultados
-    - Retornar detalhes de notícias específicas
-
-    Nota: A lógica de coleta de notícias foi movida para NewsCollectService
-    """
+   
     def __init__(
         self,
         news_repo: NewsRepository | None = None,
         topic_repo: TopicRepository | None = None,
-        user_news_source_repo: UserNewsSourceRepository | None = None
+        user_news_source_repo: UserNewsSourceRepository | None = None,
+        user_history_repo: UserReadHistoryRepository | None = None
     ):
         self.news_repo = news_repo or NewsRepository()
         self.topic_repo = topic_repo or TopicRepository()
         self.user_news_source_repo = user_news_source_repo or UserNewsSourceRepository()
         self.user_custom_topic_service = UserCustomTopicService()
+        self.user_history_repo = UserReadHistoryRepository()
 
     def get_news_by_id(self, user_id: Optional[int], news_id: int) -> dict:
         news = self.news_repo.find_by_id(news_id, user_id=user_id)
@@ -317,3 +312,13 @@ class NewsService():
                 "pages": total_pages
             }
         }
+    
+    def save_history(self, user_id: int, news_id: int):
+        try:
+            created_history = self.user_history_repo.create(user_id, news_id)
+            return created_history
+        except (UserNotFoundError,NewsNotFoundError) as e:
+            raise e
+        except Exception as e:
+            logging.error(f"Erro inesperado ao salvar noticia como lida (user_id={user_id}, news_id={news_id}): {e}", exc_info=True)
+            raise Exception("Ocorreu um erro interno ao marcar noticia como lida.")

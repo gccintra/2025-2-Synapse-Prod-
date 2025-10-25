@@ -5,7 +5,6 @@ from app.services.news_service import NewsService
 from app.models.exceptions import NewsNotFoundError, NewsSourceAlreadyAttachedError
 from typing import Optional
 
-
 class NewsController:
     def __init__(self):
         self.user_service = UserService()
@@ -125,3 +124,10 @@ class NewsController:
                 "data": None,
                 "error": str(e)
             }), 404
+
+    def save_history_news(self, user_id:int, news_id:int):
+        try:
+            self.news_service.save_history(user_id, news_id)
+            return jsonify({"success": True, "message": "Noticia acessada.", "data": {"news_id": news_id}, "error": None}), 200
+        except Exception as e:
+             return jsonify({"success": False, "message": "Erro salvar acesso a noticia.", "data": None, "error": str(e)}), 500
