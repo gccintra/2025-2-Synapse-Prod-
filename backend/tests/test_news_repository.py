@@ -153,6 +153,20 @@ def test_find_by_id_not_found(news_repository, mock_session):
     assert found_news is None
 
 
+def test_find_by_id_sqlalchemy_error(news_repository, mock_session):
+    """Testa o tratamento de erro do SQLAlchemy ao buscar por ID."""
+    # Arrange
+    mock_session.execute.side_effect = SQLAlchemyError("Simulated DB error")
+
+    # Act & Assert
+    with pytest.raises(SQLAlchemyError):
+        news_repository.find_by_id(1)
+
+    # Verifica se a sessão não tentou fazer commit ou rollback, pois é uma operação de leitura
+    mock_session.commit.assert_not_called()
+    mock_session.rollback.assert_not_called()
+
+
 @pytest.mark.parametrize("url, expected", [
     ("http://www.example.com/path/", "http://example.com/path"),
     ("https://example.com/path", "https://example.com/path"),
@@ -165,6 +179,13 @@ def test_find_by_id_not_found(news_repository, mock_session):
 def test_normalize_url(news_repository, url, expected):
     """Testa a normalização de URLs."""
     assert news_repository._normalize_url(url) == expected
+
+
+def test_normalize_url_with_malformed_url(news_repository):
+    """Testa a normalização com uma URL que causa exceção, esperando um fallback."""
+    malformed_url = "http://[::1]/"  # URL que pode causar erro no urlparse
+    # A função normaliza a URL removendo a barra final.
+    assert news_repository._normalize_url(malformed_url) == "http://[::1]"
 
 
 def test_find_by_url_normalized(news_repository, mock_session, sample_news_entity, sample_news_model):
@@ -210,6 +231,20 @@ def test_find_by_url_iterating(news_repository, mock_session, sample_news_entity
     assert found_news.id == sample_news_model.id
 
 
+def test_find_by_url_not_found(news_repository, mock_session):
+    """Testa a busca por URL quando a notícia não é encontrada em nenhuma etapa."""
+    # Arrange
+    # Simula que todas as tentativas de busca retornam None
+    mock_session.execute.return_value.scalar_one_or_none.return_value = None
+    mock_session.execute.return_value.scalars.return_value.all.return_value = []
+
+    # Act
+    found_news = news_repository.find_by_url("http://nonexistent.com")
+
+    # Assert
+    assert found_news is None
+
+
 def test_list_all(news_repository, mock_session, sample_news_entity, sample_news_model):
     """Testa a listagem de todas as notícias."""
     # Arrange
@@ -233,6 +268,45 @@ def test_list_all(news_repository, mock_session, sample_news_entity, sample_news
     assert news_list[0].is_favorited is True
 
 
+def test_list_all_without_user_id(news_repository, mock_session, sample_news_entity, sample_news_model):
+    """Testa a listagem de notícias sem um user_id (usuário não logado)."""
+    # Arrange
+    mock_result = MagicMock()
+    mock_result.all.return_value = [(sample_news_entity, False)] # is_favorited deve ser False
+    mock_session.execute.return_value = mock_result
+
+    with patch('app.models.news.News.from_entity', return_value=sample_news_model):
+        # Act
+        news_list = news_repository.list_all(page=1, per_page=10, user_id=None)
+
+    # Assert
+    mock_session.execute.assert_called_once()
+    assert len(news_list) == 1
+    assert news_list[0].is_favorited is False
+
+
+def test_list_all_empty(news_repository, mock_session):
+    """Testa a listagem quando não há notícias."""
+    # Arrange
+    mock_result = MagicMock()
+    mock_result.all.return_value = []
+    mock_session.execute.return_value = mock_result
+
+    # Act
+    news_list = news_repository.list_all()
+
+    # Assert
+    mock_session.execute.assert_called_once()
+    assert news_list == []
+
+
+def test_list_all_sqlalchemy_error(news_repository, mock_session):
+    """Testa o tratamento de erro do SQLAlchemy ao listar notícias."""
+    mock_session.execute.side_effect = SQLAlchemyError("Simulated DB error")
+    with pytest.raises(SQLAlchemyError):
+        news_repository.list_all()
+
+
 def test_find_by_topic(news_repository, mock_session, sample_news_entity, sample_news_model):
     """Testa a busca de notícias por tópico."""
     # Arrange
@@ -251,6 +325,18 @@ def test_find_by_topic(news_repository, mock_session, sample_news_entity, sample
     assert len(news_list) == 1
     assert news_list[0].topic_id == sample_news_model.topic_id
 
+
+def test_count_all(news_repository, mock_session):
+    """Testa a contagem de todas as notícias."""
+    # Arrange
+    mock_session.execute.return_value.scalar.return_value = 150
+
+    # Act
+    count = news_repository.count_all()
+
+    # Assert
+    assert count == 150
+    mock_session.execute.assert_called_once()
 
 def test_count_by_topic(news_repository, mock_session):
     """Testa a contagem de notícias por tópico."""
