@@ -22,21 +22,21 @@ const NewsCard = forwardRef(
     const [isClicked, setIsClicked] = useState(false); // Estado para a animação de clique
     const LinkComponent = isLoading ? "div" : Link;
 
-    // Impede que o clique no ícone navegue para a notícia
+    // impede que o clique no ícone navegue para a notícia
     const handleSaveClick = async (e) => {
       e.stopPropagation();
       e.preventDefault();
 
-      // Verifica se o usuário NÃO está logado
+      // verifica se o usuário NÃO está logado
       if (!isLoggedIn) {
         toast.warn("To save a news story, you need to be logged in.");
-        return; // Interrompe a execução
+        return; // interrompe a execução
       }
 
-      if (isSaving) return; // Previne múltiplos cliques
+      if (isSaving) return; // previne múltiplos cliques
 
-      setIsClicked(true); // Ativa a animação
-      setTimeout(() => setIsClicked(false), 300); // Reseta a animação após 300ms
+      setIsClicked(true); // animação
+      setTimeout(() => setIsClicked(false), 300); // Reseta a animação
 
       setIsSaving(true);
 
@@ -102,35 +102,34 @@ const NewsCard = forwardRef(
             )}
           </div>
 
-          {/* --- ÍCONE DE SALVAR (LISTA) --- */}
-          {!isLoading &&
-            showSaveButton && ( // Usamos a nova prop aqui
-              <button
-                onClick={handleSaveClick}
-                disabled={isSaving}
-                className={`absolute top-3 right-3 z-10 p-1.5 text-gray-600 hover:text-black transition-all duration-200 ${
-                  isSaved ? "opacity-100" : "opacity-0 group-hover:opacity-100"
-                } ${isSaving ? "cursor-wait" : ""}`}
-                aria-label="Salvar notícia"
+          {/* --- ÍCONE DE SALVAR --- */}
+          {!isLoading && showSaveButton && (
+            <button
+              onClick={handleSaveClick}
+              disabled={isSaving}
+              className={`absolute top-3 right-3 z-10 p-1.5 text-gray-600 hover:text-black transition-all duration-200 ${
+                isSaved ? "opacity-100" : "opacity-0 group-hover:opacity-100"
+              } ${isSaving ? "cursor-wait" : ""}`}
+              aria-label="Salvar notícia"
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                className={`h-5 w-5 transition-colors ${
+                  isSaved ? "text-black" : "text-gray-600"
+                } ${isClicked ? "animate-pop-in" : ""}`} // Aplica a animação aqui
+                fill={isSaved ? "currentColor" : "none"}
+                viewBox="0 0 24 24"
+                stroke="black"
+                strokeWidth={2}
               >
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  className={`h-5 w-5 transition-colors ${
-                    isSaved ? "text-black" : "text-gray-600"
-                  } ${isClicked ? "animate-pop-in" : ""}`} // Aplica a animação aqui
-                  fill={isSaved ? "currentColor" : "none"}
-                  viewBox="0 0 24 24"
-                  stroke="black"
-                  strokeWidth={2}
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z"
-                  />
-                </svg>
-              </button>
-            )}
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z"
+                />
+              </svg>
+            </button>
+          )}
         </LinkComponent>
       );
     }
@@ -156,34 +155,33 @@ const NewsCard = forwardRef(
           )}
 
           {/* --- ÍCONE DE SALVAR (DESTAQUES) --- */}
-          {!isLoading &&
-            showSaveButton && ( // E aqui também
-              <button
-                onClick={handleSaveClick}
-                disabled={isSaving}
-                className={`absolute top-3 right-3 z-10 p-2 bg-white/70 backdrop-blur-sm rounded-full text-gray-700 hover:bg-white hover:text-black transition-all duration-200 ${
-                  isSaved ? "opacity-100" : "opacity-0 group-hover:opacity-100"
-                } ${isSaving ? "cursor-wait" : ""}`}
-                aria-label="Salvar notícia"
+          {!isLoading && showSaveButton && (
+            <button
+              onClick={handleSaveClick}
+              disabled={isSaving}
+              className={`absolute top-3 right-3 z-10 p-2 bg-white/70 backdrop-blur-sm rounded-full text-gray-700 hover:bg-white hover:text-black transition-all duration-200 ${
+                isSaved ? "opacity-100" : "opacity-0 group-hover:opacity-100"
+              } ${isSaving ? "cursor-wait" : ""}`}
+              aria-label="Salvar notícia"
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                className={`h-5 w-5 transition-colors ${
+                  isSaved ? "text-black" : "text-gray-600"
+                } ${isClicked ? "animate-pop-in" : ""}`} // E aqui também
+                fill={isSaved ? "currentColor" : "none"}
+                viewBox="0 0 24 24"
+                stroke="black"
+                strokeWidth={2}
               >
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  className={`h-5 w-5 transition-colors ${
-                    isSaved ? "text-black" : "text-gray-600"
-                  } ${isClicked ? "animate-pop-in" : ""}`} // E aqui também
-                  fill={isSaved ? "currentColor" : "none"}
-                  viewBox="0 0 24 24"
-                  stroke="black"
-                  strokeWidth={2}
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z"
-                  />
-                </svg>
-              </button>
-            )}
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z"
+                />
+              </svg>
+            </button>
+          )}
           <div className="mt-3">
             {isLoading ? (
               <div className="animate-pulse">

@@ -1,71 +1,65 @@
 import React, { useState, useEffect } from "react";
 import HeaderFeedPage from "../components/FeedPage/HeaderFeedPage";
-import NewsCard from "../components/FeedPage/NewsCard"; // 1. Importar o NewsCard
-
-const MOCK_HISTORY_DATA = [
-  {
-    id: 1,
-    title: "Google completa 27 anos com doodle especial",
-    summary: "Lorem ipsum dolor sit amet, consectetur...",
-    image: "https://via.placeholder.com/150x100",
-    readAt: new Date(Date.now() - 86400000 * 2),
-    source_name: "Google News",
-  },
-  {
-    id: 2,
-    title: "Astrônomos detectam anã branca que ...",
-    summary: "Lorem ipsum dolor sit amet, consectetur...",
-    image: "https://via.placeholder.com/150x100",
-    readAt: new Date(Date.now() - 86400000 * 2),
-    source_name: "BBC",
-  },
-  {
-    id: 3,
-    title: "What's the big deal about AI data centres?",
-    summary: "Lorem ipsum dolor sit amet, consectetur...",
-    image: "https://via.placeholder.com/150x100",
-    readAt: new Date(Date.now() - 86400000 * 5),
-    source_name: "Wired",
-  },
-  {
-    id: 4,
-    title: "The airliner pilot who gets to fly...",
-    summary: "Lorem ipsum dolor sit amet, consectetur...",
-    image: "https://via.placeholder.com/150x100",
-    readAt: new Date(Date.now() - 86400000 * 5),
-    source_name: "The Verge",
-  },
-  {
-    id: 5,
-    title: "A resposta oficial da Apple aos arranhões...",
-    summary: "Lorem ipsum dolor sit amet, consectetur...",
-    image: "https://via.placeholder.com/150x100",
-    readAt: new Date("2025-10-16T10:00:00Z"),
-    source_name: "Apple News",
-  },
-];
+import NewsCard from "../components/FeedPage/NewsCard";
+import { newsAPI, usersAPI } from "../services/api";
+import { toast } from "react-toastify";
 
 const NewsHistoryPage = () => {
   const [historyData, setHistoryData] = useState({});
   const [loading, setLoading] = useState(true);
-
-  const userEmail = "";
+  const [error, setError] = useState(null);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [userEmail, setUserEmail] = useState("");
 
   useEffect(() => {
-    const data = MOCK_HISTORY_DATA;
+    const fetchHistory = async () => {
+      setLoading(true);
+      setError(null);
 
-    const formatDateGroup = (date) => {
-      const today = new Date();
-      const yesterday = new Date(today);
-      yesterday.setDate(yesterday.getDate() - 1);
+      try {
+        // erifica se o usuário está logado e obtém o e-mail
+        const profileRes = await usersAPI.getUserProfile();
+        setIsLoggedIn(true);
+        setUserEmail(profileRes.data.email);
 
+        // login bem-sucedido, busca o histórico em um bloco separado
+        try {
+          const historyRes = await newsAPI.getHistory();
+          const historyList = historyRes.data.news || [];
+          const groupedData = groupHistoryByDate(historyList);
+          setHistoryData(groupedData);
+        } catch (historyError) {
+          console.error("Failed to fetch history:", historyError);
+          setError(
+            "Could not load your reading history. Please try again later."
+          );
+          toast.error("Could not load your reading history.");
+        }
+      } catch (err) {
+        // Se o `getUserProfile` falhar, o usuário NÃO está logado
+        setIsLoggedIn(false);
+        setError("You must be logged in to view your news history.");
+        toast.warn("You must be logged in to view your news history.");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchHistory();
+  }, []);
+
+  const groupHistoryByDate = (historyList) => {
+    const today = new Date();
+    const yesterday = new Date(today);
+    yesterday.setDate(yesterday.getDate() - 1);
+
+    const formatDateGroup = (viewedAt) => {
+      const date = new Date(viewedAt);
       if (date.toDateString() === today.toDateString()) return "Today";
       if (date.toDateString() === yesterday.toDateString()) return "Yesterday";
-
       if (today.getTime() - date.getTime() < 7 * 24 * 60 * 60 * 1000) {
-        return date.toLocaleDateString("en-US", { weekday: "long" }); // "Friday", "Tuesday"
+        return date.toLocaleDateString("en-US", { weekday: "long" });
       }
-
       return date.toLocaleDateString("pt-BR", {
         day: "2-digit",
         month: "2-digit",
@@ -73,18 +67,16 @@ const NewsHistoryPage = () => {
       });
     };
 
-    const groupedData = data.reduce((acc, news) => {
-      const groupKey = formatDateGroup(new Date(news.readAt));
+    return historyList.reduce((acc, news) => {
+      // A API de histórico deve retornar 'viewed_at'
+      const groupKey = formatDateGroup(news.viewed_at);
       if (!acc[groupKey]) {
         acc[groupKey] = [];
       }
       acc[groupKey].push(news);
       return acc;
     }, {});
-
-    setHistoryData(groupedData);
-    setLoading(false);
-  }, []);
+  };
 
   return (
     <div className="bg-white min-h-screen">
@@ -97,7 +89,7 @@ const NewsHistoryPage = () => {
         </h1>
 
         {/* Seção de Histórico */}
-        <div className="space-y-12 mt-11">
+        <div className="mt-11">
           {loading ? (
             <div className="space-y-12">
               {/* Bloco de esqueleto 1 (ex: "Today") */}
@@ -119,34 +111,39 @@ const NewsHistoryPage = () => {
                 </div>
               </section>
             </div>
+          ) : error ? (
+            <div className="text-center py-10">
+              <p className="text-gray-600">{error}</p>
+            </div>
+          ) : Object.keys(historyData).length === 0 ? (
+            <div className="text-center py-10">
+              <p className="text-gray-600">Your reading history is empty.</p>
+              <p className="text-sm text-gray-500 mt-2">
+                Start reading news to see your history here.
+              </p>
+            </div>
           ) : (
-            Object.keys(historyData).map((dateGroup) => (
-              <section key={dateGroup}>
-                {/* Título do Grupo (ex: "Friday") */}
-                <h2 className="text-xl font-montserrat font-normal text-gray-900 mb-6">
-                  {dateGroup}
-                </h2>
+            <div className="space-y-12">
+              {Object.keys(historyData).map((dateGroup) => (
+                <section key={dateGroup}>
+                  <h2 className="text-xl font-montserrat font-normal text-gray-900 mb-6">
+                    {dateGroup}
+                  </h2>
 
-                {/* Lista de Notícias no Grupo */}
-                <div className="space-y-0">
-                  {historyData[dateGroup].map((news) => (
-                    // 3. Substituir HistoryNewsItem por NewsCard e mapear os dados
-                    <NewsCard
-                      key={news.id}
-                      isListItem={true}
-                      isLoggedIn={true} // A página de histórico é privada
-                      showSaveButton={false} // Adicione esta linha para esconder o botão
-                      news={{
-                        ...news,
-                        description: news.summary,
-                        image_url: news.image,
-                        published_at: news.readAt.toISOString(),
-                      }}
-                    />
-                  ))}
-                </div>
-              </section>
-            ))
+                  <div className="space-y-0">
+                    {historyData[dateGroup].map((news) => (
+                      <NewsCard
+                        key={`${news.id}-${news.viewed_at}`}
+                        isListItem={true}
+                        isLoggedIn={isLoggedIn}
+                        showSaveButton={false}
+                        news={news}
+                      />
+                    ))}
+                  </div>
+                </section>
+              ))}
+            </div>
           )}
         </div>
       </main>

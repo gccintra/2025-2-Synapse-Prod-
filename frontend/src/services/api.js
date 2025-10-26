@@ -61,7 +61,10 @@ export const topicsAPI = {
   // Lista os tópicos preferidos do usuário
   getPreferredTopics: () => apiRequest("/topics/custom"),
   addPreferredTopic: (name) =>
-    apiRequest("/topics/custom", { method: "POST", body: JSON.stringify({ name }) }),
+    apiRequest("/topics/custom", {
+      method: "POST",
+      body: JSON.stringify({ name }),
+    }),
 
   // Remove um tópico das preferências do usuário
   removePreferredTopic: (topicId) =>
@@ -94,9 +97,49 @@ export const newsAPI = {
     apiRequest(`/news/${newsId}/favorite`, { method: "PUT" }),
 
   // Busca as noticias favoritas por usuario
-  getSavedNews: () => 
-    apiRequest(`/news/saved`, { method: "GET" }),
+  getSavedNews: () => apiRequest(`/news/saved`, { method: "GET" }),
 
+  // Adiciona uma notícia ao histórico de leitura do usuário
+  addNewsToHistory: (newsId) =>
+    apiRequest(`/news/${newsId}/history`, { method: "POST" }),
+
+  // Busca o histórico de notícias lidas pelo usuário
+  getHistory: async (page = 1, perPage = 50) => {
+    // --- MOCK TEMPORÁRIO!! ---
+    // simulando a API, retorna dados de exemplo.
+    // Remova ou comente este bloco quando o endpoint estiver pronto.
+    console.warn("API MOCK: getHistory() is returning simulated data.");
+    return new Promise((resolve) => {
+      setTimeout(() => {
+        resolve({
+          data: {
+            news: [
+              {
+                id: 101,
+                title: "Notícia lida hoje: A ascensão da IA generativa",
+                description: "Um resumo da notícia lida hoje...",
+                image_url: "https://via.placeholder.com/150x100",
+                source_name: "Tech News",
+                published_at: new Date().toISOString(),
+                viewed_at: new Date().toISOString(), // Campo crucial para o histórico
+              },
+              {
+                id: 102,
+                title: "Artigo de ontem: Novas descobertas em Marte",
+                description:
+                  "Explorando as últimas descobertas no planeta vermelho.",
+                image_url: "https://via.placeholder.com/150x100",
+                source_name: "Space Today",
+                published_at: new Date(Date.now() - 86400000).toISOString(),
+                viewed_at: new Date(Date.now() - 86400000).toISOString(),
+              },
+            ],
+          },
+        });
+      }, 500);
+    });
+    // --- FIM DO EXEMPLO ---
+  },
 };
 
 // API de Users
@@ -111,11 +154,15 @@ export const newsSourcesAPI = {
   getAllSources: () => apiRequest("/news_sources/list_all"),
 
   // Lista as fontes que o usuário marcou como preferidas
-  getAttachedSources: () => apiRequest("/news_sources/list_all_attached_sources"),
+  getAttachedSources: () =>
+    apiRequest("/news_sources/list_all_attached_sources"),
 
   // Associa uma fonte ao usuário
   attachSource: (sourceId) =>
-    apiRequest("/news_sources/attach", { method: "POST", body: JSON.stringify({ source_id: sourceId }) }),
+    apiRequest("/news_sources/attach", {
+      method: "POST",
+      body: JSON.stringify({ source_id: sourceId }),
+    }),
 
   // Desassocia uma fonte do usuário
   detachSource: (sourceId) =>

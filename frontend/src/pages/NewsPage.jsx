@@ -53,8 +53,17 @@ const NewsPage = () => {
         // Define o estado inicial do botão de salvar
         setIsSaved(newsData.is_favorited || false);
 
-        // Define o status de login
+        // status de login
         setIsLoggedIn(authResponse.status === "fulfilled");
+        // usuário logado, registra a visualização no histórico
+        // try/catch` separado para não quebrar a página se o registro falhar
+        if (authResponse.status === "fulfilled") {
+          try {
+            await newsAPI.addNewsToHistory(newsId);
+          } catch (historyError) {
+            console.warn("Could not save to history:", historyError.message);
+          }
+        }
       } catch (err) {
         console.error("Erro ao carregar notícia:", err);
         setError(err.message || "Erro ao carregar a notícia");
