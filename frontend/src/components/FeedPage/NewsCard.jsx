@@ -8,10 +8,15 @@ import { newsAPI } from "../../services/api";
 
 const NewsCard = forwardRef(
   (
-    { news, isListItem = false, isLoading = false, isLoggedIn = false },
+    {
+      news,
+      isListItem = false,
+      isLoading = false,
+      isLoggedIn = false,
+      showSaveButton = true,
+    },
     ref
   ) => {
-    // Inicializa o estado com base na propriedade da API
     const [isSaved, setIsSaved] = useState(news?.is_favorited || false);
     const [isSaving, setIsSaving] = useState(false); // Estado de carregamento para o botão
     const [isClicked, setIsClicked] = useState(false); // Estado para a animação de clique
@@ -22,7 +27,7 @@ const NewsCard = forwardRef(
       e.stopPropagation();
       e.preventDefault();
 
-      // 1. Verifica se o usuário NÃO está logado
+      // Verifica se o usuário NÃO está logado
       if (!isLoggedIn) {
         toast.warn("To save a news story, you need to be logged in.");
         return; // Interrompe a execução
@@ -98,33 +103,34 @@ const NewsCard = forwardRef(
           </div>
 
           {/* --- ÍCONE DE SALVAR (LISTA) --- */}
-          {!isLoading && (
-            <button
-              onClick={handleSaveClick}
-              disabled={isSaving}
-              className={`absolute top-3 right-3 z-10 p-1.5 text-gray-600 hover:text-black transition-all duration-200 ${
-                isSaved ? "opacity-100" : "opacity-0 group-hover:opacity-100"
-              } ${isSaving ? "cursor-wait" : ""}`}
-              aria-label="Salvar notícia"
-            >
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                className={`h-5 w-5 transition-colors ${
-                  isSaved ? "text-black" : "text-gray-600"
-                } ${isClicked ? "animate-pop-in" : ""}`} // Aplica a animação aqui
-                fill={isSaved ? "currentColor" : "none"}
-                viewBox="0 0 24 24"
-                stroke="black"
-                strokeWidth={2}
+          {!isLoading &&
+            showSaveButton && ( // Usamos a nova prop aqui
+              <button
+                onClick={handleSaveClick}
+                disabled={isSaving}
+                className={`absolute top-3 right-3 z-10 p-1.5 text-gray-600 hover:text-black transition-all duration-200 ${
+                  isSaved ? "opacity-100" : "opacity-0 group-hover:opacity-100"
+                } ${isSaving ? "cursor-wait" : ""}`}
+                aria-label="Salvar notícia"
               >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z"
-                />
-              </svg>
-            </button>
-          )}
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  className={`h-5 w-5 transition-colors ${
+                    isSaved ? "text-black" : "text-gray-600"
+                  } ${isClicked ? "animate-pop-in" : ""}`} // Aplica a animação aqui
+                  fill={isSaved ? "currentColor" : "none"}
+                  viewBox="0 0 24 24"
+                  stroke="black"
+                  strokeWidth={2}
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z"
+                  />
+                </svg>
+              </button>
+            )}
         </LinkComponent>
       );
     }
@@ -150,33 +156,34 @@ const NewsCard = forwardRef(
           )}
 
           {/* --- ÍCONE DE SALVAR (DESTAQUES) --- */}
-          {!isLoading && (
-            <button
-              onClick={handleSaveClick}
-              disabled={isSaving}
-              className={`absolute top-3 right-3 z-10 p-2 bg-white/70 backdrop-blur-sm rounded-full text-gray-700 hover:bg-white hover:text-black transition-all duration-200 ${
-                isSaved ? "opacity-100" : "opacity-0 group-hover:opacity-100"
-              } ${isSaving ? "cursor-wait" : ""}`}
-              aria-label="Salvar notícia"
-            >
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                className={`h-5 w-5 transition-colors ${
-                  isSaved ? "text-black" : "text-gray-600"
-                } ${isClicked ? "animate-pop-in" : ""}`} // E aqui também
-                fill={isSaved ? "currentColor" : "none"}
-                viewBox="0 0 24 24"
-                stroke="black"
-                strokeWidth={2}
+          {!isLoading &&
+            showSaveButton && ( // E aqui também
+              <button
+                onClick={handleSaveClick}
+                disabled={isSaving}
+                className={`absolute top-3 right-3 z-10 p-2 bg-white/70 backdrop-blur-sm rounded-full text-gray-700 hover:bg-white hover:text-black transition-all duration-200 ${
+                  isSaved ? "opacity-100" : "opacity-0 group-hover:opacity-100"
+                } ${isSaving ? "cursor-wait" : ""}`}
+                aria-label="Salvar notícia"
               >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z"
-                />
-              </svg>
-            </button>
-          )}
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  className={`h-5 w-5 transition-colors ${
+                    isSaved ? "text-black" : "text-gray-600"
+                  } ${isClicked ? "animate-pop-in" : ""}`} // E aqui também
+                  fill={isSaved ? "currentColor" : "none"}
+                  viewBox="0 0 24 24"
+                  stroke="black"
+                  strokeWidth={2}
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z"
+                  />
+                </svg>
+              </button>
+            )}
           <div className="mt-3">
             {isLoading ? (
               <div className="animate-pulse">

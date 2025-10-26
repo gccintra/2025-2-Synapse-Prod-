@@ -129,9 +129,9 @@ const FeedPage = () => {
 
       {/* Main Content Container */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-4">
-        {/* Filtros - Renderiza apenas após o carregamento inicial para evitar o "flicker" */}
+        {/* Tópicos - Renderiza apenas após o carregamento inicial para evitar o "flicker" */}
         {initialLoading ? (
-          // Skeleton para a área de filtros
+          // Skeleton para a área de tópicos
           <div className="flex gap-4 mb-8 flex-wrap">
             <div className="mt-6 h-8 w-24 bg-gray-300 rounded-full animate-pulse" />
             <div className="mt-6 h-8 w-28 bg-gray-300 rounded-full animate-pulse" />

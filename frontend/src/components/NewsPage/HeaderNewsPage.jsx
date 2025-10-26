@@ -97,6 +97,13 @@ const HeaderNewsPage = () => {
                   >
                     Saved News
                   </Link>
+                  <Link
+                    to="/history"
+                    className="block px-4 py-2 text-gray-800 hover:bg-gray-100 font-montserrat"
+                    onClick={() => setDropdownOpen(false)}
+                  >
+                    News History
+                  </Link>
                   <hr className="border-gray-200" />
                   <button
                     onClick={handleLogout}
