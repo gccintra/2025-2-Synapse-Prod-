@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import { Link } from "react-router-dom";
-import HeaderFeedPage from "../components/FeedPage/HeaderFeedPage";
 import NewsCard from "../components/FeedPage/NewsCard";
+import DynamicHeader from "../components/DynamicHeader"; // Import the new DynamicHeader
 import { topicsAPI, usersAPI, newsAPI } from "../services/api";
 import { useInfiniteScroll } from "../hooks/useInfiniteScroll";
 
@@ -124,8 +124,12 @@ const FeedPage = () => {
 
   return (
     <div className="bg-gray-50 min-h-screen">
-      {/* 1. Header do Feed */}
-      <HeaderFeedPage userEmail={userData.email} />
+      {/* Dynamic Header for Feed Page */}
+      <DynamicHeader
+        userEmail={userData.email}
+        isAuthenticated={isLoggedIn}
+        showBackButton={false}
+      />
 
       {/* Main Content Container */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-4">

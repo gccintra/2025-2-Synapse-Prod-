@@ -1,11 +1,8 @@
 import React from "react";
-import HeaderNewsPage from "./HeaderNewsPage";
 
 const NewsPageSkeleton = () => {
   return (
     <div className="bg-white min-h-screen">
-      <HeaderNewsPage />
-
       <main className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 pt-10 pb-20">
         <div className="animate-pulse">
           {/* Placeholder da Imagem de Destaque */}

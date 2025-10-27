@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
 import { toast } from "react-toastify";
-import HeaderNewsPage from "../components/NewsPage/HeaderNewsPage";
+import DynamicHeader from "../components/DynamicHeader"; // Import the new DynamicHeader
 import NewsPageSkeleton from "../components/NewsPage/NewsPageSkeleton"; // Importe o usersAPI
 import { newsAPI } from "../services/api";
 import { usersAPI } from "../services/api";
@@ -114,7 +114,8 @@ const NewsPage = () => {
   if (error) {
     return (
       <div className="bg-white min-h-screen">
-        <HeaderNewsPage isLoggedIn={isLoggedIn} />
+        <DynamicHeader isAuthenticated={isLoggedIn} />{" "}
+        {/* backTo/backText will use location.state.from */}
         <main className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 pt-10 pb-20">
           <div className="text-center py-12">
             <h1 className="text-2xl font-bold text-gray-900 mb-4">
@@ -136,7 +137,8 @@ const NewsPage = () => {
   if (!articleData) {
     return (
       <div className="bg-white min-h-screen">
-        <HeaderNewsPage isLoggedIn={isLoggedIn} />
+        <DynamicHeader isAuthenticated={isLoggedIn} />{" "}
+        {/* backTo/backText will use location.state.from */}
         <main className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 pt-10 pb-20">
           <div className="text-center py-12">
             <h1 className="text-2xl font-bold text-gray-900 mb-4">
@@ -160,8 +162,8 @@ const NewsPage = () => {
   return (
     <div className="bg-white min-h-screen">
       {/* Header da Página de Notícias (mantendo o email do usuário) */}
-      <HeaderNewsPage isLoggedIn={isLoggedIn} />
-
+      <DynamicHeader isAuthenticated={isLoggedIn} />{" "}
+      {/* backTo/backText will use location.state.from */}
       <main className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 pt-10 pb-20">
         {/* Imagem de Destaque */}
         <img

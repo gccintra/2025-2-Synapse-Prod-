@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
-import Header from "../components/HeaderEditAccount";
+import DynamicHeader from "../components/DynamicHeader"; // Import the new DynamicHeader
 import BackIcon from "../icons/back-svgrepo-com.svg";
 
 // Sub-componente que representa cada card de fonte
@@ -117,16 +117,10 @@ const AddSource = ({ onSave, onBack }) => {
 
   return (
     <div className="bg-white min-h-screen">
-      <header className="flex justify-between items-center p-6 border-b border-gray-300">
-        <button
-          onClick={onBack}
-          className="text-black hover:text-gray-700 font-semibold flex items-center"
-        >
-          <img src={BackIcon} alt="Ícone de Voltar" className="w-5 h-5 mr-2" />
-          <span className="font-medium font-montserrat">Back</span>
-        </button>
-      </header>
-
+      <DynamicHeader
+        userEmail={""} // Email será buscado pelo DynamicHeader se não for fornecido
+        isAuthenticated={true} // Opcional, se o status de autenticação já estiver no contexto
+      />
       <main className="max-w-xl mx-auto py-12 px-4 w-full text-center">
         <h2 className=" mb-2 text-3xl font-bold text-black font-montserrat">
           Add Preferred News Sources

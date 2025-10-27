@@ -1,5 +1,5 @@
 import React, { forwardRef, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom"; // Import useLocation
 import { toast } from "react-toastify";
 import TestNewsImage from "../../assets/news-placeholder.jpg";
 import Test2NewsImage from "../../assets/news-placeholder-2.jpg";
@@ -20,6 +20,7 @@ const NewsCard = forwardRef(
     const [isSaved, setIsSaved] = useState(news?.is_favorited || false);
     const [isSaving, setIsSaving] = useState(false); // Estado de carregamento para o botão
     const [isClicked, setIsClicked] = useState(false); // Estado para a animação de clique
+    const location = useLocation(); // Hook para obter a localização atual
     const LinkComponent = isLoading ? "div" : Link;
 
     // impede que o clique no ícone navegue para a notícia
@@ -61,6 +62,7 @@ const NewsCard = forwardRef(
         // Card da lista
         <LinkComponent
           to={!isLoading ? `/article/${news?.id}` : undefined}
+          state={{ from: location.pathname }} // Passa o caminho atual como estado
           ref={ref}
           className={`relative group flex items-start gap-4 p-4 border-b border-gray-200 ${
             !isLoading && "hover:bg-gray-100 transition-colors cursor-pointer"
@@ -137,6 +139,7 @@ const NewsCard = forwardRef(
       // Card destaques
       <LinkComponent
         to={!isLoading ? `/article/${news?.id}` : undefined}
+        state={{ from: location.pathname }} // Passa o caminho atual como estado
         className={`relative group text-base rounded-lg overflow-hidden font-montserrat h-full ${
           !isLoading &&
           "transition-all duration-300 ease-in-out hover:scale-[1.02] cursor-pointer"

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
-import HeaderEditAccount from "../components/HeaderEditAccount";
+import DynamicHeader from "../components/DynamicHeader"; // Import the new DynamicHeader
 
 // Importe os ícones que você está usando no formulário
 import UserIcon from "../icons/user-regular-full.svg";
@@ -159,10 +159,9 @@ function EditAccount() {
 
   return (
     <>
-      <HeaderEditAccount
-        userEmail={formData.email}
-        backTo="/account"
-        backText="Back to account"
+      <DynamicHeader
+        userEmail={formData.email} // Opcional, se o email já estiver no contexto de autenticação
+        isAuthenticated={true} // Opcional, se o status de autenticação já estiver no contexto
       />
       {/* Container principal da página de edição */}
       <div className="min-h-screen flex flex-col justify-start items-center bg-[#f5f5f5] pt-16">

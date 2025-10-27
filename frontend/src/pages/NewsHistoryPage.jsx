@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
-import HeaderFeedPage from "../components/FeedPage/HeaderFeedPage";
 import NewsCard from "../components/FeedPage/NewsCard";
+import DynamicHeader from "../components/DynamicHeader"; // Import the new DynamicHeader
 import { newsAPI, usersAPI } from "../services/api";
 import { toast } from "react-toastify";
 
@@ -80,7 +80,12 @@ const NewsHistoryPage = () => {
 
   return (
     <div className="bg-white min-h-screen">
-      <HeaderFeedPage userEmail={userEmail} />
+      <DynamicHeader
+        userEmail={userEmail}
+        isAuthenticated={isLoggedIn}
+        backTo="/feed"
+        backText="Back to feed"
+      />
 
       <main className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12 font-montserrat">
         {/* Título da Página */}

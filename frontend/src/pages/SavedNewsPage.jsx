@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
-import HeaderEditAccount from "../components/HeaderEditAccount";
 import SavedNewsCard from "../components/SavedNews/SavedNewsCard";
+import DynamicHeader from "../components/DynamicHeader"; // Import the new DynamicHeader
 import RemoveConfirmationModal from "../components/SavedNews/RemoveConfirmationModal";
 import SavedNewsCardSkeleton from "../components/SavedNews/SavedNewsCardSkeleton";
 import { usersAPI, newsAPI } from "../services/api";
@@ -70,7 +70,10 @@ const SavedNewsPage = () => {
 
   return (
     <div className="bg-gray-50 min-h-screen flex flex-col font-montserrat">
-      <HeaderEditAccount userEmail={userData.email} />
+      <DynamicHeader
+        userEmail={userData.email} // Opcional, se o email já estiver no contexto de autenticação
+        isAuthenticated={true} // Opcional, se o status de autenticação já estiver no contexto
+      />
 
       <main className="flex-grow max-w-6xl mx-auto sm:px-6 lg:px-8 mt-12 w-full">
         <h1 className="p-3 text-3xl font-medium text-gray-900 font-montserrat text-center">
