@@ -7,13 +7,23 @@ from app.routes.user_routes import get_user_id_from_token, get_optional_user_id_
 news_bp = Blueprint("news", __name__)
 news_controller = NewsController()
 
-
-
 @news_bp.route("/<int:news_id>", methods=["GET"])
 @jwt_required(optional=True)
 @get_optional_user_id_from_token
 def get_news_by_id(user_id, news_id: int):
     return news_controller.get_by_id(user_id, news_id)
+
+@news_bp.route("/<int:news_id>/history", methods=["POST"])
+@jwt_required()
+@get_user_id_from_token
+def save_history_news(user_id: int, news_id: int):
+    return news_controller.save_history_news(user_id, news_id)
+
+@news_bp.route("/history", methods=["GET"])
+@jwt_required()
+@get_user_id_from_token
+def get_history_news(user_id: int):
+    return news_controller.get_history_news(user_id)
 
 @news_bp.route("/<int:news_id>/favorite", methods=["POST"])
 @jwt_required()
