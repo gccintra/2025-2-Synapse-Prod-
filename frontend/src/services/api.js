@@ -105,40 +105,7 @@ export const newsAPI = {
 
   // Busca o histórico de notícias lidas pelo usuário
   getHistory: async (page = 1, perPage = 50) => {
-    // --- MOCK TEMPORÁRIO!! ---
-    // simulando a API, retorna dados de exemplo.
-    // Remova ou comente este bloco quando o endpoint estiver pronto.
-    console.warn("API MOCK: getHistory() is returning simulated data.");
-    return new Promise((resolve) => {
-      setTimeout(() => {
-        resolve({
-          data: {
-            news: [
-              {
-                id: 101,
-                title: "Notícia lida hoje: A ascensão da IA generativa",
-                description: "Um resumo da notícia lida hoje...",
-                image_url: "https://via.placeholder.com/150x100",
-                source_name: "Tech News",
-                published_at: new Date().toISOString(),
-                viewed_at: new Date().toISOString(), // Campo crucial para o histórico
-              },
-              {
-                id: 102,
-                title: "Artigo de ontem: Novas descobertas em Marte",
-                description:
-                  "Explorando as últimas descobertas no planeta vermelho.",
-                image_url: "https://via.placeholder.com/150x100",
-                source_name: "Space Today",
-                published_at: new Date(Date.now() - 86400000).toISOString(),
-                viewed_at: new Date(Date.now() - 86400000).toISOString(),
-              },
-            ],
-          },
-        });
-      }, 500);
-    });
-    // --- FIM DO EXEMPLO ---
+    return apiRequest(`/news/history?page=${page}&per_page=${perPage}`);
   },
 };
 
