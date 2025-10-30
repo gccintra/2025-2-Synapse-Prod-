@@ -86,64 +86,72 @@ function LoginPage() {
         {/* Container para o "Synapse" - alinhado à esquerda */}
         <div className="mt-12 w-full max-w-lg text-left">
           <h1 className="mb-10 text-64xl font-bold text-black font-rajdhani">
-            Synapse.
+            Synapse
           </h1>
         </div>
         <div className="w-full max-w-lg">
           <form onSubmit={handleSubmit} className="space-y-4">
             {/* Campo Email */}
-            
-              <label
-                className="block text-sm font-medium text-gray-900 font-montserrat"
-                htmlFor="email"
-              >
-                Email Address
-                <div className="relative mt-1">
-                  <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
-                    <img
-                      src="./src/icons/envelope-regular-full.svg"
-                      alt="email icon"
-                      className="h-5 w-5"
-                    />
-                  </div>
-                  <input
-                    id="email"
-                    type="email"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    placeholder="Enter your e-mail..."
-                    className={`w-full border rounded py-2 px-9 focus:outline-none focus:ring-1 font-montserrat ${errors.email ? "border-red-500 focus:ring-red-500" : "border-gray-800 focus:ring-black"}`}
-                    required
+
+            <label
+              className="block text-sm font-medium text-gray-900 font-montserrat"
+              htmlFor="email"
+            >
+              Email Address
+              <div className="relative mt-1">
+                <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
+                  <img
+                    src="./src/icons/envelope-regular-full.svg"
+                    alt="email icon"
+                    className="h-5 w-5"
                   />
                 </div>
+                <input
+                  id="email"
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="Enter your e-mail..."
+                  className={`w-full border rounded py-2 px-9 focus:outline-none focus:ring-1 font-montserrat ${
+                    errors.email
+                      ? "border-red-500 focus:ring-red-500"
+                      : "border-gray-800 focus:ring-black"
+                  }`}
+                  required
+                />
+              </div>
               {errors.email && (
                 <p className="mt-1 text-sm text-red-600">{errors.email}</p>
               )}
-            </label> 
+            </label>
             {/* Campo de Senha */}
             <label
-                className="mt-6 block text-sm font-medium text-gray-900 font-montserrat"
-                htmlFor="password"
-              >
-                Password
-                <div className="relative mt-1">
-                  <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
-                    <img
-                      src="./src/icons/lock-regular-full.svg"
-                      alt="lock icon"
-                      className="h-5 w-5"
-                    />
-                  </div>
-                  <input
-                    id="password"
-                    type="password"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    placeholder="Your password..."
-                    className={`w-full border rounded py-2 px-9 focus:outline-none focus:ring-1 font-montserrat ${errors.password ? "border-red-500 focus:ring-red-500" : "border-gray-800 focus:ring-black"}`}
-                    required
+              className="mt-6 block text-sm font-medium text-gray-900 font-montserrat"
+              htmlFor="password"
+            >
+              Password
+              <div className="relative mt-1">
+                <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
+                  <img
+                    src="./src/icons/lock-regular-full.svg"
+                    alt="lock icon"
+                    className="h-5 w-5"
                   />
                 </div>
+                <input
+                  id="password"
+                  type="password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  placeholder="Your password..."
+                  className={`w-full border rounded py-2 px-9 focus:outline-none focus:ring-1 font-montserrat ${
+                    errors.password
+                      ? "border-red-500 focus:ring-red-500"
+                      : "border-gray-800 focus:ring-black"
+                  }`}
+                  required
+                />
+              </div>
               {errors.password && (
                 <p className="mt-1 text-sm text-red-600">{errors.password}</p>
               )}
@@ -205,13 +213,16 @@ function LoginPage() {
           World,
         </h2>
         <h2 className="ml-8 text-160xl font-bold leading-none font-rajdhani">
-          <Link to="/feed" className="hover:text-gray-300 transition-colors duration-200">
+          <Link
+            to="/feed"
+            className="hover:text-gray-300 transition-colors duration-200"
+          >
             <button>Faster.</button>
           </Link>
         </h2>
       </div>
     </div>
   );
-};
+}
 
 export default LoginPage;
