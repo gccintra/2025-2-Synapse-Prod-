@@ -54,7 +54,7 @@ const NewsHistoryPage = () => {
     yesterday.setDate(yesterday.getDate() - 1);
 
     const formatDateGroup = (viewedAt) => {
-      const date = new Date(viewedAt);
+      const date = new Date(viewedAt); // Agora 'viewedAt' é na verdade 'read_at'
       if (date.toDateString() === today.toDateString()) return "Today";
       if (date.toDateString() === yesterday.toDateString()) return "Yesterday";
       if (today.getTime() - date.getTime() < 7 * 24 * 60 * 60 * 1000) {
@@ -67,15 +67,23 @@ const NewsHistoryPage = () => {
       });
     };
 
-    return historyList.reduce((acc, news) => {
-      // A API de histórico deve retornar 'viewed_at'
-      const groupKey = formatDateGroup(news.viewed_at);
-      if (!acc[groupKey]) {
-        acc[groupKey] = [];
+    const uniqueNewsIds = new Set();
+    const groupedData = {};
+
+    // A lista já deve vir ordenada do backend pela data de leitura mais recente (DESC).
+    // Ao iterar e usar um Set para IDs, garantimos que a primeira ocorrência (mais recente)
+    // de cada notícia seja a que é adicionada.
+    historyList.forEach((news) => {
+      if (!uniqueNewsIds.has(news.id)) {
+        uniqueNewsIds.add(news.id);
+        const groupKey = formatDateGroup(news.read_at); // Usar news.read_at
+        if (!groupedData[groupKey]) {
+          groupedData[groupKey] = [];
+        }
+        groupedData[groupKey].push(news);
       }
-      acc[groupKey].push(news);
-      return acc;
-    }, {});
+    });
+    return groupedData;
   };
 
   return (
@@ -137,8 +145,8 @@ const NewsHistoryPage = () => {
 
                   <div className="space-y-0">
                     {historyData[dateGroup].map((news) => (
-                      <NewsCard
-                        key={`${news.id}-${news.viewed_at}`}
+                      <NewsCard // Usar news.read_at para a chave
+                        key={`${news.id}-${news.read_at}`}
                         isListItem={true}
                         isLoggedIn={isLoggedIn}
                         showSaveButton={false}
