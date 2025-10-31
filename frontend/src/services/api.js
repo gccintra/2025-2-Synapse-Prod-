@@ -61,7 +61,10 @@ export const topicsAPI = {
   // Lista os tópicos preferidos do usuário
   getPreferredTopics: () => apiRequest("/topics/custom"),
   addPreferredTopic: (name) =>
-    apiRequest("/topics/custom", { method: "POST", body: JSON.stringify({ name }) }),
+    apiRequest("/topics/custom", {
+      method: "POST",
+      body: JSON.stringify({ name }),
+    }),
 
   // Remove um tópico das preferências do usuário
   removePreferredTopic: (topicId) =>
@@ -94,9 +97,16 @@ export const newsAPI = {
     apiRequest(`/news/${newsId}/favorite`, { method: "PUT" }),
 
   // Busca as noticias favoritas por usuario
-  getSavedNews: () => 
-    apiRequest(`/news/saved`, { method: "GET" }),
+  getSavedNews: () => apiRequest(`/news/saved`, { method: "GET" }),
 
+  // Adiciona uma notícia ao histórico de leitura do usuário
+  addNewsToHistory: (newsId) =>
+    apiRequest(`/news/${newsId}/history`, { method: "POST" }),
+
+  // Busca o histórico de notícias lidas pelo usuário
+  getHistory: async (page = 1, perPage = 50) => {
+    return apiRequest(`/news/history?page=${page}&per_page=${perPage}`);
+  },
 };
 
 // API de Users
@@ -111,11 +121,15 @@ export const newsSourcesAPI = {
   getAllSources: () => apiRequest("/news_sources/list_all"),
 
   // Lista as fontes que o usuário marcou como preferidas
-  getAttachedSources: () => apiRequest("/news_sources/list_all_attached_sources"),
+  getAttachedSources: () =>
+    apiRequest("/news_sources/list_all_attached_sources"),
 
   // Associa uma fonte ao usuário
   attachSource: (sourceId) =>
-    apiRequest("/news_sources/attach", { method: "POST", body: JSON.stringify({ source_id: sourceId }) }),
+    apiRequest("/news_sources/attach", {
+      method: "POST",
+      body: JSON.stringify({ source_id: sourceId }),
+    }),
 
   // Desassocia uma fonte do usuário
   detachSource: (sourceId) =>

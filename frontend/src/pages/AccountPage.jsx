@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
-import HeaderEditAccount from "../components/HeaderEditAccount";
+import DynamicHeader from "../components/DynamicHeader";
 import PreferredTopics from "../components/PreferredTopics";
 import AddSource from "../pages/AddSource";
 import { usersAPI, topicsAPI, newsSourcesAPI } from "../services/api";
@@ -57,7 +57,7 @@ const AccountInformation = ({ user }) => {
     </div>
   );
 };
-// Componente para exibir um card de uma fonte de notícia.
+// componente que exibe um card de uma fonte de notícia.
 const SourceCard = ({ source, onDelete }) => (
   <div className="flex items-center justify-between border border-black rounded shadow-lg p-4">
     <div>
@@ -126,11 +126,10 @@ const AccountPage = () => {
       const failedResponses = responses.filter((res) => !res.ok);
 
       if (failedResponses.length > 0) {
-        // Opcional: tratar erros individuais
+        // tratar erros individuais
         toast.error("Some sources could not be added.");
       }
 
-      // Atualiza o estado local com as fontes que foram salvas com sucesso
       setUserData((prevData) => ({
         ...prevData,
         preferred_sources: [...prevData.preferred_sources, ...newSources],
@@ -141,13 +140,12 @@ const AccountPage = () => {
       setIsAddingSource(false); // Fecha a tela de adição
     }
   };
-  // Este `useEffect` roda uma vez quando o componente é montado para realizar a busca de dados do usuario.
   useEffect(() => {
     const fetchUserData = async () => {
       setLoading(true);
       setError(null);
       try {
-        // Busca de dados do perfil, tópicos e fontes em paralelo
+        // buscando dados do perfil, tópicos e fontes em paralelo
         const [profileRes, topicsRes, sourcesRes] = await Promise.all([
           usersAPI.getUserProfile(),
           topicsAPI.getPreferredTopics(),
@@ -158,11 +156,9 @@ const AccountPage = () => {
           full_name: profileRes.data.full_name,
           email: profileRes.data.email,
           birthdate: profileRes.data.birthdate,
-          // A resposta de tópicos agora tem uma estrutura aninhada
           preferred_topics: topicsRes.data.topics || [],
           preferred_sources: sourcesRes.data || [],
         });
-
       } catch (err) {
         setError(err.message || "Erro de conexão ao buscar dados do usuário.");
       } finally {
@@ -172,7 +168,7 @@ const AccountPage = () => {
     fetchUserData();
   }, [navigate]);
 
-  // Função para adicionar um novo tópico à lista.
+  // adicionar um novo tópico à lista.
   const handleAddTopic = async () => {
     if (newTopic.trim() === "") return;
     const limit = 10;
@@ -185,7 +181,6 @@ const AccountPage = () => {
     try {
       const result = await topicsAPI.addPreferredTopic(newTopic.trim());
 
-      // Adiciona o novo tópico apenas se ele já não estiver na lista (caso de re-associação)
       if (
         !userData.preferred_topics.some((t) => t.id === result.data.topic.id)
       ) {
@@ -299,7 +294,10 @@ const AccountPage = () => {
   // Se não há erro e o carregamento terminou, mostra a página completa.
   return (
     <div className="bg-gray-50 min-h-screen">
-      <HeaderEditAccount userEmail={userData.email} />
+      <DynamicHeader
+        userEmail={userData.email} // Opcional, se o email já estiver no contexto de autenticação
+        isAuthenticated={true} // Opcional, se o status de autenticação já estiver no contexto
+      />
       <main className="max-w-7xl mx-auto px-6">
         <div className="flex">
           <aside className="mt-16 ml-12 w-1/3">

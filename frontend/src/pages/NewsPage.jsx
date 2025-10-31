@@ -1,9 +1,9 @@
 // src/pages/NewsPage.jsx
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useParams } from "react-router-dom";
 import { toast } from "react-toastify";
-import HeaderNewsPage from "../components/NewsPage/HeaderNewsPage";
+import DynamicHeader from "../components/DynamicHeader"; // Import the new DynamicHeader
 import NewsPageSkeleton from "../components/NewsPage/NewsPageSkeleton"; // Importe o usersAPI
 import { newsAPI } from "../services/api";
 import { usersAPI } from "../services/api";
@@ -17,6 +17,7 @@ const NewsPage = () => {
   const [isSaved, setIsSaved] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const historyAddedRef = useRef(false);
 
   useEffect(() => {
     const fetchNewsData = async () => {
@@ -53,7 +54,7 @@ const NewsPage = () => {
         // Define o estado inicial do botão de salvar
         setIsSaved(newsData.is_favorited || false);
 
-        // Define o status de login
+        // status de login
         setIsLoggedIn(authResponse.status === "fulfilled");
       } catch (err) {
         console.error("Erro ao carregar notícia:", err);
@@ -65,6 +66,21 @@ const NewsPage = () => {
 
     fetchNewsData();
   }, [newsId]);
+
+  //useEffect: Registro de Histórico
+  useEffect(() => {
+    if (isLoggedIn && newsId && !historyAddedRef.current) {
+      const addHistory = async () => {
+        try {
+          await newsAPI.addNewsToHistory(newsId);
+          historyAddedRef.current = true;
+        } catch (historyError) {
+          console.warn("Could not save to history:", historyError.message);
+        }
+      };
+      addHistory();
+    }
+  }, [isLoggedIn, newsId]);
 
   // Função de segurança para HTML
   const createMarkup = (htmlContent) => {
@@ -105,7 +121,8 @@ const NewsPage = () => {
   if (error) {
     return (
       <div className="bg-white min-h-screen">
-        <HeaderNewsPage isLoggedIn={isLoggedIn} />
+        <DynamicHeader isAuthenticated={isLoggedIn} />{" "}
+        {/* backTo/backText will use location.state.from */}
         <main className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 pt-10 pb-20">
           <div className="text-center py-12">
             <h1 className="text-2xl font-bold text-gray-900 mb-4">
@@ -127,7 +144,8 @@ const NewsPage = () => {
   if (!articleData) {
     return (
       <div className="bg-white min-h-screen">
-        <HeaderNewsPage isLoggedIn={isLoggedIn} />
+        <DynamicHeader isAuthenticated={isLoggedIn} />{" "}
+        {/* backTo/backText will use location.state.from */}
         <main className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 pt-10 pb-20">
           <div className="text-center py-12">
             <h1 className="text-2xl font-bold text-gray-900 mb-4">
@@ -151,8 +169,8 @@ const NewsPage = () => {
   return (
     <div className="bg-white min-h-screen">
       {/* Header da Página de Notícias (mantendo o email do usuário) */}
-      <HeaderNewsPage isLoggedIn={isLoggedIn} />
-
+      <DynamicHeader isAuthenticated={isLoggedIn} />{" "}
+      {/* backTo/backText will use location.state.from */}
       <main className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 pt-10 pb-20">
         {/* Imagem de Destaque */}
         <img

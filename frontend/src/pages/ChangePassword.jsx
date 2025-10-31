@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
-import HeaderEditAccount from "../components/HeaderEditAccount";
+import DynamicHeader from "../components/DynamicHeader";
 import LockIcon from "../icons/lock-regular-full.svg";
 import SeeEye from "../icons/eye-regular-full.svg";
 import BlockedEye from "../icons/eye-slash-regular-full.svg";
@@ -134,10 +134,9 @@ function ChangePassword() {
 
   return (
     <>
-      <HeaderEditAccount
-        userEmail={userEmail}
-        backTo="/account"
-        backText="Back to account"
+      <DynamicHeader
+        userEmail={userEmail} // Opcional, se o email já estiver no contexto de autenticação
+        isAuthenticated={true} // Opcional, se o status de autenticação já estiver no contexto
       />
       <div className="h-[calc(100vh-4.625rem)] flex flex-col justify-start items-center bg-[#f5f5f5] pt-16">
         <div className="w-full max-w-lg">

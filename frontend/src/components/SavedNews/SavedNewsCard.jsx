@@ -1,10 +1,12 @@
 // src/components/SavedNewsCard.jsx
 
 import React from "react";
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import fallbackImage from "../../assets/news-placeholder.jpg"; // Importa a imagem de fallback
 
 const SavedNewsCard = ({ news, onRemove }) => {
+  const location = useLocation(); // Hook para obter a localização atual
+
   // Função para lidar com o clique na remoção.
   // Previne a navegação para a página da notícia.
   const handleRemoveClick = (e) => {
@@ -34,7 +36,11 @@ const SavedNewsCard = ({ news, onRemove }) => {
       </button>
 
       {/* Link para a página da notícia */}
-      <Link to={`/article/${news.id}`} className="block">
+      <Link
+        to={`/article/${news.id}`}
+        state={{ from: location.pathname }} // Passa o caminho atual como estado
+        className="block"
+      >
         {/* Imagem */}
         <img
           src={news.image}

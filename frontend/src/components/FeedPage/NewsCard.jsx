@@ -1,5 +1,5 @@
 import React, { forwardRef, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom"; // Import useLocation
 import { toast } from "react-toastify";
 import TestNewsImage from "../../assets/news-placeholder.jpg";
 import Test2NewsImage from "../../assets/news-placeholder-2.jpg";
@@ -8,30 +8,36 @@ import { newsAPI } from "../../services/api";
 
 const NewsCard = forwardRef(
   (
-    { news, isListItem = false, isLoading = false, isLoggedIn = false },
+    {
+      news,
+      isListItem = false,
+      isLoading = false,
+      isLoggedIn = false,
+      showSaveButton = true,
+    },
     ref
   ) => {
-    // Inicializa o estado com base na propriedade da API
     const [isSaved, setIsSaved] = useState(news?.is_favorited || false);
     const [isSaving, setIsSaving] = useState(false); // Estado de carregamento para o botão
     const [isClicked, setIsClicked] = useState(false); // Estado para a animação de clique
+    const location = useLocation(); // Hook para obter a localização atual
     const LinkComponent = isLoading ? "div" : Link;
 
-    // Impede que o clique no ícone navegue para a notícia
+    // impede que o clique no ícone navegue para a notícia
     const handleSaveClick = async (e) => {
       e.stopPropagation();
       e.preventDefault();
 
-      // 1. Verifica se o usuário NÃO está logado
+      // verifica se o usuário NÃO está logado
       if (!isLoggedIn) {
         toast.warn("To save a news story, you need to be logged in.");
-        return; // Interrompe a execução
+        return; // interrompe a execução
       }
 
-      if (isSaving) return; // Previne múltiplos cliques
+      if (isSaving) return; // previne múltiplos cliques
 
-      setIsClicked(true); // Ativa a animação
-      setTimeout(() => setIsClicked(false), 300); // Reseta a animação após 300ms
+      setIsClicked(true); // animação
+      setTimeout(() => setIsClicked(false), 300); // Reseta a animação
 
       setIsSaving(true);
 
@@ -56,6 +62,7 @@ const NewsCard = forwardRef(
         // Card da lista
         <LinkComponent
           to={!isLoading ? `/article/${news?.id}` : undefined}
+          state={{ from: location.pathname }} // Passa o caminho atual como estado
           ref={ref}
           className={`relative group flex items-start gap-4 p-4 border-b border-gray-200 ${
             !isLoading && "hover:bg-gray-100 transition-colors cursor-pointer"
@@ -97,8 +104,8 @@ const NewsCard = forwardRef(
             )}
           </div>
 
-          {/* --- ÍCONE DE SALVAR (LISTA) --- */}
-          {!isLoading && (
+          {/* --- ÍCONE DE SALVAR --- */}
+          {!isLoading && showSaveButton && (
             <button
               onClick={handleSaveClick}
               disabled={isSaving}
@@ -132,6 +139,7 @@ const NewsCard = forwardRef(
       // Card destaques
       <LinkComponent
         to={!isLoading ? `/article/${news?.id}` : undefined}
+        state={{ from: location.pathname }} // Passa o caminho atual como estado
         className={`relative group text-base rounded-lg overflow-hidden font-montserrat h-full ${
           !isLoading &&
           "transition-all duration-300 ease-in-out hover:scale-[1.02] cursor-pointer"
@@ -150,7 +158,7 @@ const NewsCard = forwardRef(
           )}
 
           {/* --- ÍCONE DE SALVAR (DESTAQUES) --- */}
-          {!isLoading && (
+          {!isLoading && showSaveButton && (
             <button
               onClick={handleSaveClick}
               disabled={isSaving}
