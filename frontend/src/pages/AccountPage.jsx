@@ -7,7 +7,7 @@ import { toast } from "react-toastify";
 
 import DynamicHeader from "../components/DynamicHeader";
 import PreferredTopics from "../components/PreferredTopics";
-import AddSource from "../pages/AddSource";
+import AddSource from "../components/AddSource";
 
 const InfoRow = ({ label, value, action, actionLink }) => (
   <div className="flex justify-between items-center py-3">

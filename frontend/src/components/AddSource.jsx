@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
-import DynamicHeader from "../components/DynamicHeader";
+import DynamicHeader from "./DynamicHeader";
 import { newsSourcesAPI } from "../services/api";
 import BackIcon from "../icons/back-svgrepo-com.svg";
 
