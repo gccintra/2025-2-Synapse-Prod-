@@ -67,21 +67,14 @@ const NewsHistoryPage = () => {
       });
     };
 
-    const uniqueNewsIds = new Set();
     const groupedData = {};
 
-    // A lista já deve vir ordenada do backend pela data de leitura mais recente (DESC).
-    // Ao iterar e usar um Set para IDs, garantimos que a primeira ocorrência (mais recente)
-    // de cada notícia seja a que é adicionada.
     historyList.forEach((news) => {
-      if (!uniqueNewsIds.has(news.id)) {
-        uniqueNewsIds.add(news.id);
-        const groupKey = formatDateGroup(news.read_at); // Usar news.read_at
-        if (!groupedData[groupKey]) {
-          groupedData[groupKey] = [];
-        }
-        groupedData[groupKey].push(news);
+      const groupKey = formatDateGroup(news.read_at); // Usar news.read_at
+      if (!groupedData[groupKey]) {
+        groupedData[groupKey] = [];
       }
+      groupedData[groupKey].push(news);
     });
     return groupedData;
   };
