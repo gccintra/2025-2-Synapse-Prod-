@@ -32,8 +32,8 @@ def test_add_preferred_topic_new_topic(custom_topic_service, mock_custom_topic_r
     result = custom_topic_service.add_preferred_topic(user_id, topic_name)
     
     assert result["topic"]['name'] == new_topic.name
-    assert result["attached"] is True # type: ignore
-    mock_custom_topic_repository.find_by_name.assert_called_once_with(topic_name.lower())
+    assert result["attached"] is True 
+    mock_custom_topic_repository.find_by_name.assert_called_once_with(new_topic.name)
     mock_users_topics_repository.attach.assert_called_once_with(user_id, new_topic.id)
 
 def test_add_preferred_topic_existing_topic(custom_topic_service, mock_custom_topic_repository, mock_users_topics_repository):
@@ -49,7 +49,7 @@ def test_add_preferred_topic_existing_topic(custom_topic_service, mock_custom_to
     
     assert result["topic"]['name'] == existing_topic.name
     assert result["attached"] is True # type: ignore
-    mock_custom_topic_repository.find_by_name.assert_called_once_with(topic_name.lower()) 
+    mock_custom_topic_repository.find_by_name.assert_called_once_with(existing_topic.name) 
     mock_custom_topic_repository.create.assert_not_called()
     mock_users_topics_repository.attach.assert_called_once_with(user_id, existing_topic.id)
 
@@ -65,7 +65,7 @@ def test_add_preferred_topic_already_attached(custom_topic_service, mock_custom_
     
     assert result["topic"]['name'] == existing_topic.name
     assert result["attached"] is False # type: ignore
-    mock_custom_topic_repository.find_by_name.assert_called_once_with(topic_name.lower())
+    mock_custom_topic_repository.find_by_name.assert_called_once_with(existing_topic.name)
     mock_custom_topic_repository.create.assert_not_called()
     mock_users_topics_repository.attach.assert_called_once_with(user_id, existing_topic.id)
 
@@ -84,7 +84,7 @@ def test_get_user_preferred_topics_returns_topics(custom_topic_service, mock_cus
     result = custom_topic_service.get_user_preferred_topics(user_id)
     
     assert len(result) == 3
-    assert [t['name'] for t in result] == ["topic 1", "topic 2", "topic 3"]
+    assert [t['name'] for t in result] == ["Topic 1", "Topic 2", "Topic 3"]
     mock_users_topics_repository.list_user_topic_ids.assert_called_once_with(user_id)
     mock_custom_topic_repository.find_by_ids.assert_called_once_with(topic_ids)
 

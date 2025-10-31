@@ -21,16 +21,15 @@ class UserCustomTopicService:
             if current_count >= self.MAX_TOPICS_PER_USER:
                 raise CustomTopicValidationError("limit", f"Limite máximo de {self.MAX_TOPICS_PER_USER} tópicos atingido.")
 
-            normalized_name = " ".join(name.strip().split()).lower()
-            topic_model = CustomTopic(name=normalized_name) # Valida e normaliza
+            topic_model = CustomTopic(name=name) 
 
-            topic = self.custom_topic_repo.find_by_name(normalized_name)
+            topic = self.custom_topic_repo.find_by_name(topic_model.name)
             if not topic:
                 try:
                     topic = self.custom_topic_repo.create(topic_model)
                 except IntegrityError: 
-                    logging.warning(f"Race condition ao criar tópico customizado '{normalized_name}'. Buscando novamente.")
-                    topic = self.custom_topic_repo.find_by_name(normalized_name)
+                    logging.warning(f"Race condition ao criar tópico customizado '{topic_model.name}'. Buscando novamente.")
+                    topic = self.custom_topic_repo.find_by_name(topic_model.name)
                     if not topic:
                         raise 
 

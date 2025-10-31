@@ -49,7 +49,7 @@ def test_add_topic_to_user_successfully(client, db):
     data = response.get_json()
     assert data['success'] is True
     assert "Tópico adicionado com sucesso." in data['message']
-    assert data['data']['topic']['name'] == "tecnologia"
+    assert data['data']['topic']['name'] == "Tecnologia"
 
 def test_add_existing_topic_to_user_successfully(client, db):
     auth_client, headers = get_auth_client(client, valid_user_data)
@@ -72,7 +72,7 @@ def test_add_existing_topic_to_user_successfully(client, db):
     data = response.get_json()
     assert data['success'] is True
     assert "Tópico adicionado com sucesso." in data['message']
-    assert data['data']['topic']['name'] == "política"
+    assert data['data']['topic']['name'] == "Política"
 
 def test_add_topic_to_user_without_name_fails(client, db):
     auth_client, headers = get_auth_client(client, valid_user_data)
@@ -101,8 +101,8 @@ def test_get_user_topics_successfully(client, db):
     assert data['success'] is True
     assert len(data['data']['topics']) == 2
     topic_names = [t['name'] for t in data['data']['topics']]
-    assert "saúde" in topic_names
-    assert "economia" in topic_names
+    assert "Saúde" in topic_names
+    assert "Economia" in topic_names
 
 def test_get_user_topics_no_topics(client, db):
     auth_client, headers = get_auth_client(client, valid_user_data)

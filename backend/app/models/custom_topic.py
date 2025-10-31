@@ -21,7 +21,7 @@ class CustomTopic:
         if not value or not isinstance(value, str):
             raise CustomTopicValidationError("name", "não pode ser vazio.")
 
-        name = " ".join(value.strip().split())
+        name = " ".join(value.strip().split()).title()
 
         if not name:
             raise CustomTopicValidationError("name", "não pode ser vazio após limpeza.")
