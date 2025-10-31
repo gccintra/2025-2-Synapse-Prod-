@@ -69,7 +69,7 @@ const DynamicHeader = ({
 
   return (
     <>
-      <header className="flex justify-between items-center p-6 bg-white border-b border-gray-300 relative">
+      <header className="flex justify-between items-center p-6 bg-white border-b border-gray-300 relative z-30">
         {/* lado esquerdo: botão "Back" ou espaço vazio */}
         <div className="flex items-center w-1/3">
           {location.pathname === "/feed" ? ( // caso esteja no feed, Synapse vai para a esquerda

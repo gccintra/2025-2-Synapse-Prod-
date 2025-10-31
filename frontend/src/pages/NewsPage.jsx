@@ -3,8 +3,11 @@
 import React, { useState, useEffect, useRef } from "react";
 import { useParams } from "react-router-dom";
 import { toast } from "react-toastify";
-import DynamicHeader from "../components/DynamicHeader"; // Import the new DynamicHeader
-import NewsPageSkeleton from "../components/NewsPage/NewsPageSkeleton"; // Importe o usersAPI
+
+import DynamicHeader from "../components/DynamicHeader";
+import NewsPageSkeleton from "../components/NewsPage/NewsPageSkeleton";
+import { motion } from "framer-motion";
+
 import { newsAPI } from "../services/api";
 import { usersAPI } from "../services/api";
 import { formatDateLong } from "../utils/dateUtils";
@@ -169,68 +172,72 @@ const NewsPage = () => {
   return (
     <div className="bg-white min-h-screen">
       {/* Header da Página de Notícias (mantendo o email do usuário) */}
-      <DynamicHeader isAuthenticated={isLoggedIn} />{" "}
-      {/* backTo/backText will use location.state.from */}
-      <main className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 pt-10 pb-20">
-        {/* Imagem de Destaque */}
-        <img
-          src={articleData.image}
-          alt={articleData.title}
-          className="w-full h-96 object-cover rounded-lg mb-8 shadow-md"
-        />
-
-        {/* Título e Metadados */}
-        <div className="mb-10 border-b border-gray-300 pb-4">
-          <h1 className="text-4xl font-extrabold text-gray-900 font-montserrat mb-3 leading-tight">
-            {articleData.title}
-          </h1>
-          <div className="flex justify-between items-center">
-            <p className="text-base text-gray-600 font-montserrat">
-              Fonte:{" "}
-              <span className="font-semibold text-black">
-                {articleData.source}
-              </span>{" "}
-              | {articleData.date}
-            </p>
-
-            {/* --- ÍCONE DE SALVAR --- */}
-            <button
-              onClick={handleSaveClick}
-              disabled={isSaving}
-              className={`p-2 rounded-full hover:bg-gray-100 transition-colors focus:outline-none focus:ring-2 focus:ring-gray-400 ${
-                isSaving ? "cursor-wait" : ""
-              }`}
-              aria-label="Salvar notícia"
-            >
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                className={`h-6 w-6 transition-colors ${
-                  isSaved ? "text-black" : "text-gray-500"
-                }`}
-                fill={isSaved ? "currentColor" : "none"}
-                viewBox="0 0 24 24"
-                stroke="black"
-                strokeWidth={2}
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z"
-                />
-              </svg>
-            </button>
-          </div>
-        </div>
-
-        {/* 🛑 Conteúdo do Artigo com dangerouslySetInnerHTML 🛑 */}
-        <article>
-          {/* A classe 'prose' do Tailwind é crucial aqui para aplicar estilos de leitura padrão ao HTML que vem da API (p, h2, img, a, etc.) */}
-          <div
-            className="prose prose-lg max-w-none font-montserrat text-gray-800"
-            dangerouslySetInnerHTML={createMarkup(articleData.contentHtml)}
+      <motion.div
+        className="bg-gray-50 min-h-screen"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: 0.7 }}
+      >
+        <DynamicHeader isAuthenticated={isLoggedIn} />{" "}
+        {/* backTo/backText will use location.state.from */}
+        <main className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 pt-10 pb-20">
+          {/* Imagem de Destaque */}
+          <img
+            src={articleData.image}
+            alt={articleData.title}
+            className="w-full h-96 object-cover rounded-lg mb-8 shadow-md"
           />
-        </article>
-      </main>
+          {/* Título e Metadados */}
+          <div className="mb-10 border-b border-gray-300 pb-4">
+            <h1 className="text-4xl font-extrabold text-gray-900 font-montserrat mb-3 leading-tight">
+              {articleData.title}
+            </h1>
+            <div className="flex justify-between items-center">
+              <p className="text-base text-gray-600 font-montserrat">
+                Fonte:{" "}
+                <span className="font-semibold text-black">
+                  {articleData.source}
+                </span>{" "}
+                | {articleData.date}
+              </p>
+              {/* --- ÍCONE DE SALVAR --- */}
+              <button
+                onClick={handleSaveClick}
+                disabled={isSaving}
+                className={`p-2 rounded-full hover:bg-gray-100 transition-colors focus:outline-none focus:ring-2 focus:ring-gray-400 ${
+                  isSaving ? "cursor-wait" : ""
+                }`}
+                aria-label="Salvar notícia"
+              >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  className={`h-6 w-6 transition-colors ${
+                    isSaved ? "text-black" : "text-gray-500"
+                  }`}
+                  fill={isSaved ? "currentColor" : "none"}
+                  viewBox="0 0 24 24"
+                  stroke="black"
+                  strokeWidth={2}
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z"
+                  />
+                </svg>
+              </button>
+            </div>
+          </div>
+          {/* 🛑 Conteúdo do Artigo com dangerouslySetInnerHTML 🛑 */}
+          <article>
+            {/* A classe 'prose' do Tailwind é crucial aqui para aplicar estilos de leitura padrão ao HTML que vem da API (p, h2, img, a, etc.) */}
+            <div
+              className="prose prose-lg max-w-none font-montserrat text-gray-800"
+              dangerouslySetInnerHTML={createMarkup(articleData.contentHtml)}
+            />
+          </article>
+        </main>
+      </motion.div>
     </div>
   );
 };
