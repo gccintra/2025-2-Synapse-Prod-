@@ -17,14 +17,23 @@ const InfoRow = ({ label, value, action, actionLink }) => (
     </div>
     {action && (
       <motion.div
-        whileHover={{ x: 5, transition: { type: "spring", stiffness: 300 } }}
+        className="relative"
+        initial="rest"
+        whileHover="hover"
+        animate="rest"
       >
         <Link
           to={actionLink}
-          className="font-medium text-base text-black hover:underline font-montserrat"
+          className="font-medium text-base text-black font-montserrat"
         >
           {action}
         </Link>
+        <motion.span
+          className="absolute bottom-0 left-0 block h-0.5 w-full bg-black"
+          variants={{ rest: { scaleX: 0 }, hover: { scaleX: 1 } }}
+          transition={{ duration: 0.3 }}
+          style={{ originX: 0 }}
+        />
       </motion.div>
     )}
   </div>
@@ -42,14 +51,18 @@ const AccountInformation = ({ user }) => {
           Account information
         </h2>
         <motion.div
-          whileHover={{ x: 5, transition: { type: "spring", stiffness: 300 } }}
+          className="relative"
+          initial="rest"
+          whileHover="hover"
+          animate="rest"
         >
-          <Link
-            to="/edit-account"
-            className="font-medium text-base text-black hover:underline font-montserrat"
-          >
-            Edit
-          </Link>
+          <Link to="/edit-account">Edit</Link>
+          <motion.span
+            className="absolute bottom-0 left-0 block h-0.5 w-full bg-black"
+            variants={{ rest: { scaleX: 0 }, hover: { scaleX: 1 } }}
+            transition={{ duration: 0.3 }}
+            style={{ originX: 0 }}
+          />
         </motion.div>
       </div>
       <hr className="my-4 border-t-2 border-black" />
