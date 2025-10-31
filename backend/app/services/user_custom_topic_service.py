@@ -21,7 +21,7 @@ class UserCustomTopicService:
             if current_count >= self.MAX_TOPICS_PER_USER:
                 raise CustomTopicValidationError("limit", f"Limite máximo de {self.MAX_TOPICS_PER_USER} tópicos atingido.")
 
-            topic_model = CustomTopic(name=name)
+            topic_model = CustomTopic(name=name) 
 
             topic = self.custom_topic_repo.find_by_name(topic_model.name)
             if not topic:
@@ -44,7 +44,9 @@ class UserCustomTopicService:
 
         except CustomTopicValidationError:
             raise  
-        except Exception as e:
+        except IntegrityError:
+            raise
+        except Exception as e: # Captura outras exceções inesperadas
             logging.error(f"Erro ao criar tópico customizado: {e}", exc_info=True)
             raise Exception("Erro interno ao adicionar tópico preferido.")
 

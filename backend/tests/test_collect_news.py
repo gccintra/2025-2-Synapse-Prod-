@@ -29,26 +29,26 @@ def mock_news_collect_service():
 
 def test_run_collection_job_successful(mock_app_context, mock_news_collect_service):
 
-    mock_news_collect_service.collect_news_intelligently.return_value = (5, 2)
+    mock_news_collect_service.collect_news_simple.return_value = (5, 2)
 
     with patch('app.jobs.collect_news.logging') as mock_logging:
         app.jobs.collect_news.run_collection_job()
 
-    mock_news_collect_service.collect_news_intelligently.assert_called_once()
+    mock_news_collect_service.collect_news_simple.assert_called_once()
 
 def test_run_collection_job_with_exception(mock_app_context, mock_news_collect_service):
 
-    mock_news_collect_service.collect_news_intelligently.side_effect = Exception("API connection error")
+    mock_news_collect_service.collect_news_simple.side_effect = Exception("API connection error")
 
     with patch('app.jobs.collect_news.logging'):
         with pytest.raises(Exception, match="API connection error"):
             app.jobs.collect_news.run_collection_job()
 
-    mock_news_collect_service.collect_news_intelligently.assert_called_once()
+    mock_news_collect_service.collect_news_simple.assert_called_once()
 
 def test_main_block_runs_run_collection_job(mock_app_context, mock_news_collect_service):
-    mock_news_collect_service.collect_news_intelligently.return_value = (1, 1)
+    mock_news_collect_service.collect_news_simple.return_value = (1, 1)
 
     runpy.run_module('app.jobs.collect_news', run_name='__main__')
 
-    mock_news_collect_service.collect_news_intelligently.assert_called_once()
+    mock_news_collect_service.collect_news_simple.assert_called_once()

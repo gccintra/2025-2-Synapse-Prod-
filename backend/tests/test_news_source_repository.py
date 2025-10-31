@@ -5,7 +5,7 @@ from app.repositories.news_source_repository import NewsSourceRepository
 from app.models.news_source import NewsSource
 from app.entities.user_entity import UserEntity
 from app.entities.news_source_entity import NewsSourceEntity
-from app.entities.user_news_sources_entity import UserNewsSourceEntity
+from app.entities.user_preferred_news_sources_entity import UserPreferredNewsSourceEntity
 
 @pytest.fixture
 def news_source_repo(db):
@@ -54,7 +54,7 @@ def test_list_by_user_id(news_source_repo, db):
     s2 = NewsSourceEntity(name="S2", url="http://s2.com")
     db.session.add_all([user, s1, s2])
     db.session.commit()
-    db.session.add(UserNewsSourceEntity(user_id=user.id, source_id=s1.id))
+    db.session.add(UserPreferredNewsSourceEntity(user_id=user.id, source_id=s1.id))
     db.session.commit()
     
     user_sources = news_source_repo.list_by_user_id(user.id)
@@ -69,7 +69,7 @@ def test_list_unassociated_by_user_id(news_source_repo, db):
     s3 = NewsSourceEntity(name="S3-un", url="http://s3un.com") 
     db.session.add_all([user, s1, s2, s3])
     db.session.commit()
-    db.session.add(UserNewsSourceEntity(user_id=user.id, source_id=s1.id))
+    db.session.add(UserPreferredNewsSourceEntity(user_id=user.id, source_id=s1.id))
     db.session.commit()
 
     unassociated = news_source_repo.list_unassociated_by_user_id(user.id)

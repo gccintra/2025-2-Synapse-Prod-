@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timezone
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy import ForeignKey, Text
 from app.extensions import db
@@ -17,7 +17,7 @@ class NewsEntity(db.Model):
     source_id: Mapped[int] = mapped_column(ForeignKey("news_sources.id", ondelete="CASCADE"), nullable=False)
     topic_id: Mapped[int] = mapped_column(ForeignKey("topics.id", ondelete="SET NULL"), nullable=True)
 
-    created_at = mapped_column(db.DateTime(timezone=True), nullable=False, default=datetime.utcnow)
+    created_at: Mapped[datetime] = mapped_column(db.DateTime(timezone=True), nullable=False, default=lambda: datetime.now(timezone.utc))
 
     source = relationship("NewsSourceEntity", lazy="select")
     topic = relationship("TopicEntity", lazy="select")

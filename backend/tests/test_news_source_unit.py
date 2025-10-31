@@ -98,11 +98,11 @@ def test_detach_source_from_user(news_source_service, mock_user_news_source_repo
     mock_user_news_source_repository.detach.assert_called_once_with(user_id, source_id)
 
 def test_news_source_model_validation():
-    with pytest.raises(NewsSourceValidationError, match="name: não pode ser vazio."):
+    with pytest.raises(NewsSourceValidationError, match="Erro de validação em 'name': não pode ser vazio."):
         NewsSource(name="", url="http://valid.com")
-    with pytest.raises(NewsSourceValidationError, match="url: não pode ser vazia."):
+    with pytest.raises(NewsSourceValidationError, match="Erro de validação em 'url': não pode ser vazia."):
         NewsSource(name="Valid Name", url="")
-    with pytest.raises(NewsSourceValidationError, match="url: formato inválido."):
+    with pytest.raises(NewsSourceValidationError, match="Erro de validação em 'url': formato inválido."):
         NewsSource(name="Valid Name", url="not-a-url")
 
 def test_list_all_sources_exception(news_source_service, mock_news_source_repository):

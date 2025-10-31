@@ -3,7 +3,7 @@ from unittest.mock import patch
 from sqlalchemy.exc import SQLAlchemyError, IntegrityError
 from app.repositories.user_news_source_repository import UserNewsSourceRepository
 from app.models.exceptions import NewsSourceAlreadyAttachedError, NewsSourceNotAttachedError
-from app.entities.user_news_sources_entity import UserNewsSourceEntity
+from app.entities.user_preferred_news_sources_entity import UserPreferredNewsSourceEntity
 
 @pytest.fixture
 def user_news_source_repo(db):
@@ -12,7 +12,7 @@ def user_news_source_repo(db):
 def test_attach_success(user_news_source_repo, db):
     user_id, source_id = 1, 1
     user_news_source_repo.attach(user_id, source_id)
-    relation = db.session.query(UserNewsSourceEntity).filter_by(user_id=user_id, source_id=source_id).one()
+    relation = db.session.query(UserPreferredNewsSourceEntity).filter_by(user_id=user_id, source_id=source_id).one()
     assert relation is not None
 
 def test_attach_already_exists_raises_error(user_news_source_repo, db):
@@ -33,12 +33,12 @@ def test_attach_sqlalchemy_error(user_news_source_repo, db):
 
 def test_detach_success(user_news_source_repo, db):
     user_id, source_id = 1, 1
-    db.session.add(UserNewsSourceEntity(user_id=user_id, source_id=source_id))
+    db.session.add(UserPreferredNewsSourceEntity(user_id=user_id, source_id=source_id))
     db.session.commit()
 
     user_news_source_repo.detach(user_id, source_id)
 
-    relation = db.session.query(UserNewsSourceEntity).filter_by(user_id=user_id, source_id=source_id).first()
+    relation = db.session.query(UserPreferredNewsSourceEntity).filter_by(user_id=user_id, source_id=source_id).first()
     assert relation is None
 
 def test_detach_not_existing_raises_error(user_news_source_repo):
@@ -47,7 +47,7 @@ def test_detach_not_existing_raises_error(user_news_source_repo):
 
 def test_detach_sqlalchemy_error(user_news_source_repo, db):
     user_id, source_id = 1, 1
-    db.session.add(UserNewsSourceEntity(user_id=user_id, source_id=source_id))
+    db.session.add(UserPreferredNewsSourceEntity(user_id=user_id, source_id=source_id))
     db.session.commit()
 
     with patch.object(db.session, 'commit', side_effect=SQLAlchemyError("DB Error")):
