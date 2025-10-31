@@ -5,7 +5,6 @@ import ArrowDownIcon from "../icons/arrow-down.svg";
 import BackIcon from "../icons/back-svgrepo-com.svg";
 import { usersAPI } from "../services/api";
 
-// Utility function to read a cookie by name
 function getCookie(name) {
   const value = `; ${document.cookie}`;
   const parts = value.split(`; ${name}=`);
@@ -14,11 +13,11 @@ function getCookie(name) {
 }
 
 const DynamicHeader = ({
-  userEmail: propUserEmail, // Email do usuário passado como prop (opcional)
-  isAuthenticated: propIsAuthenticated, // Status de autenticação passado como prop (opcional)
-  showBackButton = true, // Controla a visibilidade do botão de voltar
-  backTo, // Caminho explícito para onde o botão de voltar deve levar
-  backText, // Texto explícito para o botão de voltar
+  userEmail: propUserEmail,
+  isAuthenticated: propIsAuthenticated,
+  showBackButton = true,
+  backTo,
+  backText,
 }) => {
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [localUserEmail, setLocalUserEmail] = useState(propUserEmail || "");
@@ -28,9 +27,8 @@ const DynamicHeader = ({
   const navigate = useNavigate();
   const location = useLocation();
 
-  // Busca dados do usuário se não forem fornecidos via props
+  // busca dados do usuário se não forem fornecidos via props
   useEffect(() => {
-    // Só busca se o email não foi fornecido ou se o status de autenticação é desconhecido
     if (!propUserEmail || propIsAuthenticated === undefined) {
       const fetchUserData = async () => {
         try {
@@ -38,7 +36,6 @@ const DynamicHeader = ({
           setLocalUserEmail(response.data.email || "");
           setLocalIsAuthenticated(true);
         } catch (err) {
-          // Se falhar, o usuário não está autenticado
           console.error("Failed to fetch user data in DynamicHeader:", err);
           setLocalIsAuthenticated(false);
         }
@@ -47,34 +44,23 @@ const DynamicHeader = ({
     }
   }, [propUserEmail, propIsAuthenticated]);
 
-  // Determina a navegação de volta dinamicamente
-  // Prioriza 'backTo' explícito, depois 'location.state.from', senão '/feed'
   const actualBackTo = backTo || location.state?.from || "/feed";
-  // Prioriza 'backText' explícito, senão "Back" se veio de algum lugar, senão "Back to feed"
+
   const actualBackText =
     backText || (location.state?.from ? "Back" : "Back to feed");
 
-  // Função de logout
   const handleLogout = async () => {
     try {
-      const apiUrl = import.meta.env.VITE_API_BASE_URL;
-      const csrfToken = getCookie("csrf_access_token");
-
-      await fetch(`${apiUrl}/users/logout`, {
-        method: "POST",
-        headers: { "X-CSRF-TOKEN": csrfToken || "" }, // Garante que csrfToken não seja nulo
-        credentials: "include",
-      });
+      await usersAPI.logout();
       toast.success("Logout successful!");
     } catch (error) {
       console.error("Logout failed:", error);
-      toast.error("Logout failed. Please try again.");
+      toast.error(error.message || "Logout failed. Please try again.");
     } finally {
       navigate("/login");
     }
   };
 
-  // Usa o email e status de autenticação das props se existirem, senão usa os estados locais
   const displayEmail = propUserEmail || localUserEmail;
   const displayIsAuthenticated =
     propIsAuthenticated !== undefined

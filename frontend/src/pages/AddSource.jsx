@@ -1,16 +1,17 @@
 import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
-import DynamicHeader from "../components/DynamicHeader"; // Import the new DynamicHeader
+import DynamicHeader from "../components/DynamicHeader";
+import { newsSourcesAPI } from "../services/api";
 import BackIcon from "../icons/back-svgrepo-com.svg";
 
-// Sub-componente que representa cada card de fonte
+// sub-componente que representa cada card de fonte
 const SourceSelectCard = ({ source, isSelected, onToggle }) => {
   const baseClasses =
-    "w-full flex items-center justify-between p-4 rounded-lg cursor-pointer transition-all duration-200 border"; // Ajuste na duração para smooth
+    "w-full flex items-center justify-between p-4 rounded-lg cursor-pointer transition-all duration-200 border";
   const selectedClasses =
-    "bg-black border-black text-white transform scale-[1.01] shadow-md"; // Aumentar um pouco a escala
+    "bg-black border-black text-white transform scale-[1.01] shadow-md";
   const unselectedClasses =
-    "bg-white border-gray-300 hover:border-black text-gray-800 hover:shadow-sm"; // Adicionado hover shadow
+    "bg-white border-gray-300 hover:border-black text-gray-800 hover:shadow-sm";
 
   return (
     <div
@@ -51,7 +52,6 @@ const SourceSelectCard = ({ source, isSelected, onToggle }) => {
 };
 
 const AddSource = ({ onSave, onBack }) => {
-  // Estado para a pesquisa e para as fontes selecionadas
   const [sources, setSources] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -63,23 +63,14 @@ const AddSource = ({ onSave, onBack }) => {
       setLoading(true);
       setError(null);
       try {
-        const apiUrl = import.meta.env.VITE_API_BASE_URL;
-        const response = await fetch(
-          `${apiUrl}/news_sources/list_all_unattached_sources`,
-          {
-            method: "GET",
-            headers: { "Content-Type": "application/json" },
-            credentials: "include",
-          }
-        );
-        const data = await response.json();
-        if (response.ok) {
-          setSources(data.data || []);
+        const response = await newsSourcesAPI.getUnattachedSources();
+        if (response.success) {
+          setSources(response.data || []);
         } else {
-          setError(data.error || "Failed to load sources.");
+          setError(response.error || "Failed to load sources.");
         }
       } catch (err) {
-        setError("Connection error. Please try again.");
+        setError(err.message || "Connection error. Please try again.");
       } finally {
         setLoading(false);
       }
@@ -87,7 +78,6 @@ const AddSource = ({ onSave, onBack }) => {
     fetchUnattachedSources();
   }, []);
 
-  // Filtra as fontes sugeridas com base no termo de pesquisa
   const filteredSources = sources.filter(
     (source) =>
       source.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -107,20 +97,16 @@ const AddSource = ({ onSave, onBack }) => {
     });
   };
 
-  // Transforma o objeto de fontes selecionadas em um array e chama a função de salvar
   const handleSave = () => {
     const sourcesArray = Object.values(selectedSources);
-    onSave(sourcesArray); // Esta função será passada da AccountPage
+    onSave(sourcesArray); // função passada da AccountPage
   };
 
   const selectedCount = Object.keys(selectedSources).length;
 
   return (
     <div className="bg-white min-h-screen">
-      <DynamicHeader
-        userEmail={""} // Email será buscado pelo DynamicHeader se não for fornecido
-        isAuthenticated={true} // Opcional, se o status de autenticação já estiver no contexto
-      />
+      <DynamicHeader userEmail={""} isAuthenticated={true} />
       <main className="max-w-xl mx-auto py-12 px-4 w-full text-center">
         <h2 className=" mb-2 text-3xl font-bold text-black font-montserrat">
           Add Preferred News Sources
@@ -141,7 +127,6 @@ const AddSource = ({ onSave, onBack }) => {
         </div>
 
         {/* Div para conter a lista de fontes com rolagem */}
-        {/* Adicionei `mb-24` (ou um valor maior) para garantir que o scroll não fique sob o footer */}
         <div className="h-96 overflow-y-auto space-y-4 pl-4 pr-4 mb-24 relative">
           {loading ? (
             <div className="flex justify-center items-center h-full">

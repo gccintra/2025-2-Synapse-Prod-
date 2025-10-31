@@ -1,11 +1,13 @@
-// teste
 import React, { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import { usersAPI, topicsAPI, newsSourcesAPI } from "../services/api";
+
+import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "react-toastify";
+
 import DynamicHeader from "../components/DynamicHeader";
 import PreferredTopics from "../components/PreferredTopics";
 import AddSource from "../pages/AddSource";
-import { usersAPI, topicsAPI, newsSourcesAPI } from "../services/api";
 
 const InfoRow = ({ label, value, action, actionLink }) => (
   <div className="flex justify-between items-center py-3">
@@ -14,16 +16,20 @@ const InfoRow = ({ label, value, action, actionLink }) => (
       <p className="mt-1 text-base text-gray-900 font-montserrat">{value}</p>
     </div>
     {action && (
-      <Link
-        to={actionLink}
-        className="font-medium text-base text-black hover:underline font-montserrat"
+      <motion.div
+        whileHover={{ x: 5, transition: { type: "spring", stiffness: 300 } }}
       >
-        {action}
-      </Link>
+        <Link
+          to={actionLink}
+          className="font-medium text-base text-black hover:underline font-montserrat"
+        >
+          {action}
+        </Link>
+      </motion.div>
     )}
   </div>
 );
-// Componente que agrupa as informações da conta do usuário.
+// agrupando informações da conta do usuário.
 const AccountInformation = ({ user }) => {
   const formattedBirthdate = user.birthdate
     ? new Date(user.birthdate).toLocaleDateString("pt-BR", { timeZone: "UTC" })
@@ -35,12 +41,16 @@ const AccountInformation = ({ user }) => {
         <h2 className="text-xl font-medium text-gray-900 font-montserrat">
           Account information
         </h2>
-        <Link
-          to="/edit-account"
-          className="font-medium text-base text-black hover:underline font-montserrat"
+        <motion.div
+          whileHover={{ x: 5, transition: { type: "spring", stiffness: 300 } }}
         >
-          Edit
-        </Link>
+          <Link
+            to="/edit-account"
+            className="font-medium text-base text-black hover:underline font-montserrat"
+          >
+            Edit
+          </Link>
+        </motion.div>
       </div>
       <hr className="my-4 border-t-2 border-black" />
       <div>
@@ -58,42 +68,51 @@ const AccountInformation = ({ user }) => {
   );
 };
 // componente que exibe um card de uma fonte de notícia.
-const SourceCard = ({ source, onDelete }) => (
-  <div className="flex items-center justify-between border border-black rounded shadow-lg p-4">
-    <div>
-      <h3 className="font-semibold text-gray-800">{source.name}</h3>
-      {source.url && <p className="text-sm text-gray-500">{source.url}</p>}
-    </div>
-    <button
-      onClick={() => onDelete(source.id)}
-      className="text-red-500 hover:text-red-700"
+const SourceCard = ({ source, onDelete }) => {
+  return (
+    <motion.div
+      layout
+      initial={{ opacity: 0, y: -10, scale: 0.9 }}
+      animate={{ opacity: 1, y: 0, scale: 1 }}
+      exit={{ opacity: 0, x: -20, scale: 0.9 }}
+      whileHover={{ x: 5, transition: { type: "spring", stiffness: 300 } }}
+      transition={{ type: "spring", stiffness: 300, damping: 25 }}
+      className="flex items-center justify-between border border-black rounded shadow-lg p-4"
     >
-      <svg
-        xmlns="http://www.w3.org/2000/svg"
-        className="h-5 w-5"
-        fill="none"
-        viewBox="0 0 24 24"
-        stroke="currentColor"
+      <div>
+        <h3 className="font-semibold text-gray-800">{source.name}</h3>
+        {source.url && <p className="text-sm text-gray-500">{source.url}</p>}
+      </div>
+      <button
+        onClick={() => onDelete(source.id)}
+        className="text-red-500 hover:text-red-700 z-10"
       >
-        <path
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          strokeWidth={2}
-          d="M6 18L18 6M6 6l12 12"
-        />
-      </svg>
-    </button>
-  </div>
-);
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          className="h-5 w-5"
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke="currentColor"
+        >
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth={2}
+            d="M6 18L18 6M6 6l12 12"
+          />
+        </svg>
+      </button>
+    </motion.div>
+  );
+};
 
-// Função auxiliar para ler um cookie pelo nome
+// ler um cookie pelo nome
 function getCookie(name) {
   const value = `; ${document.cookie}`;
   const parts = value.split(`; ${name}=`);
   if (parts.length === 2) return parts.pop().split(";").shift();
 }
 
-// --- Componente Principal da Página ---
 const AccountPage = () => {
   const [userData, setUserData] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -137,7 +156,7 @@ const AccountPage = () => {
     } catch (err) {
       toast.error("Connection error while saving sources.");
     } finally {
-      setIsAddingSource(false); // Fecha a tela de adição
+      setIsAddingSource(false);
     }
   };
   useEffect(() => {
@@ -198,7 +217,7 @@ const AccountPage = () => {
       setTopicError("Connection error. Try again.");
     }
   };
-  // Função para deletar um tópico da lista pelo seu ID.
+  // deletar um tópico da lista pelo seu ID.
   const handleDeleteTopic = async (topicId) => {
     try {
       await topicsAPI.removePreferredTopic(topicId);
@@ -244,8 +263,24 @@ const AccountPage = () => {
       toast.error("Connection error when removing source.");
     }
   };
-  // --- RENDERIZAÇÃO CONDICIONAL ---
-  // Mostra um spinner de carregamento enquanto os dados não chegam.
+  const containerVariants = {
+    hidden: { opacity: 0 },
+    visible: {
+      opacity: 1,
+      transition: {
+        staggerChildren: 0.2,
+      },
+    },
+  };
+
+  const sectionVariants = {
+    hidden: { y: 20, opacity: 0 },
+    visible: {
+      y: 0,
+      opacity: 1,
+    },
+  };
+  // spinner de carregamento
   if (loading) {
     return (
       <div className="flex justify-center items-center h-screen">
@@ -273,7 +308,7 @@ const AccountPage = () => {
     );
   }
 
-  // Mostra uma mensagem de erro se a busca de dados falhar
+  // mensagem de erro se a busca de dados falhar
   if (error) {
     return (
       <div className="flex justify-center items-center h-screen text-red-500">
@@ -291,12 +326,11 @@ const AccountPage = () => {
     );
   }
 
-  // Se não há erro e o carregamento terminou, mostra a página completa.
   return (
     <div className="bg-gray-50 min-h-screen">
       <DynamicHeader
-        userEmail={userData.email} // Opcional, se o email já estiver no contexto de autenticação
-        isAuthenticated={true} // Opcional, se o status de autenticação já estiver no contexto
+        userEmail={userData.email} // se o email já estiver no contexto de autenticação
+        isAuthenticated={true} // se o status de autenticação já estiver no contexto
       />
       <main className="max-w-7xl mx-auto px-6">
         <div className="flex">
@@ -323,27 +357,35 @@ const AccountPage = () => {
             </nav>
           </aside>
 
-          <section className="mt-16 w-1/2">
-            {/* Passamos os dados para os componentes filhos via props */}
-            <div className="">
+          <motion.section
+            className="mt-16 w-1/2"
+            variants={containerVariants}
+            initial="hidden"
+            animate="visible"
+          >
+            {/* Seção 1: Informações da Conta */}
+            <motion.div variants={sectionVariants}>
               <AccountInformation user={userData} />
+            </motion.div>
 
-              <PreferredTopics // Adicione uma chave única aqui, como o email do usuário
+            {/* Seção 2: Tópicos Preferidos */}
+            <motion.div variants={sectionVariants}>
+              <PreferredTopics
                 key={userData.email}
                 topics={userData.preferred_topics}
                 newTopic={newTopic}
                 onNewTopicChange={(e) => {
                   setNewTopic(e.target.value);
-                  // Limpa o erro assim que o usuário começa a digitar
-                  if (topicError) {
-                    setTopicError("");
-                  }
+                  if (topicError) setTopicError("");
                 }}
                 onAddTopic={handleAddTopic}
                 onDeleteTopic={handleDeleteTopic}
                 topicError={topicError}
               />
+            </motion.div>
 
+            {/* Seção 3: Fontes Preferidas */}
+            <motion.div variants={sectionVariants}>
               <div className="mt-11 rounded-lg ">
                 <div className="flex justify-between items-center">
                   <h2 className="text-xl font-medium text-gray-900 font-montserrat">
@@ -356,26 +398,29 @@ const AccountPage = () => {
                     <p className="text-base font-medium text-gray-900 font-montserrat">
                       Your Sources
                     </p>
-                    <button
+                    <motion.button
                       onClick={handleOpenAddSource}
                       className="h-11 flex items-center bg-black text-white text-xs font-bold px-4 rounded hover:bg-gray-800 font-montserrat"
+                      whileTap={{ scale: 0.95 }}
                     >
                       Add Source
-                    </button>
+                    </motion.button>
                   </div>
-                  <div className="mt-6 space-y-6">
-                    {userData.preferred_sources.map((source) => (
-                      <SourceCard
-                        key={source.id}
-                        source={source}
-                        onDelete={handleDeleteSource}
-                      />
-                    ))}
-                  </div>
+                  <AnimatePresence>
+                    <div className="mt-6 space-y-6">
+                      {userData.preferred_sources.map((source) => (
+                        <SourceCard
+                          key={source.id}
+                          source={source}
+                          onDelete={handleDeleteSource}
+                        />
+                      ))}
+                    </div>
+                  </AnimatePresence>
                 </div>
               </div>
-            </div>
-          </section>
+            </motion.div>
+          </motion.section>
         </div>
       </main>
     </div>
