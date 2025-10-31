@@ -1,6 +1,6 @@
 // src/pages/NewsPage.jsx
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useParams } from "react-router-dom";
 import { toast } from "react-toastify";
 import DynamicHeader from "../components/DynamicHeader"; // Import the new DynamicHeader
@@ -17,6 +17,7 @@ const NewsPage = () => {
   const [isSaved, setIsSaved] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const historyAddedRef = useRef(false);
 
   useEffect(() => {
     const fetchNewsData = async () => {
@@ -55,15 +56,6 @@ const NewsPage = () => {
 
         // status de login
         setIsLoggedIn(authResponse.status === "fulfilled");
-        // usuário logado, registra a visualização no histórico
-        // try/catch` separado para não quebrar a página se o registro falhar
-        if (authResponse.status === "fulfilled") {
-          try {
-            await newsAPI.addNewsToHistory(newsId);
-          } catch (historyError) {
-            console.warn("Could not save to history:", historyError.message);
-          }
-        }
       } catch (err) {
         console.error("Erro ao carregar notícia:", err);
         setError(err.message || "Erro ao carregar a notícia");
@@ -74,6 +66,21 @@ const NewsPage = () => {
 
     fetchNewsData();
   }, [newsId]);
+
+  //useEffect: Registro de Histórico
+  useEffect(() => {
+    if (isLoggedIn && newsId && !historyAddedRef.current) {
+      const addHistory = async () => {
+        try {
+          await newsAPI.addNewsToHistory(newsId);
+          historyAddedRef.current = true;
+        } catch (historyError) {
+          console.warn("Could not save to history:", historyError.message);
+        }
+      };
+      addHistory();
+    }
+  }, [isLoggedIn, newsId]);
 
   // Função de segurança para HTML
   const createMarkup = (htmlContent) => {
