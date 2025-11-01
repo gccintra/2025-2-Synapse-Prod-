@@ -123,36 +123,48 @@ const DynamicHeader = ({
                 />
               </button>
               {dropdownOpen && (
-                <div className="absolute right-0 mt-2 w-32 bg-white border border-gray-200 rounded-xl shadow-lg z-10 text-xs font-montserrat">
-                  <Link
-                    to="/account"
-                    className="block px-4 py-2 text-gray-800 hover:bg-gray-100 font-montserrat"
-                    onClick={() => setDropdownOpen(false)}
-                  >
-                    My Account
-                  </Link>
-                  <Link
-                    to="/saved-news"
-                    className="block px-4 py-2 text-gray-800 hover:bg-gray-100 font-montserrat"
-                    onClick={() => setDropdownOpen(false)}
-                  >
-                    Saved News
-                  </Link>
-                  <Link
-                    to="/history"
-                    className="block px-4 py-2 text-gray-800 hover:bg-gray-100 font-montserrat"
-                    onClick={() => setDropdownOpen(false)}
-                  >
-                    News History
-                  </Link>
-                  <hr className="border-gray-200" />
-                  <button
-                    onClick={handleLogout}
-                    className="block w-full text-left px-4 py-2 text-gray-800 hover:bg-gray-100 font-montserrat"
-                  >
-                    Logout
-                  </button>
+                // {-----------------}
+                <div className="absolute right-0 mt-2 w-64 bg-white rounded-md shadow-lg z-10 text-sm font-montserrat ring-1 ring-black ring-opacity-5">
+                  <div className="p-1">
+                    <Link
+                      to="/account"
+                      className="group flex w-full items-center rounded-t-md px-4 py-2 text-gray-900 transition-colors duration-100 hover:bg-black hover:text-white font-montserrat"
+                      onClick={() => setDropdownOpen(false)}
+                    >
+                      <i className="fa-regular fa-user fa-fw mr-3 text-gray-900 group-hover:text-white"></i>
+                      My Account
+                    </Link>
+                    <Link
+                      to="/saved-news"
+                      className="group flex w-full items-center rounded-sm px-4 py-2 text-gray-900 transition-colors duration-100 hover:bg-black hover:text-white font-montserrat"
+                      onClick={() => setDropdownOpen(false)}
+                    >
+                      <i className="fa-regular fa-bookmark fa-fw mr-3 text-gray-900 group-hover:text-white"></i>
+                      Saved News
+                    </Link>
+                    <Link
+                      to="/history"
+                      className="group flex w-full items-center rounded-sm px-4 py-2 text-gray-900 transition-colors duration-100 hover:bg-black hover:text-white font-montserrat"
+                      onClick={() => setDropdownOpen(false)}
+                    >
+                      <i className="fa-solid fa-clock-rotate-left fa-fw mr-3 text-gray-900 group-hover:text-white"></i>
+                      News History
+                    </Link>
+                  </div>
+
+                  <div className="border-t border-gray-100"></div>
+
+                  <div className="p-1">
+                    <button
+                      onClick={handleLogout}
+                      className="group flex w-full items-center text-left rounded-b-md px-4 py-2 text-gray-900 transition-colors duration-100 hover:bg-black hover:text-white font-montserrat"
+                    >
+                      <i className="fa-solid fa-arrow-right-from-bracket fa-fw mr-3 text-gray-900 group-hover:text-white"></i>
+                      Logout
+                    </button>
+                  </div>
                 </div>
+                // {-----------------}
               )}
             </div>
           ) : (
