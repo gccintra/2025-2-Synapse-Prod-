@@ -124,7 +124,7 @@ const DynamicHeader = ({
               </button>
               {dropdownOpen && (
                 // {-----------------}
-                <div className="absolute right-0 mt-2 w-64 bg-white rounded-md shadow-lg z-10 text-sm font-montserrat ring-1 ring-black ring-opacity-5">
+                <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg z-10 text-xs font-montserrat ring-1 ring-black ring-opacity-5">
                   <div className="p-1">
                     <Link
                       to="/account"

@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import SavedNewsCard from "../components/SavedNews/SavedNewsCard";
 import DynamicHeader from "../components/DynamicHeader"; // Import the new DynamicHeader
 import RemoveConfirmationModal from "../components/SavedNews/RemoveConfirmationModal";
@@ -11,6 +12,21 @@ const SavedNewsPage = () => {
   const [showModal, setShowModal] = useState(false);
   const [newsToRemove, setNewsToRemove] = useState(null);
   const [userData, setUserData] = useState({ email: "" });
+
+  const containerVariants = {
+    hidden: { opacity: 0 },
+    visible: {
+      opacity: 1,
+      transition: {
+        staggerChildren: 0.07,
+      },
+    },
+  };
+
+  const itemVariants = {
+    hidden: { y: 20, opacity: 0 },
+    visible: { y: 0, opacity: 1 },
+  };
 
   useEffect(() => {
     const fetchPageData = async () => {
@@ -70,10 +86,7 @@ const SavedNewsPage = () => {
 
   return (
     <div className="bg-gray-50 min-h-screen flex flex-col font-montserrat">
-      <DynamicHeader
-        userEmail={userData.email} // Opcional, se o email já estiver no contexto de autenticação
-        isAuthenticated={true} // Opcional, se o status de autenticação já estiver no contexto
-      />
+      <DynamicHeader userEmail={userData.email} isAuthenticated={true} />
 
       <main className="flex-grow max-w-6xl mx-auto sm:px-6 lg:px-8 mt-12 w-full">
         <h1 className="p-3 text-3xl font-medium text-gray-900 font-montserrat text-center">
@@ -98,16 +111,31 @@ const SavedNewsPage = () => {
             </p>
           </div>
         ) : (
-          <div className="p-4 flex flex-wrap justify-center gap-8 mt-12">
-            {savedNews.map((news) => (
-              <div
-                key={news.id}
-                className="w-full sm:w-1/2 md:w-1/3 lg:w-[30%] xl:w-1/4"
-              >
-                <SavedNewsCard news={news} onRemove={handleConfirmRemove} />
-              </div>
-            ))}
-          </div>
+          <motion.div
+            layout
+            variants={containerVariants}
+            initial="hidden"
+            animate="visible"
+            className="p-4 flex flex-wrap justify-center gap-8 mt-12"
+          >
+            <AnimatePresence>
+              {savedNews.map((news) => (
+                <motion.div
+                  key={news.id}
+                  variants={itemVariants}
+                  layout
+                  exit={{
+                    opacity: 0,
+                    scale: 0.5,
+                    transition: { duration: 0.2 },
+                  }}
+                  className="w-full sm:w-1/2 md:w-1/3 lg:w-[30%] xl:w-1/4"
+                >
+                  <SavedNewsCard news={news} onRemove={handleConfirmRemove} />
+                </motion.div>
+              ))}
+            </AnimatePresence>
+          </motion.div>
         )}
       </main>
 
