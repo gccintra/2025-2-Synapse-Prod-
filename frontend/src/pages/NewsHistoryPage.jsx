@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import NewsCard from "../components/FeedPage/NewsCard";
 import DynamicHeader from "../components/DynamicHeader";
+import ScrollToTopButton from "../components/ScrollToTopButton";
 
 import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "react-toastify";
@@ -185,6 +186,7 @@ const NewsHistoryPage = () => {
           )}
         </div>
       </main>
+      <ScrollToTopButton />
     </div>
   );
 };

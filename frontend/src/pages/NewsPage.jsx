@@ -5,6 +5,7 @@ import { useParams } from "react-router-dom";
 import { toast } from "react-toastify";
 
 import DynamicHeader from "../components/DynamicHeader";
+import ScrollToTopButton from "../components/ScrollToTopButton";
 import NewsPageSkeleton from "../components/NewsPage/NewsPageSkeleton";
 import { motion } from "framer-motion";
 
@@ -237,6 +238,7 @@ const NewsPage = () => {
           </article>
         </>
       </motion.main>
+      <ScrollToTopButton />
     </div>
   );
 };

@@ -1,9 +1,12 @@
 import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+
 import SavedNewsCard from "../components/SavedNews/SavedNewsCard";
-import DynamicHeader from "../components/DynamicHeader"; // Import the new DynamicHeader
+import DynamicHeader from "../components/DynamicHeader";
+import ScrollToTopButton from "../components/ScrollToTopButton";
 import RemoveConfirmationModal from "../components/SavedNews/RemoveConfirmationModal";
 import SavedNewsCardSkeleton from "../components/SavedNews/SavedNewsCardSkeleton";
+
 import { usersAPI, newsAPI } from "../services/api";
 
 const SavedNewsPage = () => {
@@ -136,6 +139,7 @@ const SavedNewsPage = () => {
           </motion.div>
         )}
       </main>
+      <ScrollToTopButton />
 
       <RemoveConfirmationModal
         isOpen={showModal}

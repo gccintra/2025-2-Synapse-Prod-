@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import NewsCard from "../components/FeedPage/NewsCard";
 import DynamicHeader from "../components/DynamicHeader";
+import ScrollToTopButton from "../components/ScrollToTopButton";
 import { topicsAPI, usersAPI, newsAPI } from "../services/api";
 import { useInfiniteScroll } from "../hooks/useInfiniteScroll";
 
@@ -320,6 +321,7 @@ const FeedPage = () => {
             </div>
           )}
       </main>
+      <ScrollToTopButton />
     </motion.div>
   );
 };
