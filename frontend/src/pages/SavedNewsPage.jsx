@@ -12,7 +12,6 @@ const SavedNewsPage = () => {
   const [showModal, setShowModal] = useState(false);
   const [newsToRemove, setNewsToRemove] = useState(null);
   const [userData, setUserData] = useState({ email: "" });
-
   const containerVariants = {
     hidden: { opacity: 0 },
     visible: {
@@ -22,7 +21,6 @@ const SavedNewsPage = () => {
       },
     },
   };
-
   const itemVariants = {
     hidden: { y: 20, opacity: 0 },
     visible: { y: 0, opacity: 1 },

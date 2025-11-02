@@ -3,15 +3,12 @@ import { Link, useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
 
 function LoginPage() {
-  // 1. Estados para armazenar os dados do formulário
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const navigate = useNavigate();
 
-  // Estados para feedback da API e validação
+  const navigate = useNavigate();
   const [errors, setErrors] = useState({});
 
-  // 2. Função de validação do formulário
   const validateForm = () => {
     const newErrors = {};
 
@@ -26,44 +23,35 @@ function LoginPage() {
     return Object.keys(newErrors).length === 0;
   };
 
-  // 3. Função que lida com o envio do formulário
   const handleSubmit = async (event) => {
     event.preventDefault();
 
     setErrors({});
 
-    // Chama a função de validação
     if (!validateForm()) {
       toast.error("Please correct the errors in the form.");
-      return; // Se a validação falhar, para o processo de envio
+      return;
     }
 
-    // Monta o corpo da requisição com os dados do estado
     const userData = {
       email: email,
       password: password,
     };
-
     try {
-      // Pega a URL base da variável de ambiente
       const apiUrl = import.meta.env.VITE_API_BASE_URL;
 
-      // Faz a chamada da API
       const response = await fetch(`${apiUrl}/users/login`, {
-        // Alteração para a rota de login
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
         body: JSON.stringify(userData),
-        credentials: "include", // Permite que o navegador envie e receba cookies
+        credentials: "include",
       });
 
       const data = await response.json();
 
-      // Lida com a resposta
       if (response.ok) {
-        // O backend retorna os dados do usuário no campo 'data'
         toast.success(`Login successful! Welcome, ${data.data.full_name}.`);
         navigate("/");
       } else {

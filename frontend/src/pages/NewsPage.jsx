@@ -170,17 +170,16 @@ const NewsPage = () => {
   }
 
   return (
-    <div className="bg-white min-h-screen">
-      {/* Header da Página de Notícias (mantendo o email do usuário) */}
-      <motion.div
-        className="bg-gray-50 min-h-screen"
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ duration: 0.7 }}
+    <div className="bg-gray-50 min-h-screen">
+      <DynamicHeader isAuthenticated={isLoggedIn} />{" "}
+      {/* backTo/backText will use location.state.from */}
+      <motion.main
+        className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 pt-10 pb-20"
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5, ease: "easeInOut" }}
       >
-        <DynamicHeader isAuthenticated={isLoggedIn} />{" "}
-        {/* backTo/backText will use location.state.from */}
-        <main className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 pt-10 pb-20">
+        <>
           {/* Imagem de Destaque */}
           <img
             src={articleData.image}
@@ -236,8 +235,8 @@ const NewsPage = () => {
               dangerouslySetInnerHTML={createMarkup(articleData.contentHtml)}
             />
           </article>
-        </main>
-      </motion.div>
+        </>
+      </motion.main>
     </div>
   );
 };
