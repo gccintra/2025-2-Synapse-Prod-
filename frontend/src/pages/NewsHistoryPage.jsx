@@ -34,28 +34,30 @@ const NewsHistoryPage = () => {
       setError(null);
 
       try {
-        // verifica se o usuário está logado e obtém o e-mail
-        const profileRes = await usersAPI.getUserProfile();
-        setIsLoggedIn(true);
-        setUserEmail(profileRes.data.email);
+        const [profileResponse, historyResponse] = await Promise.allSettled([
+          usersAPI.getUserProfile(),
+          newsAPI.getHistory(),
+        ]);
 
-        // login bem-sucedido, busca o histórico em um bloco separado
-        try {
-          const historyRes = await newsAPI.getHistory();
-          const historyList = historyRes.data.news || [];
+        if (profileResponse.status === "fulfilled") {
+          setIsLoggedIn(true);
+          setUserEmail(profileResponse.value.data.email);
+        } else {
+          throw new Error("You must be logged in to view your news history.");
+        }
+
+        if (historyResponse.status === "fulfilled") {
+          const historyList = historyResponse.value.data.news || [];
           const groupedData = groupHistoryByDate(historyList);
           setHistoryData(groupedData);
-        } catch (historyError) {
-          console.error("Failed to fetch history:", historyError);
-          setError(
+        } else {
+          throw new Error(
             "Could not load your reading history. Please try again later."
           );
-          toast.error("Could not load your reading history.");
         }
       } catch (err) {
+        setError(err.message);
         setIsLoggedIn(false);
-        setError("You must be logged in to view your news history.");
-        toast.warn("You must be logged in to view your news history.");
       } finally {
         setLoading(false);
       }

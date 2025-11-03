@@ -4,7 +4,6 @@ import { motion, AnimatePresence } from "framer-motion";
 const ScrollToTopButton = () => {
   const [isVisible, setIsVisible] = useState(false);
 
-  // Mostra o botão quando o scroll vertical for maior que 300px
   const toggleVisibility = () => {
     if (window.scrollY > 300) {
       setIsVisible(true);
@@ -13,7 +12,6 @@ const ScrollToTopButton = () => {
     }
   };
 
-  // Rola a página para o topo suavemente
   const scrollToTop = () => {
     window.scrollTo({
       top: 0,
@@ -24,7 +22,6 @@ const ScrollToTopButton = () => {
   useEffect(() => {
     window.addEventListener("scroll", toggleVisibility);
 
-    // Limpa o event listener quando o componente é desmontado
     return () => {
       window.removeEventListener("scroll", toggleVisibility);
     };

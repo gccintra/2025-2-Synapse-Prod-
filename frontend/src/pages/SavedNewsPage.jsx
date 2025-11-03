@@ -1,20 +1,24 @@
 import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { Link } from "react-router-dom";
 
 import SavedNewsCard from "../components/SavedNews/SavedNewsCard";
 import DynamicHeader from "../components/DynamicHeader";
+import SavedNewsCardSkeleton from "../components/SavedNews/SavedNewsCardSkeleton";
 import ScrollToTopButton from "../components/ScrollToTopButton";
 import RemoveConfirmationModal from "../components/SavedNews/RemoveConfirmationModal";
-import SavedNewsCardSkeleton from "../components/SavedNews/SavedNewsCardSkeleton";
 
 import { usersAPI, newsAPI } from "../services/api";
 
 const SavedNewsPage = () => {
   const [savedNews, setSavedNews] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const [showModal, setShowModal] = useState(false);
   const [newsToRemove, setNewsToRemove] = useState(null);
   const [userData, setUserData] = useState({ email: "" });
+
+  // animações
   const containerVariants = {
     hidden: { opacity: 0 },
     visible: {
@@ -32,31 +36,34 @@ const SavedNewsPage = () => {
   useEffect(() => {
     const fetchPageData = async () => {
       setLoading(true);
+      setError(null);
       try {
-        const userProfile = await usersAPI.getUserProfile();
-        setUserData(userProfile.data);
+        const [userResponse, savedNewsResponse] = await Promise.allSettled([
+          usersAPI.getUserProfile(),
+          newsAPI.getSavedNews(),
+        ]);
 
-        const savedNewsResponse = await newsAPI.getSavedNews();
+        if (userResponse.status === "fulfilled") {
+          setUserData(userResponse.value.data);
+        } else {
+          console.error("Failed to fetch user profile:", userResponse.reason);
+        }
 
-        if (
-          savedNewsResponse &&
-          savedNewsResponse.data &&
-          Array.isArray(savedNewsResponse.data.news)
-        ) {
-          const mappedNews = savedNewsResponse.data.news.map((newsItem) => ({
+        if (savedNewsResponse.status === "fulfilled") {
+          const newsData = savedNewsResponse.value.data?.news || [];
+          const mappedNews = newsData.map((newsItem) => ({
             id: newsItem.id,
             title: newsItem.title,
             summary: newsItem.description,
             image: newsItem.image_url,
-            isSaved: newsItem.is_favorited,
           }));
           setSavedNews(mappedNews);
         } else {
-          setSavedNews([]);
+          throw new Error("Failed to load saved news.");
         }
       } catch (error) {
         console.error("Failed to fetch data:", error);
-        setSavedNews([]);
+        setError(error.message || "An unexpected error occurred.");
       }
       setLoading(false);
     };
@@ -105,11 +112,30 @@ const SavedNewsPage = () => {
               </div>
             ))}
           </div>
+        ) : error ? (
+          <div className="text-center py-16">
+            <h2 className="text-xl font-semibold text-red-600 mb-4">
+              Oops! Something went wrong.
+            </h2>
+            <p className="text-gray-600 mb-6">{error}</p>
+            <button
+              onClick={() => window.location.reload()}
+              className="bg-black text-white font-bold py-2 px-4 rounded hover:bg-gray-800 transition-colors"
+            >
+              Try Again
+            </button>
+          </div>
         ) : savedNews.length === 0 ? (
           <div className="text-center py-16">
-            <p className="text-xl text-gray-600 mb-4">
-              Você ainda não salvou nenhuma notícia.
+            <p className="text-xl text-gray-600 mb-6">
+              You haven't saved any news yet.
             </p>
+            <Link
+              to="/feed"
+              className="bg-black text-white font-bold py-3 px-6 rounded-full hover:bg-gray-800 transition-transform hover:scale-105 inline-block"
+            >
+              Explore the Feed
+            </Link>
           </div>
         ) : (
           <motion.div

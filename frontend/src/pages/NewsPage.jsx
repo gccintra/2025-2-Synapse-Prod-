@@ -1,12 +1,10 @@
-// src/pages/NewsPage.jsx
-
 import React, { useState, useEffect, useRef } from "react";
 import { useParams } from "react-router-dom";
 import { toast } from "react-toastify";
 
 import DynamicHeader from "../components/DynamicHeader";
-import ScrollToTopButton from "../components/ScrollToTopButton";
 import NewsPageSkeleton from "../components/NewsPage/NewsPageSkeleton";
+import ScrollToTopButton from "../components/ScrollToTopButton";
 import { motion } from "framer-motion";
 
 import { newsAPI } from "../services/api";
@@ -21,6 +19,7 @@ const NewsPage = () => {
   const [isSaved, setIsSaved] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [userData, setUserData] = useState({ email: "" });
   const historyAddedRef = useRef(false);
 
   useEffect(() => {
@@ -30,18 +29,13 @@ const NewsPage = () => {
         setLoading(false);
         return;
       }
-
       try {
         setLoading(true);
         setError(null);
-
-        // Busca a notícia e o status de login em paralelo
         const [newsResponse, authResponse] = await Promise.allSettled([
           newsAPI.getNewsById(newsId),
-          usersAPI.getUserProfile(), // Verifica se o usuário está logado
+          usersAPI.getUserProfile(),
         ]);
-
-        // Adaptar os dados da API para o formato esperado
         if (newsResponse.status === "rejected") throw newsResponse.reason;
         const newsData = newsResponse.value.data;
         setArticleData({
@@ -55,11 +49,13 @@ const NewsPage = () => {
             "Conteúdo não disponível",
         });
 
-        // Define o estado inicial do botão de salvar
         setIsSaved(newsData.is_favorited || false);
 
         // status de login
-        setIsLoggedIn(authResponse.status === "fulfilled");
+        if (authResponse.status === "fulfilled") {
+          setIsLoggedIn(true);
+          setUserData(authResponse.value.data);
+        }
       } catch (err) {
         console.error("Erro ao carregar notícia:", err);
         setError(err.message || "Erro ao carregar a notícia");
@@ -71,7 +67,6 @@ const NewsPage = () => {
     fetchNewsData();
   }, [newsId]);
 
-  //useEffect: Registro de Histórico
   useEffect(() => {
     if (isLoggedIn && newsId && !historyAddedRef.current) {
       const addHistory = async () => {
@@ -86,14 +81,11 @@ const NewsPage = () => {
     }
   }, [isLoggedIn, newsId]);
 
-  // Função de segurança para HTML
   const createMarkup = (htmlContent) => {
     return { __html: htmlContent };
   };
 
-  // Função para lidar com o clique no botão de salvar
   const handleSaveClick = async () => {
-    // Adiciona a verificação de login
     if (!isLoggedIn) {
       toast.warn("To save a news story, you need to be logged in.");
       return;
@@ -101,7 +93,6 @@ const NewsPage = () => {
 
     if (isSaving) return;
     setIsSaving(true);
-
     try {
       if (isSaved) {
         await newsAPI.unfavoriteNews(newsId);
@@ -125,8 +116,10 @@ const NewsPage = () => {
   if (error) {
     return (
       <div className="bg-white min-h-screen">
-        <DynamicHeader isAuthenticated={isLoggedIn} />{" "}
-        {/* backTo/backText will use location.state.from */}
+        <DynamicHeader
+          userEmail={userData.email}
+          isAuthenticated={isLoggedIn}
+        />
         <main className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 pt-10 pb-20">
           <div className="text-center py-12">
             <h1 className="text-2xl font-bold text-gray-900 mb-4">
@@ -148,8 +141,10 @@ const NewsPage = () => {
   if (!articleData) {
     return (
       <div className="bg-white min-h-screen">
-        <DynamicHeader isAuthenticated={isLoggedIn} />{" "}
-        {/* backTo/backText will use location.state.from */}
+        <DynamicHeader
+          userEmail={userData.email}
+          isAuthenticated={isLoggedIn}
+        />
         <main className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 pt-10 pb-20">
           <div className="text-center py-12">
             <h1 className="text-2xl font-bold text-gray-900 mb-4">
@@ -172,8 +167,8 @@ const NewsPage = () => {
 
   return (
     <div className="bg-gray-50 min-h-screen">
-      <DynamicHeader isAuthenticated={isLoggedIn} />{" "}
-      {/* backTo/backText will use location.state.from */}
+      <ScrollToTopButton />
+      <DynamicHeader userEmail={userData.email} isAuthenticated={isLoggedIn} />
       <motion.main
         className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 pt-10 pb-20"
         initial={{ opacity: 0, y: 20 }}
@@ -200,7 +195,7 @@ const NewsPage = () => {
                 </span>{" "}
                 | {articleData.date}
               </p>
-              {/* --- ÍCONE DE SALVAR --- */}
+              {/* ícone salvar */}
               <button
                 onClick={handleSaveClick}
                 disabled={isSaving}
@@ -228,17 +223,27 @@ const NewsPage = () => {
               </button>
             </div>
           </div>
-          {/* 🛑 Conteúdo do Artigo com dangerouslySetInnerHTML 🛑 */}
+          <style>
+            {`
+              .article-content img {
+                display: block;
+                margin-left: auto;
+                margin-right: auto;
+                border-radius: 0.5rem; /* Bordas arredondadas */
+                box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1); /* Sombra suave */
+                margin-top: 2em;
+                margin-bottom: 2em;
+              }
+            `}
+          </style>
           <article>
-            {/* A classe 'prose' do Tailwind é crucial aqui para aplicar estilos de leitura padrão ao HTML que vem da API (p, h2, img, a, etc.) */}
             <div
-              className="prose prose-lg max-w-none font-montserrat text-gray-800"
+              className="prose prose-lg max-w-none font-montserrat text-gray-800 article-content"
               dangerouslySetInnerHTML={createMarkup(articleData.contentHtml)}
             />
           </article>
         </>
       </motion.main>
-      <ScrollToTopButton />
     </div>
   );
 };
