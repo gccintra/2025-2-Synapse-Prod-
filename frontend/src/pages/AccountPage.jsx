@@ -347,28 +347,35 @@ const AccountPage = () => {
       />
       <main className="max-w-7xl mx-auto px-6">
         <div className="flex">
-          <aside className="mt-16 ml-12 w-1/3">
-            <nav>
-              <ul>
-                <li>
-                  <a
-                    href="#"
-                    className="relative block py-2 pl-4 text-base font-semibold text-black font-montserrat before:content-[''] before:absolute before:left-0 before:top-1/2 before:h-1/2 before:w-1.5 before:-translate-y-1/2 before:bg-black"
-                  >
-                    Account
-                  </a>
-                </li>
-                <li>
-                  <a
-                    href="#"
-                    className="block py-2 text-base text-gray-500 hover:text-black pl-4 font-montserrat"
-                  >
-                    Newsletter
-                  </a>
-                </li>
-              </ul>
-            </nav>
-          </aside>
+          <motion.aside
+            className="mt-16 ml-12 w-1/3 sticky top-24 self-start"
+            variants={sectionVariants}
+            initial="hidden"
+            animate="visible"
+          >
+            <div className="h-full">
+              <nav>
+                <ul>
+                  <li>
+                    <a
+                      href="#"
+                      className="relative block py-2 pl-4 text-base font-semibold text-black font-montserrat before:content-[''] before:absolute before:left-0 before:top-1/2 before:h-1/2 before:w-1.5 before:-translate-y-1/2 before:bg-black"
+                    >
+                      Account
+                    </a>
+                  </li>
+                  <li>
+                    <a
+                      href="#"
+                      className="block py-2 text-base text-gray-500 hover:text-black pl-4 font-montserrat"
+                    >
+                      Newsletter
+                    </a>
+                  </li>
+                </ul>
+              </nav>
+            </div>
+          </motion.aside>
 
           <motion.section
             className="mt-16 w-1/2"
@@ -376,12 +383,12 @@ const AccountPage = () => {
             initial="hidden"
             animate="visible"
           >
-            {/* Seção 1: Informações da Conta */}
+            {/* seção 1 -> informações da Conta */}
             <motion.div variants={sectionVariants}>
               <AccountInformation user={userData} />
             </motion.div>
 
-            {/* Seção 2: Tópicos Preferidos */}
+            {/* seção 2 -> tópicos Preferidos */}
             <motion.div variants={sectionVariants}>
               <PreferredTopics
                 key={userData.email}
@@ -397,7 +404,7 @@ const AccountPage = () => {
               />
             </motion.div>
 
-            {/* Seção 3: Fontes Preferidas */}
+            {/* seção 3 -> fontes Preferidas */}
             <motion.div variants={sectionVariants}>
               <div className="mt-11 rounded-lg ">
                 <div className="flex justify-between items-center">
