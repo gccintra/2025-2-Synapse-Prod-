@@ -36,8 +36,7 @@ const DynamicHeader = ({
 
   const actualBackTo = backTo || location.state?.from || "/feed";
 
-  const actualBackText =
-    backText || (location.state?.from ? "Back" : "Back to feed");
+  const actualBackText = backText || (location.state?.from ? "Back" : "Back");
 
   const handleLogout = async () => {
     try {
@@ -97,7 +96,18 @@ const DynamicHeader = ({
                 className="flex items-center rounded-md text-gray-800 hover:text-gray-600 focus:outline-none text-base font-montserrat"
                 onClick={() => setDropdownOpen((open) => !open)}
               >
-                <span className="font-medium font-montserrat">{userEmail}</span>
+                {/* 1. Texto para ECRÃS GRANDES (>= 700px) */}
+                {/* Começa "hidden" (mobile-first) e torna-se "inline" (visível) em 700px */}
+                <span className="hidden min-[700px]:inline font-medium font-montserrat">
+                  {userEmail}
+                </span>
+
+                {/* 2. Texto para ECRÃS PEQUENOS (< 700px) */}
+                {/* Começa "inline" (visível) e torna-se "hidden" (escondido) em 700px */}
+                <span className="inline min-[700px]:hidden font-medium font-montserrat">
+                  Profile
+                </span>
+
                 <img
                   src={ArrowDownIcon}
                   alt="Arrow Down Icon"
@@ -116,7 +126,7 @@ const DynamicHeader = ({
                     <div className="p-1">
                       <Link
                         to="/account"
-                        className="group flex w-full items-center rounded-t-md px-4 py-2 text-gray-900 transition-colors duration-100 hover:bg-black hover:text-white font-montserrat"
+                        className="group flex w-full items-center rounded-t-md px-4 py-2 text-gray-900 transition-colors duration-100 hover:bg-black hover:text-white font-medium font-montserrat"
                         onClick={() => setDropdownOpen(false)}
                       >
                         <i className="fa-regular fa-user fa-fw mr-3 text-gray-900 group-hover:text-white"></i>
@@ -124,7 +134,7 @@ const DynamicHeader = ({
                       </Link>
                       <Link
                         to="/saved-news"
-                        className="group flex w-full items-center rounded-sm px-4 py-2 text-gray-900 transition-colors duration-100 hover:bg-black hover:text-white font-montserrat"
+                        className="group flex w-full items-center rounded-sm px-4 py-2 text-gray-900 transition-colors duration-100 hover:bg-black hover:text-white font-medium font-montserrat"
                         onClick={() => setDropdownOpen(false)}
                       >
                         <i className="fa-regular fa-bookmark fa-fw mr-3 text-gray-900 group-hover:text-white"></i>
@@ -132,7 +142,7 @@ const DynamicHeader = ({
                       </Link>
                       <Link
                         to="/history"
-                        className="group flex w-full items-center rounded-sm px-4 py-2 text-gray-900 transition-colors duration-100 hover:bg-black hover:text-white font-montserrat"
+                        className="group flex w-full items-center rounded-sm px-4 py-2 text-gray-900 transition-colors duration-100 hover:bg-black hover:text-white font-medium font-montserrat"
                         onClick={() => setDropdownOpen(false)}
                       >
                         <i className="fa-solid fa-clock-rotate-left fa-fw mr-3 text-gray-900 group-hover:text-white"></i>
@@ -143,7 +153,7 @@ const DynamicHeader = ({
                     <div className="p-1">
                       <button
                         onClick={handleLogout}
-                        className="group flex w-full items-center text-left rounded-b-md px-4 py-2 text-gray-900 transition-colors duration-100 hover:bg-black hover:text-white font-montserrat"
+                        className="group flex w-full items-center text-left rounded-b-md px-4 py-2 text-gray-900 transition-colors duration-100 hover:bg-black hover:text-white font-medium font-montserrat"
                       >
                         <i className="fa-solid fa-arrow-right-from-bracket fa-fw mr-3 text-gray-900 group-hover:text-white"></i>
                         Logout
