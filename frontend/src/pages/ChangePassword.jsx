@@ -126,10 +126,10 @@ function ChangePassword() {
         backTo="/account"
         backText="Back"
       />
-      <div className="h-[calc(100vh-4.625rem)] flex flex-col justify-start items-center bg-[#f5f5f5] pt-16">
-        <div className="w-full max-w-lg">
+      <div className="h-[calc(100vh-10rem)] flex flex-col justify-start items-center bg-[#f5f5f5] pt-16">
+        <div className="w-full max-w-lg px-4">
           <div className="w-full text-center">
-            <h2 className=" mb-2 text-3xl font-bold text-black font-montserrat">
+            <h2 className=" mb-2 text-2xl min-[530px]:text-3xl font-bold text-black font-montserrat">
               Change your password
             </h2>
             <p className="mt-5 mb-8 text-sm text-gray-600 font-montserrat">
