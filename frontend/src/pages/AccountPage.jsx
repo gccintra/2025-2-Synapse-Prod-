@@ -341,14 +341,11 @@ const AccountPage = () => {
 
   return (
     <div className="bg-gray-50 min-h-screen">
-      <DynamicHeader
-        userEmail={userData.email} // se o email já estiver no contexto de autenticação
-        isAuthenticated={true} // se o status de autenticação já estiver no contexto
-      />
+      <DynamicHeader userEmail={userData.email} isAuthenticated={true} />
       <main className="max-w-7xl mx-auto px-6">
-        <div className="flex">
+        <div className="flex flex-col items-center min-[670px]:flex-row min-[670px]:items-start">
           <motion.aside
-            className="mt-16 ml-12 w-1/3 sticky top-24 self-start"
+            className="mt-16 w-11/12 min-[670px]:w-1/3 min-[670px]:sticky min-[670px]:top-24 min-[670px]:self-start min-[670px]:ml-12"
             variants={sectionVariants}
             initial="hidden"
             animate="visible"
@@ -378,7 +375,7 @@ const AccountPage = () => {
           </motion.aside>
 
           <motion.section
-            className="mt-16 w-1/2"
+            className="mt-16 w-11/12 min-[670px]:w-1/2"
             variants={containerVariants}
             initial="hidden"
             animate="visible"
