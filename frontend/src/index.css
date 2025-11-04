@@ -4,3 +4,14 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/* para esconder scrollbar dos tópicos na FeedPage.jsx */
+@media (max-width: 1255px) {
+  .custom-scroll {
+    scrollbar-width: none; /* Firefox */
+    -ms-overflow-style: none; /* IE and Edge */
+  }
+  .custom-scroll::-webkit-scrollbar {
+    display: none; /* Chrome, Safari and Opera */
+  }
+}

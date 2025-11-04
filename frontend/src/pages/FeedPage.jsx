@@ -54,6 +54,7 @@ const FeedPage = () => {
   const [topics, setTopics] = useState([]);
   const [selectedTopic, setSelectedTopic] = useState(null);
   const [topicsLoading, setTopicsLoading] = useState(true);
+  const topicsContainerRef = useRef(null);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
 
   const fetchNews = useCallback(
@@ -134,6 +135,53 @@ const FeedPage = () => {
     resetNews();
   }, [selectedTopic, isLoggedIn]);
 
+  // Efeito para adicionar a funcionalidade de arrastar com o mouse
+  useEffect(() => {
+    const slider = topicsContainerRef.current;
+    if (!slider) return;
+
+    let isDown = false;
+    let startX;
+    let scrollLeft;
+
+    const handleMouseDown = (e) => {
+      isDown = true;
+      slider.classList.add("cursor-grabbing");
+      startX = e.pageX - slider.offsetLeft;
+      scrollLeft = slider.scrollLeft;
+    };
+
+    const handleMouseLeave = () => {
+      isDown = false;
+      slider.classList.remove("cursor-grabbing");
+    };
+
+    const handleMouseUp = () => {
+      isDown = false;
+      slider.classList.remove("cursor-grabbing");
+    };
+
+    const handleMouseMove = (e) => {
+      if (!isDown) return;
+      e.preventDefault();
+      const x = e.pageX - slider.offsetLeft;
+      const walk = (x - startX) * 2; // Multiplicador para acelerar o scroll
+      slider.scrollLeft = scrollLeft - walk;
+    };
+
+    slider.addEventListener("mousedown", handleMouseDown);
+    slider.addEventListener("mouseleave", handleMouseLeave);
+    slider.addEventListener("mouseup", handleMouseUp);
+    slider.addEventListener("mousemove", handleMouseMove);
+
+    return () => {
+      slider.removeEventListener("mousedown", handleMouseDown);
+      slider.removeEventListener("mouseleave", handleMouseLeave);
+      slider.removeEventListener("mouseup", handleMouseUp);
+      slider.removeEventListener("mousemove", handleMouseMove);
+    };
+  }, [topicsLoading]); // Roda o efeito quando o container estiver pronto
+
   return (
     <motion.div
       className="bg-gray-50 min-h-screen"
@@ -160,7 +208,8 @@ const FeedPage = () => {
           </div>
         ) : (
           <motion.div
-            className="flex gap-4 mb-8 flex-wrap"
+            ref={topicsContainerRef}
+            className="flex gap-4 mb-8 max-[1255px]:overflow-x-scroll max-[1255px]:pb-4 cursor-grab select-none custom-scroll"
             variants={containerVariants}
             initial="hidden"
             animate="visible"
@@ -168,7 +217,7 @@ const FeedPage = () => {
             {/* Botão "For You" */}
             <motion.button
               onClick={() => setSelectedTopic(null)}
-              className="relative flex items-center gap-3 mt-6 text-xs border border-black shadow-lg pl-6 pr-6 py-1 rounded-full font-montserrat transition-colors duration-300 cursor-pointer"
+              className="relative flex-shrink-0 flex items-center gap-3 mt-6 text-xs border border-black shadow-lg pl-6 pr-6 py-1 rounded-full font-montserrat transition-colors duration-300"
               animate={{
                 color: selectedTopic === null ? "#fff" : "#000",
                 fontWeight: selectedTopic === null ? "600" : "500",
@@ -189,8 +238,8 @@ const FeedPage = () => {
             {topics.map((topic) => (
               <motion.button
                 key={topic.id}
-                onClick={() => setSelectedTopic(topic)}
-                className="relative flex items-center gap-3 mt-6 text-xs border border-black shadow-lg pl-6 pr-6 py-1 rounded-full font-montserrat transition-colors duration-300 cursor-pointer"
+                onClick={() => setSelectedTopic(topic)} // Adicionado flex-shrink-0 para evitar que os botões encolham
+                className="relative flex-shrink-0 flex items-center gap-3 mt-6 text-xs border border-black shadow-lg pl-6 pr-6 py-1 rounded-full font-montserrat transition-colors duration-300"
                 animate={{
                   color: selectedTopic?.id === topic.id ? "#fff" : "#000",
                   fontWeight: selectedTopic?.id === topic.id ? "600" : "500",
