@@ -341,7 +341,12 @@ const AccountPage = () => {
 
   return (
     <div className="bg-gray-50 min-h-screen">
-      <DynamicHeader userEmail={userData.email} isAuthenticated={true} />
+      <DynamicHeader
+        userEmail={userData.email}
+        isAuthenticated={true}
+        onBackClick={() => navigate(-1)}
+        backText="Back"
+      />
       <main className="max-w-7xl mx-auto px-6">
         <div className="flex flex-col items-center min-[670px]:flex-row min-[670px]:items-start">
           <motion.aside

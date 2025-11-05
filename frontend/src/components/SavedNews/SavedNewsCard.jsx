@@ -1,14 +1,11 @@
-// src/components/SavedNewsCard.jsx
-
 import React from "react";
 import { Link, useLocation } from "react-router-dom";
-import fallbackImage from "../../assets/news-placeholder.jpg"; // Importa a imagem de fallback
+import fallbackImage from "../../assets/news-placeholder.jpg";
 
 const SavedNewsCard = ({ news, onRemove }) => {
-  const location = useLocation(); // Hook para obter a localização atual
+  const location = useLocation();
 
   // Função para lidar com o clique na remoção.
-  // Previne a navegação para a página da notícia.
   const handleRemoveClick = (e) => {
     e.preventDefault();
     e.stopPropagation();

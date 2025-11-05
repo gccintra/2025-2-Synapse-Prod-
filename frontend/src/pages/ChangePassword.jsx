@@ -8,13 +8,6 @@ import AnimatedPage from "../components/AnimatedPage";
 import SeeEye from "../icons/eye-regular-full.svg";
 import BlockedEye from "../icons/eye-slash-regular-full.svg";
 
-// Função auxiliar para ler um cookie pelo nome
-function getCookie(name) {
-  const value = `; ${document.cookie}`;
-  const parts = value.split(`; ${name}=`);
-  if (parts.length === 2) return parts.pop().split(";").shift();
-}
-
 function ChangePassword() {
   const navigate = useNavigate();
 
@@ -123,7 +116,7 @@ function ChangePassword() {
       <DynamicHeader
         userEmail={userEmail}
         isAuthenticated={true}
-        backTo="/account"
+        onBackClick={() => navigate(-1)}
         backText="Back"
       />
       <div className="h-[calc(100vh-10rem)] flex flex-col justify-start items-center bg-[#f5f5f5] pt-16">

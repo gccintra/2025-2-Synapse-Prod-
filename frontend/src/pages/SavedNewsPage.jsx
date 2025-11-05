@@ -94,7 +94,12 @@ const SavedNewsPage = () => {
 
   return (
     <div className="bg-gray-50 min-h-screen flex flex-col font-montserrat">
-      <DynamicHeader userEmail={userData.email} isAuthenticated={true} />
+      <DynamicHeader
+        userEmail={userData.email}
+        isAuthenticated={true}
+        backTo="/feed"
+        backText="Back to feed"
+      />
 
       <main className="flex-grow max-w-6xl mx-auto sm:px-6 lg:px-8 mt-12 w-full">
         <h1 className="p-3 text-3xl font-medium text-gray-900 font-montserrat text-center">

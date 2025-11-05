@@ -115,7 +115,6 @@ function EditAccount() {
     } catch (err) {
       toast.error(err.message || "Could not connect to the server.");
     } finally {
-      // Finalizando o estado de carregamento
       setLoading(false);
     }
   };
@@ -125,7 +124,7 @@ function EditAccount() {
       <DynamicHeader
         userEmail={formData.email}
         isAuthenticated={true}
-        backTo="/account"
+        onBackClick={() => navigate(-1)}
         backText="Back"
       />
       {/* Container principal da página de edição */}

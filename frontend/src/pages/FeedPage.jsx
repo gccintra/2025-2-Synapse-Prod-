@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import { Link } from "react-router-dom";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import NewsCard from "../components/FeedPage/NewsCard";
 import DynamicHeader from "../components/DynamicHeader";
 import ScrollToTopButton from "../components/ScrollToTopButton";
@@ -9,7 +9,6 @@ import { useInfiniteScroll } from "../hooks/useInfiniteScroll";
 
 const LoginPrompt = () => (
   <div className="relative">
-    {/* Overlay com blur e mensagem */}
     <div className="absolute inset-0 z-10 flex flex-col items-center justify-center rounded-lg bg-white/30 p-8 text-center backdrop-blur-md">
       <h2 className="text-2xl font-bold text-gray-900 font-montserrat">
         Access your personalized feed
@@ -24,7 +23,6 @@ const LoginPrompt = () => (
         Log In
       </Link>
     </div>
-    {/* Conteúdo desfocado no fundo */}
     <div className="grid grid-cols-1 gap-8 md:grid-cols-3">
       {Array.from({ length: 3 }).map((_, index) => (
         <NewsCard key={index} isLoading={true} />
@@ -32,6 +30,48 @@ const LoginPrompt = () => (
     </div>
   </div>
 );
+
+const TopicSelector = React.forwardRef(
+  ({ topics, selectedTopic, onSelectTopic, isLoading }, ref) => {
+    if (isLoading) {
+      return (
+        <div className="flex gap-4 mb-8 flex-wrap">
+          <div className="mt-6 h-8 w-24 bg-gray-300 rounded-full animate-pulse" />
+          <div className="mt-6 h-8 w-28 bg-gray-300 rounded-full animate-pulse" />
+          <div className="mt-6 h-8 w-20 bg-gray-300 rounded-full animate-pulse" />
+        </div>
+      );
+    }
+
+    return (
+      <motion.div
+        ref={ref}
+        className="flex gap-4 mb-8 cursor-grab select-none custom-scroll overflow-x-auto flex-nowrap"
+        variants={containerVariants}
+        initial="hidden"
+        animate="visible"
+      >
+        {/* botão for you */}
+        <TopicButton
+          label="For You"
+          isSelected={selectedTopic === null}
+          onClick={() => onSelectTopic(null)}
+        />
+
+        {/* tópicos padrão */}
+        {topics.map((topic) => (
+          <TopicButton
+            key={topic.id}
+            label={topic.name.charAt(0).toUpperCase() + topic.name.slice(1)}
+            isSelected={selectedTopic?.id === topic.id}
+            onClick={() => onSelectTopic(topic)}
+          />
+        ))}
+      </motion.div>
+    );
+  }
+);
+TopicSelector.displayName = "TopicSelector";
 
 // animações do container e dos itens
 const containerVariants = {
@@ -43,6 +83,28 @@ const containerVariants = {
     },
   },
 };
+const TopicButton = ({ label, isSelected, onClick }) => (
+  <motion.button
+    onClick={onClick}
+    className="relative flex-shrink-0 flex items-center gap-3 mt-6 text-xs border border-black shadow-lg pl-6 pr-6 py-1 rounded-full font-montserrat transition-colors duration-300"
+    animate={{
+      color: isSelected ? "#fff" : "#000",
+      fontWeight: isSelected ? "600" : "500",
+    }}
+  >
+    <span className="relative z-10">{label}</span>
+    {isSelected && (
+      <motion.div
+        className="absolute inset-0 bg-black rounded-full"
+        layoutId="active-pill"
+        transition={{ type: "spring", stiffness: 350, damping: 30 }}
+        style={{ zIndex: 0 }}
+      />
+    )}
+  </motion.button>
+);
+
+// animações do container e dos itens
 const itemVariants = {
   hidden: { y: 20, opacity: 0 },
   visible: { y: 0, opacity: 1, transition: { duration: 0.5 } },
@@ -55,6 +117,8 @@ const FeedPage = () => {
   const [selectedTopic, setSelectedTopic] = useState(null);
   const [topicsLoading, setTopicsLoading] = useState(true);
   const topicsContainerRef = useRef(null);
+  const [showLeftGradient, setShowLeftGradient] = useState(false);
+  const [showRightGradient, setShowRightGradient] = useState(false);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
 
   const fetchNews = useCallback(
@@ -94,24 +158,22 @@ const FeedPage = () => {
       let fetchedTopics = [];
 
       try {
-        // Buscar dados do usuário e tópicos em paralelo
         const [userResponse, topicsResponse] = await Promise.allSettled([
           usersAPI.getUserProfile(),
           topicsAPI.getStandardTopics(),
         ]);
 
-        // Processar dados do usuário
         if (userResponse.status === "fulfilled") {
           setUserData(userResponse.value.data);
-          userIsLoggedIn = true; // Atualiza a variável local
+          userIsLoggedIn = true;
         } else {
           console.error("Failed to fetch user data:", userResponse.reason);
-          userIsLoggedIn = false; // Atualiza a variável local
+          userIsLoggedIn = false;
         }
 
         if (topicsResponse.status === "fulfilled") {
           fetchedTopics = topicsResponse.value.data || [];
-          setTopics(fetchedTopics); // Define o estado de tópicos
+          setTopics(fetchedTopics);
         } else {
           console.error("Failed to fetch topics:", topicsResponse.reason);
         }
@@ -135,7 +197,38 @@ const FeedPage = () => {
     resetNews();
   }, [selectedTopic, isLoggedIn]);
 
-  // Efeito para adicionar a funcionalidade de arrastar com o mouse
+  // controlar a visibilidade dos gradientes de scroll
+  useEffect(() => {
+    const slider = topicsContainerRef.current;
+    if (!slider) return;
+
+    const checkOverflow = () => {
+      const tolerance = 2;
+      const hasOverflow = slider.scrollWidth > slider.clientWidth + tolerance;
+
+      if (hasOverflow) {
+        setShowLeftGradient(slider.scrollLeft > 0);
+        setShowRightGradient(
+          slider.scrollLeft <
+            slider.scrollWidth - slider.clientWidth - tolerance
+        );
+      } else {
+        setShowLeftGradient(false);
+        setShowRightGradient(false);
+      }
+    };
+
+    // Verifica no carregamento inicial e em redimensionamentos
+    checkOverflow();
+    slider.addEventListener("scroll", checkOverflow);
+    window.addEventListener("resize", checkOverflow);
+
+    return () => {
+      slider.removeEventListener("scroll", checkOverflow);
+      window.removeEventListener("resize", checkOverflow);
+    };
+  }, [topicsLoading, topics]); // Reavalia quando os tópicos mudam
+
   useEffect(() => {
     const slider = topicsContainerRef.current;
     if (!slider) return;
@@ -180,7 +273,7 @@ const FeedPage = () => {
       slider.removeEventListener("mouseup", handleMouseUp);
       slider.removeEventListener("mousemove", handleMouseMove);
     };
-  }, [topicsLoading]); // Roda o efeito quando o container estiver pronto
+  }, [topicsLoading]);
 
   return (
     <motion.div
@@ -197,69 +290,30 @@ const FeedPage = () => {
         showBackButton={false}
       />
 
-      {/* Main Content Container */}
       <main className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-4">
-        {/* Tópicos - Renderiza apenas após o carregamento inicial para evitar o "flicker" */}
-        {initialLoading ? (
-          <div className="flex gap-4 mb-8 flex-wrap">
-            <div className="mt-6 h-8 w-24 bg-gray-300 rounded-full animate-pulse" />
-            <div className="mt-6 h-8 w-28 bg-gray-300 rounded-full animate-pulse" />
-            <div className="mt-6 h-8 w-20 bg-gray-300 rounded-full animate-pulse" />
-          </div>
-        ) : (
-          <motion.div
+        {/* Skeleton Loading */}
+        <div className="relative">
+          <TopicSelector
             ref={topicsContainerRef}
-            className="flex gap-4 mb-8 max-[1255px]:overflow-x-scroll max-[1255px]:pb-4 cursor-grab select-none custom-scroll"
-            variants={containerVariants}
-            initial="hidden"
-            animate="visible"
-          >
-            {/* Botão "For You" */}
-            <motion.button
-              onClick={() => setSelectedTopic(null)}
-              className="relative flex-shrink-0 flex items-center gap-3 mt-6 text-xs border border-black shadow-lg pl-6 pr-6 py-1 rounded-full font-montserrat transition-colors duration-300"
-              animate={{
-                color: selectedTopic === null ? "#fff" : "#000",
-                fontWeight: selectedTopic === null ? "600" : "500",
-              }}
-            >
-              <span className="relative z-10">For You</span>
-              {selectedTopic === null && (
-                <motion.div
-                  className="absolute inset-0 bg-black rounded-full"
-                  layoutId="active-pill"
-                  transition={{ type: "spring", stiffness: 350, damping: 30 }}
-                  style={{ zIndex: 0 }}
-                />
-              )}
-            </motion.button>
-
-            {/* Tópicos Padrão */}
-            {topics.map((topic) => (
-              <motion.button
-                key={topic.id}
-                onClick={() => setSelectedTopic(topic)} // Adicionado flex-shrink-0 para evitar que os botões encolham
-                className="relative flex-shrink-0 flex items-center gap-3 mt-6 text-xs border border-black shadow-lg pl-6 pr-6 py-1 rounded-full font-montserrat transition-colors duration-300"
-                animate={{
-                  color: selectedTopic?.id === topic.id ? "#fff" : "#000",
-                  fontWeight: selectedTopic?.id === topic.id ? "600" : "500",
-                }}
-              >
-                <span className="relative z-10">
-                  {topic.name.charAt(0).toUpperCase() + topic.name.slice(1)}
-                </span>
-                {selectedTopic?.id === topic.id && (
-                  <motion.div
-                    className="absolute inset-0 bg-black rounded-full"
-                    layoutId="active-pill"
-                    transition={{ type: "spring", stiffness: 350, damping: 30 }}
-                    style={{ zIndex: 0 }}
-                  />
-                )}
-              </motion.button>
-            ))}
-          </motion.div>
-        )}
+            topics={topics}
+            selectedTopic={selectedTopic}
+            onSelectTopic={setSelectedTopic}
+            isLoading={initialLoading}
+          />
+          <AnimatePresence>
+            {showLeftGradient && (
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                className="absolute top-0 left-0 h-full w-16 bg-gradient-to-r from-gray-50 to-transparent pointer-events-none z-10"
+              />
+            )}
+          </AnimatePresence>
+          {showRightGradient && (
+            <div className="absolute top-0 right-0 h-full w-16 bg-gradient-to-l from-gray-50 to-transparent pointer-events-none z-10" />
+          )}
+        </div>
 
         {/* Exibir erro se houver */}
         {newsError && (
@@ -285,18 +339,17 @@ const FeedPage = () => {
           initial="hidden"
           animate={!initialLoading && news.length > 0 ? "visible" : "hidden"}
         >
-          {/* Grid para os 3 primeiros cards (Destaques) */}
+          {/* grid destaques */}
           <motion.div
             className="grid grid-cols-1 md:grid-cols-3 gap-8 mt-12 mb-12"
             variants={itemVariants}
           >
             {newsLoading && news.length === 0
-              ? // Renderiza 3 cards em estado de carregamento inicial
-                Array.from({ length: 3 }).map((_, index) => (
+              ? Array.from({ length: 3 }).map((_, index) => (
                   <NewsCard key={index} isLoading={true} />
                 ))
-              : isLoggedIn || selectedTopic
-              ? news
+              : (isLoggedIn || selectedTopic) &&
+                news
                   .slice(0, 3)
                   .map((newsItem) => (
                     <NewsCard
@@ -304,28 +357,31 @@ const FeedPage = () => {
                       news={newsItem}
                       isLoggedIn={isLoggedIn}
                     />
-                  ))
-              : null}
+                  ))}
           </motion.div>
 
-          {/* Layout em Lista para os demais (Corpo do Feed) */}
-          <motion.div className="space-y-0" variants={itemVariants}>
+          {/* Corpo do Feed - Itens em formato de lista (que se adaptam no mobile) */}
+          <motion.div className="space-y-4" variants={itemVariants}>
             {newsLoading && news.length === 0
-              ? Array.from({ length: 2 }).map((_, index) => (
+              ? // Skeleton para a lista
+                Array.from({ length: 4 }).map((_, index) => (
                   <NewsCard key={index} isListItem={true} isLoading={true} />
                 ))
               : (isLoggedIn || selectedTopic) &&
                 news.slice(3).map((newsItem, index) => {
-                  // Adicionar ref ao último elemento para infinite scroll
                   const isLastItem = index === news.slice(3).length - 1;
                   return (
-                    <NewsCard
+                    <div
                       key={newsItem.id}
-                      news={newsItem}
-                      isListItem={true}
-                      isLoggedIn={isLoggedIn}
-                      ref={isLastItem ? lastElementRef : undefined}
-                    />
+                      className="flex flex-col md:flex-row"
+                    >
+                      <NewsCard
+                        news={newsItem}
+                        isListItem={true}
+                        isLoggedIn={isLoggedIn}
+                        ref={isLastItem ? lastElementRef : null}
+                      />
+                    </div>
                   );
                 })}
           </motion.div>
@@ -335,13 +391,7 @@ const FeedPage = () => {
         {newsLoading && news.length > 0 && (
           <div className="flex justify-center py-8">
             <div className="space-y-4 w-full">
-              {Array.from({ length: 2 }).map((_, index) => (
-                <NewsCard
-                  key={`loading-${index}`}
-                  isListItem={true}
-                  isLoading={true}
-                />
-              ))}
+              <NewsCard isListItem={true} isLoading={true} />
             </div>
           </div>
         )}

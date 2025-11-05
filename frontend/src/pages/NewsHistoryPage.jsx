@@ -98,17 +98,17 @@ const NewsHistoryPage = () => {
   };
 
   return (
-    <div className="bg-gray-50 min-h-screen">
+    <div className="bg-white min-h-screen">
       <DynamicHeader
         userEmail={userEmail}
         isAuthenticated={isLoggedIn}
         backTo="/feed"
-        backText="Back"
+        backText="Back to feed"
       />
 
       <main className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12 font-montserrat">
         {/* Título da Página */}
-        <h1 className="p-3 text-3xl font-medium text-gray-900 font-montserrat text-center">
+        <h1 className="p-3 text-2xl md:text-3xl font-medium text-gray-900 font-montserrat text-center">
           News History
         </h1>
 
@@ -166,7 +166,7 @@ const NewsHistoryPage = () => {
                       transition: { duration: 0.3 },
                     }}
                   >
-                    <h2 className="text-xl font-montserrat font-normal text-gray-900 mb-6">
+                    <h2 className="text-lg md:text-xl font-montserrat font-normal text-gray-900 mb-6">
                       {dateGroup}
                     </h2>
 

@@ -15,6 +15,7 @@ const DynamicHeader = ({
   showBackButton = true,
   backTo,
   backText,
+  onBackClick,
 }) => {
   const dropdownVariants = {
     hidden: {
@@ -38,6 +39,13 @@ const DynamicHeader = ({
 
   const actualBackText = backText || (location.state?.from ? "Back" : "Back");
 
+  const handleBackClick = () => {
+    if (onBackClick) {
+      onBackClick();
+    } else {
+      navigate(actualBackTo);
+    }
+  };
   const handleLogout = async () => {
     try {
       await usersAPI.logout();
@@ -65,7 +73,7 @@ const DynamicHeader = ({
             // exibe o botão de voltar (se showBackButton for true)
             showBackButton && (
               <button
-                onClick={() => navigate(actualBackTo)}
+                onClick={handleBackClick}
                 className="flex items-center text-gray-800 hover:text-gray-600"
               >
                 <img src={BackIcon} alt="Back Icon" className="w-5 h-5 mr-2" />
@@ -79,7 +87,7 @@ const DynamicHeader = ({
 
         {/* centro: logo Synapse */}
         <div className="flex justify-center w-1/3">
-          {location.pathname !== "/feed" && ( // caso NÃO estiver no feed, Synapse fica no centro
+          {location.pathname !== "/feed" && ( // caso ñ estiver no feed, Synapse fica no centro
             <Link to="/feed" onClick={() => setDropdownOpen(false)}>
               <h1 className="text-3xl font-bold text-black font-rajdhani">
                 Synapse
@@ -96,16 +104,11 @@ const DynamicHeader = ({
                 className="flex items-center rounded-md text-gray-800 hover:text-gray-600 focus:outline-none text-base font-montserrat"
                 onClick={() => setDropdownOpen((open) => !open)}
               >
-                {/* 1. Texto para ECRÃS GRANDES (>= 700px) */}
-                {/* Começa "hidden" (mobile-first) e torna-se "inline" (visível) em 700px */}
                 <span className="hidden min-[700px]:inline font-medium font-montserrat">
                   {userEmail}
                 </span>
-
-                {/* 2. Texto para ECRÃS PEQUENOS (< 700px) */}
-                {/* Começa "inline" (visível) e torna-se "hidden" (escondido) em 700px */}
                 <span className="inline min-[700px]:hidden font-medium font-montserrat">
-                  Profile
+                  {userEmail.split("@")[0]}
                 </span>
 
                 <img
@@ -121,7 +124,7 @@ const DynamicHeader = ({
                     initial="hidden"
                     animate="visible"
                     exit="hidden"
-                    className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg z-10 text-xs font-montserrat ring-1 ring-black ring-opacity-5"
+                    className="absolute right-0 mt-2 w-36 sm:w-48 bg-white rounded-md shadow-lg z-10 text-xs font-montserrat ring-1 ring-black ring-opacity-5"
                   >
                     <div className="p-1">
                       <Link

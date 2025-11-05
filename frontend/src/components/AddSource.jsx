@@ -1,8 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import DynamicHeader from "./DynamicHeader";
-import { newsSourcesAPI } from "../services/api";
-import BackIcon from "../icons/back-svgrepo-com.svg";
+import { newsSourcesAPI, usersAPI } from "../services/api";
 
 // sub-componente que representa cada card de fonte
 const SourceSelectCard = ({ source, isSelected, onToggle }) => {
@@ -57,17 +56,33 @@ const AddSource = ({ onSave, onBack }) => {
   const [error, setError] = useState(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedSources, setSelectedSources] = useState({});
+  const [userData, setUserData] = useState({ email: "" });
 
   useEffect(() => {
     const fetchUnattachedSources = async () => {
       setLoading(true);
       setError(null);
       try {
-        const response = await newsSourcesAPI.getUnattachedSources();
-        if (response.success) {
-          setSources(response.data || []);
+        // Executa as chamadas em paralelo
+        const [sourcesResponse, userProfileResponse] = await Promise.allSettled(
+          [newsSourcesAPI.getUnattachedSources(), usersAPI.getUserProfile()]
+        );
+
+        // Processa a resposta das fontes
+        if (
+          sourcesResponse.status === "fulfilled" &&
+          sourcesResponse.value.success
+        ) {
+          setSources(sourcesResponse.value.data || []);
         } else {
-          setError(response.error || "Failed to load sources.");
+          setError(sourcesResponse.value?.error || "Failed to load sources.");
+        }
+        // Processa a resposta do perfil do usuário
+        if (
+          userProfileResponse.status === "fulfilled" &&
+          userProfileResponse.value.success
+        ) {
+          setUserData(userProfileResponse.value.data);
         }
       } catch (err) {
         setError(err.message || "Connection error. Please try again.");
@@ -106,7 +121,12 @@ const AddSource = ({ onSave, onBack }) => {
 
   return (
     <div className="bg-white min-h-screen">
-      <DynamicHeader userEmail={""} isAuthenticated={true} />
+      <DynamicHeader
+        userEmail={userData.email}
+        isAuthenticated={true}
+        onBackClick={onBack}
+        backText="Back"
+      />
       <main className="max-w-xl mx-auto py-12 px-4 w-full text-center">
         <h2 className=" mb-2 text-3xl font-bold text-black font-montserrat">
           Add Preferred News Sources
