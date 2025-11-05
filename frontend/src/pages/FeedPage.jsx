@@ -197,12 +197,12 @@ const FeedPage = () => {
     resetNews();
   }, [selectedTopic, isLoggedIn]);
 
-  // controlar a visibilidade dos gradientes de scroll
+  // efeito que controla o carrossel de tópicos (gradientes e drag-to-scroll)
   useEffect(() => {
     const slider = topicsContainerRef.current;
     if (!slider) return;
 
-    const checkOverflow = () => {
+    const handleScrollAndResize = () => {
       const tolerance = 2;
       const hasOverflow = slider.scrollWidth > slider.clientWidth + tolerance;
 
@@ -217,21 +217,6 @@ const FeedPage = () => {
         setShowRightGradient(false);
       }
     };
-
-    // Verifica no carregamento inicial e em redimensionamentos
-    checkOverflow();
-    slider.addEventListener("scroll", checkOverflow);
-    window.addEventListener("resize", checkOverflow);
-
-    return () => {
-      slider.removeEventListener("scroll", checkOverflow);
-      window.removeEventListener("resize", checkOverflow);
-    };
-  }, [topicsLoading, topics]); // Reavalia quando os tópicos mudam
-
-  useEffect(() => {
-    const slider = topicsContainerRef.current;
-    if (!slider) return;
 
     let isDown = false;
     let startX;
@@ -258,22 +243,31 @@ const FeedPage = () => {
       if (!isDown) return;
       e.preventDefault();
       const x = e.pageX - slider.offsetLeft;
-      const walk = (x - startX) * 2; // Multiplicador para acelerar o scroll
+      const walk = (x - startX) * 2; // Multiplicador para acelerar o arraste
       slider.scrollLeft = scrollLeft - walk;
     };
 
+    // Adiciona todos os event listeners
+    slider.addEventListener("scroll", handleScrollAndResize);
+    window.addEventListener("resize", handleScrollAndResize);
     slider.addEventListener("mousedown", handleMouseDown);
     slider.addEventListener("mouseleave", handleMouseLeave);
     slider.addEventListener("mouseup", handleMouseUp);
     slider.addEventListener("mousemove", handleMouseMove);
 
+    // Executa a verificação inicial
+    handleScrollAndResize();
+
+    // Função de limpeza para remover todos os listeners
     return () => {
       slider.removeEventListener("mousedown", handleMouseDown);
       slider.removeEventListener("mouseleave", handleMouseLeave);
       slider.removeEventListener("mouseup", handleMouseUp);
       slider.removeEventListener("mousemove", handleMouseMove);
+      slider.removeEventListener("scroll", handleScrollAndResize);
+      window.removeEventListener("resize", handleScrollAndResize);
     };
-  }, [topicsLoading]);
+  }, [topicsLoading, topics]); // Depende dos tópicos para recalcular o overflow
 
   return (
     <motion.div
