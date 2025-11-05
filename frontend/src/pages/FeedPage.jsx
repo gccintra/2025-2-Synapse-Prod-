@@ -8,24 +8,26 @@ import { topicsAPI, usersAPI, newsAPI } from "../services/api";
 import { useInfiniteScroll } from "../hooks/useInfiniteScroll";
 
 const LoginPrompt = () => (
-  <div className="relative">
-    <div className="absolute inset-0 z-10 flex flex-col items-center justify-center rounded-lg bg-white/30 p-8 text-center backdrop-blur-md">
-      <h2 className="text-2xl font-bold text-gray-900 font-montserrat">
+  <div className="relative min-h-[400px] overflow-hidden">
+    <div className="absolute inset-0 z-10 flex flex-col items-center justify-center rounded-lg bg-white/20 p-4 text-center sm:p-8">
+      <h2 className="text-base font-bold text-gray-900 font-montserrat sm:text-xl">
         Access your personalized feed
       </h2>
-      <p className="mt-2 text-gray-700 font-montserrat">
+      <p className="mt-2 text-xs sm:text-sm text-gray-700 font-montserrat">
         Please log in to see the news tailored specifically for you.
       </p>
       <Link
         to="/login"
-        className="mt-6 rounded-full bg-black px-8 py-3 text-sm font-semibold text-white shadow-lg transition-transform duration-300 hover:scale-105"
+        className="mt-6 bg-black text-white font-medium sm:font-bold py-2 px-3 sm:py-2 sm:px-4 rounded sm:hover:bg-gray-800 font-montserrat text-xs sm:text-sm transition-transform duration-300 hover:scale-105"
       >
-        Log In
+        Login
       </Link>
     </div>
-    <div className="grid grid-cols-1 gap-8 md:grid-cols-3">
+    <div className="grid grid-cols-1 gap-6 sm:gap-8 md:grid-cols-3 filter blur-sm grayscale scale-95 opacity-70">
       {Array.from({ length: 3 }).map((_, index) => (
-        <NewsCard key={index} isLoading={true} />
+        <div key={index} className={index > 0 ? "hidden md:block" : "block"}>
+          <NewsCard isLoading={true} />
+        </div>
       ))}
     </div>
   </div>
@@ -46,7 +48,7 @@ const TopicSelector = React.forwardRef(
     return (
       <motion.div
         ref={ref}
-        className="flex gap-4 mb-8 cursor-grab select-none custom-scroll overflow-x-auto flex-nowrap"
+        className="flex gap-4 mb-8 cursor-grab select-none custom-scroll overflow-x-auto flex-nowrap w-11/12 mx-auto md:w-full md:mx-0"
         variants={containerVariants}
         initial="hidden"
         animate="visible"
@@ -354,10 +356,10 @@ const FeedPage = () => {
                   ))}
           </motion.div>
 
-          {/* Corpo do Feed - Itens em formato de lista (que se adaptam no mobile) */}
+          {/* lista */}
           <motion.div className="space-y-4" variants={itemVariants}>
             {newsLoading && news.length === 0
-              ? // Skeleton para a lista
+              ? // skeleton lista
                 Array.from({ length: 4 }).map((_, index) => (
                   <NewsCard key={index} isListItem={true} isLoading={true} />
                 ))
@@ -365,10 +367,7 @@ const FeedPage = () => {
                 news.slice(3).map((newsItem, index) => {
                   const isLastItem = index === news.slice(3).length - 1;
                   return (
-                    <div
-                      key={newsItem.id}
-                      className="flex flex-col md:flex-row"
-                    >
+                    <div key={newsItem.id} className="flex md:flex-row">
                       <NewsCard
                         news={newsItem}
                         isListItem={true}

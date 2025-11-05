@@ -170,13 +170,13 @@ const DynamicHeader = ({
             <>
               <Link
                 to="/login"
-                className="bg-black text-white font-bold py-2 px-4 rounded hover:bg-gray-800 transition-colors duration-200 font-montserrat text-sm"
+                className="sm:bg-black sm:text-white font-medium sm:font-bold py-2 px-2 sm:py-2 sm:px-4 rounded hover:bg-gray-200 sm:hover:bg-gray-800 transition-colors duration-200 font-montserrat text-sm"
               >
                 Login
               </Link>
               <Link
                 to="/registrar"
-                className="ml-4 text-black border border-black font-bold py-2 px-4 rounded hover:bg-gray-100 transition-colors duration-200 font-montserrat text-sm"
+                className="ml-4 text-black sm:border border-black font-medium sm:font-bold py-2 px-2 sm:py-2 sm:px-4 rounded hover:bg-gray-200 transition-colors duration-200 font-montserrat text-sm"
               >
                 Sign Up
               </Link>
