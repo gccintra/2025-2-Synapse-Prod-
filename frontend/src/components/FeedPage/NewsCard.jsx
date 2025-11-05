@@ -75,7 +75,7 @@ const NewsCard = forwardRef(
             <img
               src={news?.image_url || TestNewsImage}
               alt={news?.title}
-              className="w-20 h-20 sm:w-24 sm:h-24 object-cover flex-shrink-0 rounded-md"
+              className="w-20 h-20 lg:w-24 lg:h-24 object-cover flex-shrink-0 rounded-md"
             />
           )}
 
@@ -89,10 +89,10 @@ const NewsCard = forwardRef(
               </div>
             ) : (
               <>
-                <h3 className="text-sm sm:text-base font-semibold text-gray-900 mb-1 font-montserrat">
+                <h3 className="text-sm lg:text-base font-semibold text-gray-900 mb-1 font-montserrat">
                   {news?.title}
                 </h3>
-                <p className="text-xs sm:text-sm text-gray-600 line-clamp-2 font-montserrat mb-2">
+                <p className="text-xs lg:text-sm text-gray-600 line-clamp-2 font-montserrat mb-2">
                   {news?.description || news?.summary}
                 </p>
                 <NewsMetadata
