@@ -1,11 +1,14 @@
 import React, { useState, useEffect, useRef, useCallback } from "react";
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
+
+import { useInfiniteScroll } from "../hooks/useInfiniteScroll";
+import ScrollToTopButton from "../components/ScrollToTopButton";
 import { motion, AnimatePresence } from "framer-motion";
+
 import NewsCard from "../components/FeedPage/NewsCard";
 import DynamicHeader from "../components/DynamicHeader";
-import ScrollToTopButton from "../components/ScrollToTopButton";
+
 import { topicsAPI, usersAPI, newsAPI } from "../services/api";
-import { useInfiniteScroll } from "../hooks/useInfiniteScroll";
 
 const LoginPrompt = () => (
   <div className="relative min-h-[400px] overflow-hidden">
@@ -122,6 +125,10 @@ const FeedPage = () => {
   const [showLeftGradient, setShowLeftGradient] = useState(false);
   const [showRightGradient, setShowRightGradient] = useState(false);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const location = useLocation();
+  const [activeCategory, setActiveCategory] = useState(
+    location.state?.activeCategory || "For You"
+  );
 
   const fetchNews = useCallback(
     (page, perPage) => {
@@ -176,6 +183,16 @@ const FeedPage = () => {
         if (topicsResponse.status === "fulfilled") {
           fetchedTopics = topicsResponse.value.data || [];
           setTopics(fetchedTopics);
+
+          // Sincroniza selectedTopic com activeCategory
+          if (location.state?.activeCategory) {
+            const categoryTopic = fetchedTopics.find(
+              (topic) => topic.name === location.state.activeCategory
+            );
+            if (categoryTopic) {
+              setSelectedTopic(categoryTopic);
+            }
+          }
         } else {
           console.error("Failed to fetch topics:", topicsResponse.reason);
         }
@@ -192,7 +209,7 @@ const FeedPage = () => {
     };
 
     fetchInitialData();
-  }, []);
+  }, [location.state?.activeCategory]);
 
   // resetar o feed quando o tópico muda
   useEffect(() => {
@@ -352,6 +369,9 @@ const FeedPage = () => {
                       key={newsItem.id}
                       news={newsItem}
                       isLoggedIn={isLoggedIn}
+                      activeCategory={
+                        selectedTopic ? selectedTopic.name : "For You"
+                      }
                     />
                   ))}
           </motion.div>
@@ -373,6 +393,9 @@ const FeedPage = () => {
                         isListItem={true}
                         isLoggedIn={isLoggedIn}
                         ref={isLastItem ? lastElementRef : null}
+                        activeCategory={
+                          selectedTopic ? selectedTopic.name : "For You"
+                        }
                       />
                     </div>
                   );

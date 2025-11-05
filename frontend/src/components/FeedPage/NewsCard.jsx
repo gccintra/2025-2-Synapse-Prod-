@@ -13,7 +13,8 @@ const NewsCard = forwardRef(
       isListItem = false,
       isLoading = false,
       isLoggedIn = false,
-      showSaveButton = true,
+      showSaveButton = false,
+      activeCategory,
     },
     ref
   ) => {
@@ -139,7 +140,7 @@ const NewsCard = forwardRef(
       // card destaques
       <LinkComponent
         to={!isLoading ? `/article/${news?.id}` : undefined}
-        state={{ from: location.pathname }}
+        state={{ from: location.pathname, fromCategory: activeCategory }}
         className={`relative group text-sm md:text-base overflow-hidden font-montserrat h-full w-11/12 mx-auto md:w-full md:mx-0 ${
           !isLoading &&
           "cursor-pointer sm:transition-all sm:duration-300 sm:ease-in-out sm:hover:scale-[1.02]"

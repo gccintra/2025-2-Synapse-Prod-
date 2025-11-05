@@ -102,17 +102,14 @@ const SavedNewsPage = () => {
       />
 
       <main className="flex-grow max-w-6xl mx-auto sm:px-6 lg:px-8 mt-12 w-full">
-        <h1 className="p-3 text-3xl font-medium text-gray-900 font-montserrat text-center">
+        <h1 className="p-3 text-2xl sm:text-3xl font-medium text-gray-900 font-montserrat text-center">
           Your saved news
         </h1>
 
         {loading ? (
-          <div className="flex flex-wrap justify-center gap-8 mt-12 p-4">
+          <div className="hidden md:flex flex-wrap justify-center gap-8 mt-12 p-4">
             {Array.from({ length: 6 }).map((_, index) => (
-              <div
-                key={index}
-                className="w-full sm:w-1/2 md:w-1/3 lg:w-[30%] xl:w-1/4"
-              >
+              <div key={index} className="w-full sm:w-1/2 lg:w-[30%] xl:w-1/4">
                 <SavedNewsCardSkeleton />
               </div>
             ))}
@@ -161,7 +158,7 @@ const SavedNewsPage = () => {
                     scale: 0.5,
                     transition: { duration: 0.2 },
                   }}
-                  className="w-full sm:w-1/2 md:w-1/3 lg:w-[30%] xl:w-1/4"
+                  className="w-1/3 lg:w-[30%]"
                 >
                   <SavedNewsCard news={news} onRemove={handleConfirmRemove} />
                 </motion.div>

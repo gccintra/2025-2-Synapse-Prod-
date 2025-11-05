@@ -131,10 +131,10 @@ function EditAccount() {
       <div className="h-[calc(100vh-10rem)] flex flex-col justify-start items-center bg-[#f5f5f5] pt-16">
         <div className="w-full max-w-lg px-4">
           <div className="w-full text-center">
-            <h2 className=" mb-2 text-2xl min-[530px]:text-3xl font-bold text-black font-montserrat">
+            <h2 className=" mb-2 text-xl md:text-2xl font-bold text-black font-montserrat">
               Edit Your Account Information
             </h2>
-            <p className="mt-5 mb-8 text-xs min-[530px]:text-sm text-gray-600 font-montserrat">
+            <p className="mt-4 mb-8 text-xs md:text-sm text-gray-600 font-montserrat">
               Edit your account information and confirm.
             </p>
           </div>
@@ -144,7 +144,7 @@ function EditAccount() {
             {/* Campo Nome Completo */}
             <div className="relative">
               <label
-                className="mt-6 block text-sm font-medium text-gray-900 font-montserrat"
+                className="mt-6 block text-xs md:text-sm font-medium text-gray-900 font-montserrat"
                 htmlFor="fullName"
               >
                 Full Name
@@ -160,7 +160,7 @@ function EditAccount() {
                     value={formData.fullName}
                     onChange={handleChange}
                     placeholder="Enter your name..."
-                    className={`w-full border rounded py-2 px-9 focus:outline-none focus:ring-1 font-montserrat ${
+                    className={`w-full border rounded py-4 px-9 md:py-2 md:px-9 focus:outline-none focus:ring-1 font-montserrat ${
                       errors.fullName
                         ? "border-red-500 focus:ring-red-500"
                         : "border-gray-800 focus:ring-black"
@@ -178,7 +178,7 @@ function EditAccount() {
             {/* Campo Email */}
             <div className="relative">
               <label
-                className="mt-6 block text-sm font-medium text-gray-900 font-montserrat"
+                className="mt-6 block text-xs md:text-sm font-medium text-gray-900 font-montserrat"
                 htmlFor="email"
               >
                 Email Address
@@ -198,7 +198,7 @@ function EditAccount() {
                     value={formData.email}
                     onChange={handleChange}
                     placeholder="Enter your e-mail..."
-                    className={`w-full border rounded py-2 px-9 focus:outline-none focus:ring-1 font-montserrat ${
+                    className={`w-full border rounded py-4 px-9 md:py-2 md:px-9 focus:outline-none focus:ring-1 font-montserrat ${
                       errors.email
                         ? "border-red-500 focus:ring-red-500"
                         : "border-gray-800 focus:ring-black"
@@ -216,13 +216,12 @@ function EditAccount() {
             {/* Campo Data de Nascimento */}
             <div className="relative">
               <label
-                className="mt-6 block text-sm font-medium text-gray-900 font-montserrat"
+                className="mt-6 block text-xs md:text-sm font-medium text-gray-900 font-montserrat"
                 htmlFor="birthdate"
               >
                 Birthdate
                 <div className="relative mt-1">
                   <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
-                    {/* Usa o ícone do padrão de cadastro */}
                     <img
                       src={CalendarIcon}
                       alt="calendar icon"
@@ -235,7 +234,7 @@ function EditAccount() {
                     type="date"
                     value={formData.birthdate}
                     onChange={handleChange}
-                    className="w-full border rounded py-2 px-9 focus:outline-none focus:ring-1 font-montserrat border-gray-800 focus:ring-black [&::-webkit-calendar-picker-indicator]:hidden"
+                    className="w-full border rounded py-4 px-9 md:py-2 md:px-9 focus:outline-none focus:ring-1 font-montserrat border-gray-800 focus:ring-black [&::-webkit-calendar-picker-indicator]:hidden"
                   />
                 </div>
               </label>
@@ -244,7 +243,7 @@ function EditAccount() {
             {/* Botão de Confirmação com o mesmo estilo de 'Cadastrar' */}
             <button
               type="submit"
-              className="mt-6 w-full rounded-md bg-black py-3 px-5 text-white hover:bg-gray-900"
+              className="mt-6 w-full rounded-md bg-black py-3 px-3 md:py-3 md:px-5 text-white font-medium md:font-bold hover:bg-gray-900"
               disabled={loading}
             >
               {loading ? "Confirming..." : "Confirm"}

@@ -180,15 +180,15 @@ const NewsPage = () => {
           <img
             src={articleData.image}
             alt={articleData.title}
-            className="w-full h-96 object-cover rounded-lg mb-8 shadow-md"
+            className="w-11/12 mx-auto md:w-full md:mx-0 h-96 object-cover rounded-lg mb-8 shadow-md"
           />
           {/* Título e Metadados */}
-          <div className="mb-10 border-b border-gray-300 pb-4">
-            <h1 className="text-4xl font-extrabold text-gray-900 font-montserrat mb-3 leading-tight">
+          <div className="w-11/12 mx-auto md:w-full md:mx-0 mb-10 border-b border-gray-300 pb-4">
+            <h1 className="text-2xl sm:text-4xl font-extrabold text-gray-900 font-montserrat mb-3 leading-tight">
               {articleData.title}
             </h1>
             <div className="flex justify-between items-center">
-              <p className="text-base text-gray-600 font-montserrat">
+              <p className="text-sm sm:text-base text-gray-600 font-montserrat">
                 Fonte:{" "}
                 <span className="font-semibold text-black">
                   {articleData.source}
@@ -238,7 +238,7 @@ const NewsPage = () => {
           </style>
           <article>
             <div
-              className="prose prose-lg max-w-none font-montserrat text-gray-800 article-content"
+              className="w-11/12 mx-auto md:w-full prose prose-lg max-w-none font-montserrat text-gray-800 article-content"
               dangerouslySetInnerHTML={createMarkup(articleData.contentHtml)}
             />
           </article>

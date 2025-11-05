@@ -35,24 +35,23 @@ const SavedNewsCard = ({ news, onRemove }) => {
       {/* Link para a página da notícia */}
       <Link
         to={`/article/${news.id}`}
-        state={{ from: location.pathname }} // Passa o caminho atual como estado
+        state={{ from: location.pathname }}
         className="block"
       >
         {/* Imagem */}
         <img
           src={news.image}
           alt={news.title}
-          // Se a imagem da API falhar, o navegador tentará carregar o fallbackImage
           onError={(e) => (e.currentTarget.src = fallbackImage)}
-          className="w-full h-48 object-cover"
+          className="w-full h-36 sm:h-48 object-cover"
         />
 
         {/* Container de Texto */}
-        <div className="p-4">
-          <h3 className="text-base font-bold text-gray-900 mb-2 font-montserrat">
+        <div>
+          <h3 className="text-sm sm:text-base font-bold text-gray-900 mt-3 mb-2 font-montserrat">
             {news.title}
           </h3>
-          <p className="text-sm text-gray-600 line-clamp-3 font-montserrat">
+          <p className="text-xs sm:text-sm text-gray-600 line-clamp-3 font-montserrat">
             {news.summary}
           </p>
         </div>

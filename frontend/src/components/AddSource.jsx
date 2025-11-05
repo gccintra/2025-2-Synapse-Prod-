@@ -6,7 +6,7 @@ import { newsSourcesAPI, usersAPI } from "../services/api";
 // sub-componente que representa cada card de fonte
 const SourceSelectCard = ({ source, isSelected, onToggle }) => {
   const baseClasses =
-    "w-full flex items-center justify-between p-4 rounded-lg cursor-pointer transition-all duration-200 border";
+    "w-11/12 mx-auto md:w-full md:mx-0 flex items-center justify-between p-4 rounded-lg cursor-pointer transition-all duration-200 border";
   const selectedClasses =
     "bg-black border-black text-white transform scale-[1.01] shadow-md";
   const unselectedClasses =
@@ -20,11 +20,11 @@ const SourceSelectCard = ({ source, isSelected, onToggle }) => {
       onClick={() => onToggle(source)}
     >
       <div>
-        <h3 className="font-semibold text-base font-montserrat">
+        <h3 className="font-semibold text-sm md:text-base font-montserrat">
           {source.name}
         </h3>
         <p
-          className={`text-sm ${
+          className={`text-xs md:text-sm ${
             isSelected ? "text-gray-200" : "text-gray-500"
           }`}
         >
@@ -128,10 +128,10 @@ const AddSource = ({ onSave, onBack }) => {
         backText="Back"
       />
       <main className="max-w-xl mx-auto py-12 px-4 w-full text-center">
-        <h2 className=" mb-2 text-3xl font-bold text-black font-montserrat">
+        <h2 className=" mb-2 text-xl sm:text-3xl font-bold text-black font-montserrat">
           Add Preferred News Sources
         </h2>
-        <p className="mt-5 mb-8 text-sm text-gray-600 font-montserrat">
+        <p className="mt-5 mb-8 text-xs sm:text-sm text-gray-600 font-montserrat">
           Select sources you trust to personalize your feed.
         </p>
 
@@ -142,7 +142,7 @@ const AddSource = ({ onSave, onBack }) => {
             placeholder="search sources (e.g., The Guardian)"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="mx-auto w-full p-3 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:border-black focus:ring-1 focus:ring-black text-xs font-montserrat"
+            className="w-11/12 mx-auto md:w-full md:mx-0 p-3 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:border-black focus:ring-1 focus:ring-black text-xs font-montserrat"
           />
         </div>
 
@@ -194,16 +194,19 @@ const AddSource = ({ onSave, onBack }) => {
         </div>
       </main>
 
-      {/* Footer Fixo para o Botão Salvar */}
-      <footer className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 p-4 shadow-lg">
+      {/* footer */}
+      <footer
+        className="fixed bottom-0 left-0 right-4 md:right-2 md:left-0
+       bg-white border-t border-gray-200 p-4 shadow-lg"
+      >
         <div className="max-w-xl mx-auto flex justify-between items-center">
-          <p className="text-lg font-montserrat">
+          <p className="text-base md:text-lg font-montserrat">
             **{selectedCount}** source(s) selected
           </p>
           <button
             onClick={handleSave}
             disabled={selectedCount === 0}
-            className={`px-6 py-3 rounded-lg text-white font-bold font-montserrat transition-colors ${
+            className={`px-3 py-2 md:px-5 md:py-3 rounded-lg text-white text-xs md:text-sm font-medium md:font-bold font-montserrat transition-colors ${
               selectedCount > 0
                 ? "bg-black hover:bg-gray-800"
                 : "bg-gray-400 cursor-not-allowed"
