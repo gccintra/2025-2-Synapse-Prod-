@@ -96,7 +96,7 @@ class KeywordGenerationService:
         Returns:
             Prompt formatado
         """
-        keywords_per_topic = 5 
+        keywords_per_topic = 5
 
         prompt = f"""Para cada tópico da lista, gere {keywords_per_topic} palavras-chave que APARECEM EM MANCHETES REAIS de jornais e sites de notícias.
 

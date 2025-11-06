@@ -4,7 +4,7 @@ import google.generativeai as genai
 
 
 class AIService:
-    def __init__(self, timeout: int = 60):
+    def __init__(self, timeout: int = 60): 
         self.api_key = os.getenv('GEMINI_API_KEY')
         self.timeout = timeout
 
@@ -17,7 +17,7 @@ class AIService:
                 self.model = genai.GenerativeModel(
                     'gemini-2.5-flash',
                     generation_config={
-                        'temperature': 0.1,  # Mais determinístico para extração de tópicos
+                        'temperature': 0.1, 
                     }
                 )
                 logging.info(f"AIService inicializado com sucesso (modelo=gemini-2.5-flash, timeout={self.timeout}s).")

@@ -11,7 +11,8 @@ class NewsEntity(db.Model):
     description: Mapped[str] = mapped_column(Text, nullable=True)
     url: Mapped[str] = mapped_column(db.String(500), unique=True, nullable=False)
     image_url: Mapped[str] = mapped_column(db.String(500), nullable=True)
-    content: Mapped[str] = mapped_column(Text, nullable=False) 
+    content: Mapped[str] = mapped_column(Text, nullable=False)
+    html: Mapped[str] = mapped_column(Text, nullable=False)
     published_at: Mapped[datetime] = mapped_column(db.DateTime(timezone=True), nullable=False)
     
     source_id: Mapped[int] = mapped_column(ForeignKey("news_sources.id", ondelete="CASCADE"), nullable=False)

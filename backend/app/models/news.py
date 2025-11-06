@@ -10,8 +10,9 @@ class News:
         title: str,
         url: str,
         published_at: datetime,
-        source_id: int, 
+        source_id: int,
         content: str,
+        html: str,
         topic_id: int | None = None,
         id: int | None = None,
         description: str | None = None,
@@ -19,6 +20,7 @@ class News:
         created_at: datetime | None = None,
         source_name: str | None = None,
         topic_name: str | None = None,
+        scrapping_status: str | None = None,
     ):
         self.id = id
         self.title = title
@@ -26,12 +28,14 @@ class News:
         self.url = url
         self.image_url = image_url
         self.content = content
+        self.html = html
         self.published_at = published_at
         self.source_id = source_id
         self.topic_id = topic_id
         self.created_at = created_at
         self.source_name = source_name
         self.topic_name = topic_name
+        self.scrapping_status = scrapping_status
 
     @property
     def title(self) -> str:
@@ -135,6 +139,7 @@ class News:
             url=entity.url,
             image_url=entity.image_url,
             content=entity.content,
+            html=entity.html,
             published_at=entity.published_at,
             source_id=entity.source_id,
             topic_id=entity.topic_id,
@@ -151,6 +156,7 @@ class News:
             url=self.url,
             image_url=self.image_url,
             content=self.content,
+            html=self.html,
             published_at=self.published_at,
             source_id=self.source_id,
             topic_id=self.topic_id,

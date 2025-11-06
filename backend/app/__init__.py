@@ -82,6 +82,5 @@ def create_app(config_overrides=None):
     app.register_blueprint(topic_bp, url_prefix="/topics")
     app.register_blueprint(news_bp, url_prefix="/news")
     app.register_blueprint(news_source_bp, url_prefix="/news_sources")
-    
 
     return app
