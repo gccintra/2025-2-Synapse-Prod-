@@ -22,46 +22,53 @@ import NewsPage from "./pages/NewsPage.jsx";
 import SavedNewsPage from "./pages/SavedNewsPage.jsx";
 import NewsHistoryPage from "./pages/NewsHistoryPage";
 
+import RootLayout from "./layouts/RootLayout";
+
 const router = createBrowserRouter([
   {
-    path: "/",
-    element: <Navigate to="/feed" replace />,
-  },
-  { path: "/feed", element: <FeedPage /> },
-  {
-    path: "/about",
-    element: <AboutPage />,
-  },
-  {
-    path: "/article/:id",
-    element: <NewsPage />,
-  },
-  {
-    path: "/history",
-    element: <NewsHistoryPage />, // Adicione esta linha
-  },
-  {
-    // Rotas públicas restritas (APENAS para usuários não logados)
-    element: <PublicRoute />,
+    element: <RootLayout />,
     children: [
       {
-        path: "/login",
-        element: <LoginPage />,
+        path: "/",
+        element: <Navigate to="/feed" replace />,
+      },
+      { path: "/feed", element: <FeedPage /> },
+      {
+        path: "/about",
+        element: <AboutPage />,
       },
       {
-        path: "/registrar",
-        element: <RegisterPage />,
+        path: "/article/:id",
+        element: <NewsPage />,
       },
-    ],
-  },
-  {
-    // Rotas privadas (apenas para usuários logados)
-    element: <PrivateRoute />,
-    children: [
-      { path: "/account", element: <AccountPage /> },
-      { path: "/edit-account", element: <EditAccount /> },
-      { path: "/change-password", element: <ChangePassword /> },
-      { path: "/saved-news", element: <SavedNewsPage /> },
+      {
+        path: "/history",
+        element: <NewsHistoryPage />, // Adicione esta linha
+      },
+      {
+        // Rotas públicas restritas (APENAS para usuários não logados)
+        element: <PublicRoute />,
+        children: [
+          {
+            path: "/login",
+            element: <LoginPage />,
+          },
+          {
+            path: "/registrar",
+            element: <RegisterPage />,
+          },
+        ],
+      },
+      {
+        // Rotas privadas (apenas para usuários logados)
+        element: <PrivateRoute />,
+        children: [
+          { path: "/account", element: <AccountPage /> },
+          { path: "/edit-account", element: <EditAccount /> },
+          { path: "/change-password", element: <ChangePassword /> },
+          { path: "/saved-news", element: <SavedNewsPage /> },
+        ],
+      },
     ],
   },
 ]);

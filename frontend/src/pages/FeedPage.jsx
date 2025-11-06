@@ -163,53 +163,73 @@ const FeedPage = () => {
       setInitialLoading(true);
       setTopicsLoading(true);
 
-      let userIsLoggedIn = false;
-      let fetchedTopics = [];
+      let currentUserIsLoggedIn = false;
+      let currentFetchedTopics = [];
 
       try {
+        // chamadas em paralelo
         const [userResponse, topicsResponse] = await Promise.allSettled([
           usersAPI.getUserProfile(),
           topicsAPI.getStandardTopics(),
         ]);
 
+        // resposta do Usuário
         if (userResponse.status === "fulfilled") {
           setUserData(userResponse.value.data);
-          userIsLoggedIn = true;
+          currentUserIsLoggedIn = true;
         } else {
-          console.error("Failed to fetch user data:", userResponse.reason);
-          userIsLoggedIn = false;
+          currentUserIsLoggedIn = false;
         }
 
+        // resposta dos Tópicos
         if (topicsResponse.status === "fulfilled") {
-          fetchedTopics = topicsResponse.value.data || [];
-          setTopics(fetchedTopics);
-
-          // Sincroniza selectedTopic com activeCategory
-          if (location.state?.activeCategory) {
-            const categoryTopic = fetchedTopics.find(
-              (topic) => topic.name === location.state.activeCategory
-            );
-            if (categoryTopic) {
-              setSelectedTopic(categoryTopic);
-            }
-          }
-        } else {
-          console.error("Failed to fetch topics:", topicsResponse.reason);
+          currentFetchedTopics = topicsResponse.value.data || [];
+          setTopics(currentFetchedTopics);
         }
       } catch (err) {
-        console.error("Connection error:", err);
+        console.error("Erro crítico na inicialização:", err);
       } finally {
+        // estados de login e loading atualizados
+        setIsLoggedIn(currentUserIsLoggedIn);
         setInitialLoading(false);
         setTopicsLoading(false);
-        setIsLoggedIn(userIsLoggedIn);
-        if (!userIsLoggedIn && fetchedTopics.length > 0) {
-          setSelectedTopic(fetchedTopics[0]);
+
+        // LÓGICA DE SELEÇÃO DO TÓPICO INICIAL
+        let topicToSelect;
+
+        // Passo A: Define o padrão baseado no login
+        if (currentUserIsLoggedIn) {
+          topicToSelect = null; // Padrão para logado: "For You"
+        } else {
+          topicToSelect =
+            currentFetchedTopics.length > 0 ? currentFetchedTopics[0] : null; // Padrão para não logado: Primeiro tópico
         }
+
+        // Passo B: Tenta sobrescrever com o histórico de navegação, se existir
+        if (location.state?.activeCategory && currentFetchedTopics.length > 0) {
+          if (location.state.activeCategory === "For You") {
+            // Se veio de "For You", só permite se estiver logado
+            if (currentUserIsLoggedIn) {
+              topicToSelect = null;
+            }
+          } else {
+            // Tenta encontrar o tópico pelo nome
+            const restoredTopic = currentFetchedTopics.find(
+              (t) => t.name === location.state.activeCategory
+            );
+            if (restoredTopic) {
+              topicToSelect = restoredTopic;
+            }
+          }
+        }
+
+        // Passo C: Aplica a seleção final
+        setSelectedTopic(topicToSelect);
       }
     };
 
     fetchInitialData();
-  }, [location.state?.activeCategory]);
+  }, []);
 
   // resetar o feed quando o tópico muda
   useEffect(() => {

@@ -63,7 +63,7 @@ const NewsCard = forwardRef(
         // card da lista
         <LinkComponent
           to={!isLoading ? `/article/${news?.id}` : undefined}
-          state={{ from: location.pathname }}
+          state={{ from: location.pathname, fromCategory: activeCategory }}
           ref={ref}
           className={`relative group flex flex-row items-start gap-4 p-4 border-b border-gray-200 ${
             !isLoading && "hover:bg-gray-100 transition-colors cursor-pointer"
