@@ -142,13 +142,10 @@ def test_to_orm(valid_user_data):
             birthdate=user.birthdate,
             password_hash=user._password_hash,
         )
-
-        # O retorno de to_orm() deve ser a instância criada pelo construtor mockado
         assert orm_entity == MockUserEntity.return_value
 
 
 def test_repr_method(valid_user_data):
-    """Testa a representação em string do objeto User."""
     user = User(**valid_user_data)
     expected_repr = f"<User(id={user.id}, email='{user.email}')>"
     assert repr(user) == expected_repr
