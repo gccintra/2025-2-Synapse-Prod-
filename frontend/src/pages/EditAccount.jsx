@@ -2,6 +2,8 @@ import React, { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
 import DynamicHeader from "../components/DynamicHeader"; // Import the new DynamicHeader
+import AnimatedPage from "../components/AnimatedPage";
+import { usersAPI } from "../services/api";
 
 // Importe os ícones que você está usando no formulário
 import UserIcon from "../icons/user-regular-full.svg";
@@ -26,59 +28,40 @@ function EditAccount() {
     birthdate: "",
   });
 
-  // Estado para os erros de validação
+  // erros de validação
   const [errors, setErrors] = useState({});
-  const [loading, setLoading] = useState(true); // Estado de carregamento
+  const [loading, setLoading] = useState(true);
 
   // useEffect para buscar os dados do usuário ao carregar o componente
   useEffect(() => {
     const fetchUserData = async () => {
-      // Definindo estado de carregamento
       setLoading(true);
 
       try {
-        const apiUrl = import.meta.env.VITE_API_BASE_URL;
-        // Faz a requisição GET para a API
-        const response = await fetch(`${apiUrl}/users/profile`, {
-          method: "GET",
-          headers: {
-            "Content-Type": "application/json",
-            // "Authorization": `Bearer ${token}`
-          },
-          credentials: "include", // Adicionado para enviar cookies de autenticação
-        });
-
-        const data = await response.json();
-
-        if (response.ok) {
-          // Corrige o problema de fuso horário da data de nascimento
-          const birthdateFromAPI = data.data.birthdate;
+        const response = await usersAPI.getUserProfile();
+        if (response.success) {
+          const birthdateFromAPI = response.data.birthdate;
           const date = new Date(birthdateFromAPI);
           const userTimezoneOffset = date.getTimezoneOffset() * 60000;
           const adjustedDate = new Date(date.getTime() + userTimezoneOffset);
-          // Formata para YYYY-MM-DD para o input type="date"
           const formattedDate = adjustedDate.toISOString().split("T")[0];
 
-          // Atualizando o estado 'formData' com os dados da API
           setFormData({
-            fullName: data.data.full_name,
-            email: data.data.email,
+            fullName: response.data.full_name,
+            email: response.data.email,
             birthdate: formattedDate,
           });
         } else {
-          // Tratamento de erros de resposta da API
-          toast.error(data.error || "Could not load data.");
+          toast.error(response.error || "Could not load data.");
         }
       } catch (err) {
-        // Tratamento de erros de conexão
-        toast.error("Connection error. Please try again later.");
+        toast.error(err.message || "Connection error. Please try again later.");
       } finally {
-        // Finaliza o carregamento
         setLoading(false);
       }
     };
 
-    fetchUserData(); // Chama a função para buscar os dados do usuário ao montar o componente
+    fetchUserData();
   }, []);
   const validateForm = () => {
     const newErrors = {};
@@ -105,17 +88,12 @@ function EditAccount() {
 
     setLoading(true);
 
-    // Valida o formulário
     if (!validateForm()) {
       toast.error("Please correct the errors in the form.");
       setLoading(false);
       return;
     }
 
-    // Obtém a URL da API da variável de ambiente
-    const apiUrl = import.meta.env.VITE_API_BASE_URL;
-
-    // Prepara os dados para a API
     const userData = {
       full_name: formData.fullName,
       email: formData.email,
@@ -123,54 +101,40 @@ function EditAccount() {
     };
 
     try {
-      const csrfToken = getCookie("csrf_access_token"); // Pega o token CSRF do cookie
+      const response = await usersAPI.updateUserProfile(userData);
 
-      // Faz a chamada à API de atualização com o método PUT
-      const response = await fetch(`${apiUrl}/users/profile/update`, {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-          "X-CSRF-TOKEN": csrfToken, // Adiciona o header CSRF
-        },
-        body: JSON.stringify(userData),
-        credentials: "include",
-      });
-
-      const data = await response.json();
-
-      // Gerenciando a resposta da API
-      if (response.ok) {
+      if (response.success) {
         toast.success(`Data updated successfully!`);
-        // Pequeno delay para o usuário ver a mensagem e depois redireciona
+        // delay para o usuário ver a mensagem e depois redireciona
         setTimeout(() => {
-          navigate("/account"); // Redireciona para a página da conta
-        }, 2000); // Atraso de 2 segundos
+          navigate("/account");
+        }, 2000);
       } else {
-        toast.error(data.error || "An unknown error occurred.");
+        toast.error(response.error || "An unknown error occurred.");
       }
     } catch (err) {
-      // Tratamento de erros de conexão
-      toast.error("Could not connect to the server. Please try again later.");
+      toast.error(err.message || "Could not connect to the server.");
     } finally {
-      // Finalizando o estado de carregamento
       setLoading(false);
     }
   };
 
   return (
-    <>
+    <AnimatedPage>
       <DynamicHeader
-        userEmail={formData.email} // Opcional, se o email já estiver no contexto de autenticação
-        isAuthenticated={true} // Opcional, se o status de autenticação já estiver no contexto
+        userEmail={formData.email}
+        isAuthenticated={true}
+        onBackClick={() => navigate(-1)}
+        backText="Back"
       />
       {/* Container principal da página de edição */}
-      <div className="min-h-screen flex flex-col justify-start items-center bg-[#f5f5f5] pt-16">
-        <div className="w-full max-w-lg">
+      <div className="h-[calc(100vh-10rem)] flex flex-col justify-start items-center bg-[#f5f5f5] pt-16">
+        <div className="w-full max-w-lg px-4">
           <div className="w-full text-center">
-            <h2 className=" mb-2 text-3xl font-bold text-black font-montserrat">
+            <h2 className=" mb-2 text-xl md:text-2xl font-bold text-black font-montserrat">
               Edit Your Account Information
             </h2>
-            <p className="mt-5 mb-8 text-sm text-gray-600 font-montserrat">
+            <p className="mt-4 mb-8 text-xs md:text-sm text-gray-600 font-montserrat">
               Edit your account information and confirm.
             </p>
           </div>
@@ -180,7 +144,7 @@ function EditAccount() {
             {/* Campo Nome Completo */}
             <div className="relative">
               <label
-                className="mt-6 block text-sm font-medium text-gray-900 font-montserrat"
+                className="mt-6 block text-xs md:text-sm font-medium text-gray-900 font-montserrat"
                 htmlFor="fullName"
               >
                 Full Name
@@ -196,7 +160,7 @@ function EditAccount() {
                     value={formData.fullName}
                     onChange={handleChange}
                     placeholder="Enter your name..."
-                    className={`w-full border rounded py-2 px-9 focus:outline-none focus:ring-1 font-montserrat ${
+                    className={`w-full border rounded py-4 px-9 md:py-2 md:px-9 focus:outline-none focus:ring-1 font-montserrat ${
                       errors.fullName
                         ? "border-red-500 focus:ring-red-500"
                         : "border-gray-800 focus:ring-black"
@@ -214,7 +178,7 @@ function EditAccount() {
             {/* Campo Email */}
             <div className="relative">
               <label
-                className="mt-6 block text-sm font-medium text-gray-900 font-montserrat"
+                className="mt-6 block text-xs md:text-sm font-medium text-gray-900 font-montserrat"
                 htmlFor="email"
               >
                 Email Address
@@ -234,7 +198,7 @@ function EditAccount() {
                     value={formData.email}
                     onChange={handleChange}
                     placeholder="Enter your e-mail..."
-                    className={`w-full border rounded py-2 px-9 focus:outline-none focus:ring-1 font-montserrat ${
+                    className={`w-full border rounded py-4 px-9 md:py-2 md:px-9 focus:outline-none focus:ring-1 font-montserrat ${
                       errors.email
                         ? "border-red-500 focus:ring-red-500"
                         : "border-gray-800 focus:ring-black"
@@ -252,13 +216,12 @@ function EditAccount() {
             {/* Campo Data de Nascimento */}
             <div className="relative">
               <label
-                className="mt-6 block text-sm font-medium text-gray-900 font-montserrat"
+                className="mt-6 block text-xs md:text-sm font-medium text-gray-900 font-montserrat"
                 htmlFor="birthdate"
               >
                 Birthdate
                 <div className="relative mt-1">
                   <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
-                    {/* Usa o ícone do padrão de cadastro */}
                     <img
                       src={CalendarIcon}
                       alt="calendar icon"
@@ -271,7 +234,7 @@ function EditAccount() {
                     type="date"
                     value={formData.birthdate}
                     onChange={handleChange}
-                    className="w-full border rounded py-2 px-9 focus:outline-none focus:ring-1 font-montserrat border-gray-800 focus:ring-black [&::-webkit-calendar-picker-indicator]:hidden"
+                    className="w-full border rounded py-4 px-9 md:py-2 md:px-9 focus:outline-none focus:ring-1 font-montserrat border-gray-800 focus:ring-black [&::-webkit-calendar-picker-indicator]:hidden"
                   />
                 </div>
               </label>
@@ -280,7 +243,7 @@ function EditAccount() {
             {/* Botão de Confirmação com o mesmo estilo de 'Cadastrar' */}
             <button
               type="submit"
-              className="mt-6 w-full rounded-md bg-black py-3 px-5 text-white hover:bg-gray-900"
+              className="mt-6 w-full rounded-md bg-black py-3 px-3 md:py-3 md:px-5 text-white font-medium md:font-bold hover:bg-gray-900"
               disabled={loading}
             >
               {loading ? "Confirming..." : "Confirm"}
@@ -288,7 +251,7 @@ function EditAccount() {
           </form>
         </div>
       </div>
-    </>
+    </AnimatedPage>
   );
 }
 

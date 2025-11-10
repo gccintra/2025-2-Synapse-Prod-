@@ -1,8 +1,12 @@
 import React, { useState, useEffect } from "react";
 import NewsCard from "../components/FeedPage/NewsCard";
-import DynamicHeader from "../components/DynamicHeader"; // Import the new DynamicHeader
-import { newsAPI, usersAPI } from "../services/api";
+import DynamicHeader from "../components/DynamicHeader";
+import ScrollToTopButton from "../components/ScrollToTopButton";
+
+import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "react-toastify";
+
+import { newsAPI, usersAPI } from "../services/api";
 
 const NewsHistoryPage = () => {
   const [historyData, setHistoryData] = useState({});
@@ -10,6 +14,19 @@ const NewsHistoryPage = () => {
   const [error, setError] = useState(null);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [userEmail, setUserEmail] = useState("");
+  const containerVariants = {
+    hidden: { opacity: 0 },
+    visible: {
+      opacity: 1,
+      transition: {
+        staggerChildren: 0.07,
+      },
+    },
+  };
+  const itemVariants = {
+    hidden: { y: 20, opacity: 0 },
+    visible: { y: 0, opacity: 1 },
+  };
 
   useEffect(() => {
     const fetchHistory = async () => {
@@ -17,29 +34,30 @@ const NewsHistoryPage = () => {
       setError(null);
 
       try {
-        // erifica se o usuário está logado e obtém o e-mail
-        const profileRes = await usersAPI.getUserProfile();
-        setIsLoggedIn(true);
-        setUserEmail(profileRes.data.email);
+        const [profileResponse, historyResponse] = await Promise.allSettled([
+          usersAPI.getUserProfile(),
+          newsAPI.getHistory(),
+        ]);
 
-        // login bem-sucedido, busca o histórico em um bloco separado
-        try {
-          const historyRes = await newsAPI.getHistory();
-          const historyList = historyRes.data.news || [];
+        if (profileResponse.status === "fulfilled") {
+          setIsLoggedIn(true);
+          setUserEmail(profileResponse.value.data.email);
+        } else {
+          throw new Error("You must be logged in to view your news history.");
+        }
+
+        if (historyResponse.status === "fulfilled") {
+          const historyList = historyResponse.value.data.news || [];
           const groupedData = groupHistoryByDate(historyList);
           setHistoryData(groupedData);
-        } catch (historyError) {
-          console.error("Failed to fetch history:", historyError);
-          setError(
+        } else {
+          throw new Error(
             "Could not load your reading history. Please try again later."
           );
-          toast.error("Could not load your reading history.");
         }
       } catch (err) {
-        // Se o `getUserProfile` falhar, o usuário NÃO está logado
+        setError(err.message);
         setIsLoggedIn(false);
-        setError("You must be logged in to view your news history.");
-        toast.warn("You must be logged in to view your news history.");
       } finally {
         setLoading(false);
       }
@@ -70,7 +88,7 @@ const NewsHistoryPage = () => {
     const groupedData = {};
 
     historyList.forEach((news) => {
-      const groupKey = formatDateGroup(news.read_at); // Usar news.read_at
+      const groupKey = formatDateGroup(news.read_at);
       if (!groupedData[groupKey]) {
         groupedData[groupKey] = [];
       }
@@ -90,15 +108,15 @@ const NewsHistoryPage = () => {
 
       <main className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12 font-montserrat">
         {/* Título da Página */}
-        <h1 className="p-3 text-3xl font-medium text-gray-900 font-montserrat text-center">
+        <h1 className="p-3 text-2xl md:text-3xl font-medium text-gray-900 font-montserrat text-center">
           News History
         </h1>
 
-        {/* Seção de Histórico */}
+        {/* Histórico */}
         <div className="mt-11">
           {loading ? (
             <div className="space-y-12">
-              {/* Bloco de esqueleto 1 (ex: "Today") */}
+              {/* Bloco de esqueleto "today"*/}
               <section>
                 <div className="h-7 w-1/4 bg-gray-200 rounded-md animate-pulse mb-6"></div>
                 <div className="space-y-0">
@@ -107,7 +125,7 @@ const NewsHistoryPage = () => {
                 </div>
               </section>
 
-              {/* Bloco de esqueleto 2 (ex: "Yesterday") */}
+              {/* Bloco de esqueleto "yesterday"*/}
               <section>
                 <div className="h-7 w-1/3 bg-gray-200 rounded-md animate-pulse mb-6"></div>
                 <div className="space-y-0">
@@ -129,30 +147,48 @@ const NewsHistoryPage = () => {
               </p>
             </div>
           ) : (
-            <div className="space-y-12">
-              {Object.keys(historyData).map((dateGroup) => (
-                <section key={dateGroup}>
-                  <h2 className="text-xl font-montserrat font-normal text-gray-900 mb-6">
-                    {dateGroup}
-                  </h2>
+            <motion.div
+              layout
+              variants={containerVariants}
+              initial="hidden"
+              animate="visible"
+              className="space-y-12"
+            >
+              <AnimatePresence>
+                {Object.keys(historyData).map((dateGroup) => (
+                  <motion.section
+                    key={dateGroup}
+                    variants={itemVariants}
+                    layout
+                    exit={{
+                      opacity: 0,
+                      scale: 0.5,
+                      transition: { duration: 0.3 },
+                    }}
+                  >
+                    <h2 className="text-lg md:text-xl font-montserrat font-normal text-gray-900 mb-6">
+                      {dateGroup}
+                    </h2>
 
-                  <div className="space-y-0">
-                    {historyData[dateGroup].map((news) => (
-                      <NewsCard // Usar news.read_at para a chave
-                        key={`${news.id}-${news.read_at}`}
-                        isListItem={true}
-                        isLoggedIn={isLoggedIn}
-                        showSaveButton={false}
-                        news={news}
-                      />
-                    ))}
-                  </div>
-                </section>
-              ))}
-            </div>
+                    <motion.div className="space-y-0">
+                      {historyData[dateGroup].map((news) => (
+                        <NewsCard
+                          key={`${news.id}-${news.read_at}`}
+                          isListItem={true}
+                          isLoggedIn={isLoggedIn}
+                          showSaveButton={false}
+                          news={news}
+                        />
+                      ))}
+                    </motion.div>
+                  </motion.section>
+                ))}
+              </AnimatePresence>
+            </motion.div>
           )}
         </div>
       </main>
+      <ScrollToTopButton />
     </div>
   );
 };

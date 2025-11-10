@@ -1,12 +1,12 @@
-// src/components/PreferredTopics.jsx
 import React from "react";
+import { motion, AnimatePresence } from "framer-motion";
 
 const PreferredTopics = ({
   topics,
   newTopic,
   onNewTopicChange,
   onAddTopic,
-  onDeleteTopic, // Prop para a função de deletar
+  onDeleteTopic,
   topicError,
 }) => {
   return (
@@ -21,22 +21,28 @@ const PreferredTopics = ({
         </p>
       )}
 
-      {/* Formulário para adicionar tópico */}
-      <div className="flex items-end gap-4">
+      <form
+        onSubmit={(e) => {
+          e.preventDefault();
+          onAddTopic();
+        }}
+        className="flex items-end gap-4"
+      >
         <input
           type="text"
           value={newTopic}
-          onChange={onNewTopicChange} // Usa a função recebida via props
+          onChange={onNewTopicChange}
           placeholder="enter a new topic..."
           className="h-11 flex-grow border border-gray-800 rounded px-2 focus:outline-none focus:ring-1 focus:ring-black text-xs font-montserrat"
         />
-        <button
-          onClick={onAddTopic} // Usa a função recebida via props
+        <motion.button
+          type="submit"
           className="h-11 flex items-center bg-black text-white text-xs font-bold px-4 rounded hover:bg-gray-800 font-montserrat"
+          whileTap={{ scale: 0.95 }}
         >
           Add Topic
-        </button>
-      </div>
+        </motion.button>
+      </form>
 
       {/* Lista de tópicos existentes */}
       <div>
@@ -44,33 +50,44 @@ const PreferredTopics = ({
           Your topics
         </p>
         <div className="flex flex-wrap gap-2">
-          {topics.map((topic) => (
-            <div
-              key={topic.id}
-              className="flex items-center gap-2 bg-white text-gray-900 text-sm font-medium border border-black shadow-lg pl-3 pr-2 py-1 rounded-full font-montserrat transition-all duration-300 ease-in-out hover:scale-[1.02] hover:shadow-xl hover:-translate-y-0.5 cursor-pointer"
-            >
-              <span>{topic.name}</span>
-              <button
-                onClick={() => onDeleteTopic(topic.id)} // Chama a função de deletar com o id do tópico
-                className="text-red-500 hover:text-red-700 rounded-full hover:bg-gray-100 p-0.2"
+          <AnimatePresence>
+            {topics.map((topic) => (
+              <motion.div
+                key={topic.id}
+                layout
+                initial={{ opacity: 0, y: -10, scale: 0.8 }}
+                animate={{ opacity: 1, y: 0, scale: 1 }}
+                exit={{ opacity: 0, x: -10, scale: 0.8 }}
+                transition={{ type: "spring", stiffness: 300, damping: 25 }}
+                whileHover={{
+                  x: 2,
+                  transition: { type: "spring", stiffness: 250, damping: 10 },
+                }}
+                className="flex items-center gap-2 bg-white text-gray-900 text-sm font-medium border border-black shadow-lg pl-3 pr-2 py-1 rounded-full font-montserrat"
               >
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  className="h-4 w-4"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
+                <span>{topic.name}</span>
+                <button
+                  onClick={() => onDeleteTopic(topic.id)}
+                  className="text-red-500 hover:text-red-700 rounded-full hover:bg-gray-100 p-0.2"
                 >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M6 18L18 6M6 6l12 12"
-                  />
-                </svg>
-              </button>
-            </div>
-          ))}
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    className="h-4 w-4"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M6 18L18 6M6 6l12 12"
+                    />
+                  </svg>
+                </button>
+              </motion.div>
+            ))}
+          </AnimatePresence>
         </div>
       </div>
     </div>

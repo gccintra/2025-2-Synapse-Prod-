@@ -1,14 +1,11 @@
-// src/components/SavedNewsCard.jsx
-
 import React from "react";
 import { Link, useLocation } from "react-router-dom";
-import fallbackImage from "../../assets/news-placeholder.jpg"; // Importa a imagem de fallback
+import fallbackImage from "../../assets/news-placeholder.jpg";
 
 const SavedNewsCard = ({ news, onRemove }) => {
-  const location = useLocation(); // Hook para obter a localização atual
+  const location = useLocation();
 
   // Função para lidar com o clique na remoção.
-  // Previne a navegação para a página da notícia.
   const handleRemoveClick = (e) => {
     e.preventDefault();
     e.stopPropagation();
@@ -38,24 +35,23 @@ const SavedNewsCard = ({ news, onRemove }) => {
       {/* Link para a página da notícia */}
       <Link
         to={`/article/${news.id}`}
-        state={{ from: location.pathname }} // Passa o caminho atual como estado
+        state={{ from: location.pathname }}
         className="block"
       >
         {/* Imagem */}
         <img
           src={news.image}
           alt={news.title}
-          // Se a imagem da API falhar, o navegador tentará carregar o fallbackImage
           onError={(e) => (e.currentTarget.src = fallbackImage)}
-          className="w-full h-48 object-cover"
+          className="w-full h-36 sm:h-48 object-cover"
         />
 
         {/* Container de Texto */}
-        <div className="p-4">
-          <h3 className="text-base font-bold text-gray-900 mb-2 font-montserrat">
+        <div>
+          <h3 className="text-sm sm:text-base font-bold text-gray-900 mt-3 mb-2 font-montserrat">
             {news.title}
           </h3>
-          <p className="text-sm text-gray-600 line-clamp-3 font-montserrat">
+          <p className="text-xs sm:text-sm text-gray-600 line-clamp-3 font-montserrat">
             {news.summary}
           </p>
         </div>

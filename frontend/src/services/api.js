@@ -1,15 +1,12 @@
-// src/services/api.js
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
-// Configuração base para fetch
 const defaultOptions = {
-  credentials: "include", // Inclui cookies de autenticação
+  credentials: "include",
   headers: {
     "Content-Type": "application/json",
   },
 };
 
-// Função auxiliar para ler um cookie pelo nome
 function getCookie(name) {
   const value = `; ${document.cookie}`;
   const parts = value.split(`; ${name}=`);
@@ -17,12 +14,10 @@ function getCookie(name) {
   return null;
 }
 
-// Função auxiliar para fazer requisições
 async function apiRequest(endpoint, options = {}) {
   const url = `${API_BASE_URL}${endpoint}`;
   const method = options.method || "GET";
 
-  // Adiciona o token CSRF automaticamente para métodos que alteram dados
   const csrfMethods = ["POST", "PUT", "DELETE", "PATCH"];
   if (csrfMethods.includes(method.toUpperCase())) {
     const csrfToken = getCookie("csrf_access_token");
@@ -30,12 +25,10 @@ async function apiRequest(endpoint, options = {}) {
       defaultOptions.headers["X-CSRF-TOKEN"] = csrfToken;
     }
   }
-
   const config = {
     ...defaultOptions,
     ...options,
   };
-
   try {
     const response = await fetch(url, config);
     const data = await response.json();
@@ -53,12 +46,10 @@ async function apiRequest(endpoint, options = {}) {
 
 // API de Topics
 export const topicsAPI = {
-  // --- Tópicos Padrão ---
-  // Lista todos os tópicos padrão do sistema
+  // Lista todos os tópicos padrão
   getStandardTopics: () => apiRequest("/topics/standard"),
 
-  // --- Tópicos Customizados (Preferências do Usuário) ---
-  // Lista os tópicos preferidos do usuário
+  // Lista os tópicos preferidos
   getPreferredTopics: () => apiRequest("/topics/custom"),
   addPreferredTopic: (name) =>
     apiRequest("/topics/custom", {
@@ -66,7 +57,7 @@ export const topicsAPI = {
       body: JSON.stringify({ name }),
     }),
 
-  // Remove um tópico das preferências do usuário
+  // Remove um tópico das preferências
   removePreferredTopic: (topicId) =>
     apiRequest(`/topics/custom/${topicId}`, { method: "DELETE" }),
 };
@@ -111,27 +102,43 @@ export const newsAPI = {
 
 // API de Users
 export const usersAPI = {
-  // Buscar perfil do usuário
+  // Buscar perfil
   getUserProfile: () => apiRequest("/users/profile"),
+
+  // Atualizar perfil
+  updateUserProfile: (userData) =>
+    apiRequest("/users/profile/update", {
+      method: "PUT",
+      body: JSON.stringify(userData),
+    }),
+
+  // Mudar a senha
+  changePassword: (passwordData) =>
+    apiRequest("/users/profile/change_password", {
+      method: "PUT",
+      body: JSON.stringify(passwordData),
+    }),
+
+  // Fazer logout
+  logout: () => apiRequest("/users/logout", { method: "POST" }),
 };
 
-// API de News Sources
+// News Sources
 export const newsSourcesAPI = {
-  // Lista todas as fontes disponíveis no sistema
   getAllSources: () => apiRequest("/news_sources/list_all"),
 
-  // Lista as fontes que o usuário marcou como preferidas
   getAttachedSources: () =>
     apiRequest("/news_sources/list_all_attached_sources"),
 
-  // Associa uma fonte ao usuário
   attachSource: (sourceId) =>
     apiRequest("/news_sources/attach", {
       method: "POST",
       body: JSON.stringify({ source_id: sourceId }),
     }),
 
-  // Desassocia uma fonte do usuário
   detachSource: (sourceId) =>
     apiRequest(`/news_sources/detach/${sourceId}`, { method: "DELETE" }),
+
+  getUnattachedSources: () =>
+    apiRequest("/news_sources/list_all_unattached_sources"),
 };

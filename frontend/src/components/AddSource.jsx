@@ -1,16 +1,16 @@
 import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
-import DynamicHeader from "../components/DynamicHeader"; // Import the new DynamicHeader
-import BackIcon from "../icons/back-svgrepo-com.svg";
+import DynamicHeader from "./DynamicHeader";
+import { newsSourcesAPI, usersAPI } from "../services/api";
 
-// Sub-componente que representa cada card de fonte
+// sub-componente que representa cada card de fonte
 const SourceSelectCard = ({ source, isSelected, onToggle }) => {
   const baseClasses =
-    "w-full flex items-center justify-between p-4 rounded-lg cursor-pointer transition-all duration-200 border"; // Ajuste na duração para smooth
+    "w-11/12 mx-auto md:w-full md:mx-0 flex items-center justify-between p-4 rounded-lg cursor-pointer transition-all duration-200 border";
   const selectedClasses =
-    "bg-black border-black text-white transform scale-[1.01] shadow-md"; // Aumentar um pouco a escala
+    "bg-black border-black text-white transform scale-[1.01] shadow-md";
   const unselectedClasses =
-    "bg-white border-gray-300 hover:border-black text-gray-800 hover:shadow-sm"; // Adicionado hover shadow
+    "bg-white border-gray-300 hover:border-black text-gray-800 hover:shadow-sm";
 
   return (
     <div
@@ -20,11 +20,11 @@ const SourceSelectCard = ({ source, isSelected, onToggle }) => {
       onClick={() => onToggle(source)}
     >
       <div>
-        <h3 className="font-semibold text-base font-montserrat">
+        <h3 className="font-semibold text-sm md:text-base font-montserrat">
           {source.name}
         </h3>
         <p
-          className={`text-sm ${
+          className={`text-xs md:text-sm ${
             isSelected ? "text-gray-200" : "text-gray-500"
           }`}
         >
@@ -51,35 +51,41 @@ const SourceSelectCard = ({ source, isSelected, onToggle }) => {
 };
 
 const AddSource = ({ onSave, onBack }) => {
-  // Estado para a pesquisa e para as fontes selecionadas
   const [sources, setSources] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedSources, setSelectedSources] = useState({});
+  const [userData, setUserData] = useState({ email: "" });
 
   useEffect(() => {
     const fetchUnattachedSources = async () => {
       setLoading(true);
       setError(null);
       try {
-        const apiUrl = import.meta.env.VITE_API_BASE_URL;
-        const response = await fetch(
-          `${apiUrl}/news_sources/list_all_unattached_sources`,
-          {
-            method: "GET",
-            headers: { "Content-Type": "application/json" },
-            credentials: "include",
-          }
+        // Executa as chamadas em paralelo
+        const [sourcesResponse, userProfileResponse] = await Promise.allSettled(
+          [newsSourcesAPI.getUnattachedSources(), usersAPI.getUserProfile()]
         );
-        const data = await response.json();
-        if (response.ok) {
-          setSources(data.data || []);
+
+        // Processa a resposta das fontes
+        if (
+          sourcesResponse.status === "fulfilled" &&
+          sourcesResponse.value.success
+        ) {
+          setSources(sourcesResponse.value.data || []);
         } else {
-          setError(data.error || "Failed to load sources.");
+          setError(sourcesResponse.value?.error || "Failed to load sources.");
+        }
+        // Processa a resposta do perfil do usuário
+        if (
+          userProfileResponse.status === "fulfilled" &&
+          userProfileResponse.value.success
+        ) {
+          setUserData(userProfileResponse.value.data);
         }
       } catch (err) {
-        setError("Connection error. Please try again.");
+        setError(err.message || "Connection error. Please try again.");
       } finally {
         setLoading(false);
       }
@@ -87,7 +93,6 @@ const AddSource = ({ onSave, onBack }) => {
     fetchUnattachedSources();
   }, []);
 
-  // Filtra as fontes sugeridas com base no termo de pesquisa
   const filteredSources = sources.filter(
     (source) =>
       source.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -107,10 +112,9 @@ const AddSource = ({ onSave, onBack }) => {
     });
   };
 
-  // Transforma o objeto de fontes selecionadas em um array e chama a função de salvar
   const handleSave = () => {
     const sourcesArray = Object.values(selectedSources);
-    onSave(sourcesArray); // Esta função será passada da AccountPage
+    onSave(sourcesArray); // função passada da AccountPage
   };
 
   const selectedCount = Object.keys(selectedSources).length;
@@ -118,14 +122,16 @@ const AddSource = ({ onSave, onBack }) => {
   return (
     <div className="bg-white min-h-screen">
       <DynamicHeader
-        userEmail={""} // Email será buscado pelo DynamicHeader se não for fornecido
-        isAuthenticated={true} // Opcional, se o status de autenticação já estiver no contexto
+        userEmail={userData.email}
+        isAuthenticated={true}
+        onBackClick={onBack}
+        backText="Back"
       />
       <main className="max-w-xl mx-auto py-12 px-4 w-full text-center">
-        <h2 className=" mb-2 text-3xl font-bold text-black font-montserrat">
+        <h2 className=" mb-2 text-xl sm:text-3xl font-bold text-black font-montserrat">
           Add Preferred News Sources
         </h2>
-        <p className="mt-5 mb-8 text-sm text-gray-600 font-montserrat">
+        <p className="mt-5 mb-8 text-xs sm:text-sm text-gray-600 font-montserrat">
           Select sources you trust to personalize your feed.
         </p>
 
@@ -136,12 +142,11 @@ const AddSource = ({ onSave, onBack }) => {
             placeholder="search sources (e.g., The Guardian)"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="mx-auto w-full p-3 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:border-black focus:ring-1 focus:ring-black text-xs font-montserrat"
+            className="w-11/12 mx-auto md:w-full md:mx-0 p-3 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:border-black focus:ring-1 focus:ring-black text-xs font-montserrat"
           />
         </div>
 
         {/* Div para conter a lista de fontes com rolagem */}
-        {/* Adicionei `mb-24` (ou um valor maior) para garantir que o scroll não fique sob o footer */}
         <div className="h-96 overflow-y-auto space-y-4 pl-4 pr-4 mb-24 relative">
           {loading ? (
             <div className="flex justify-center items-center h-full">
@@ -189,16 +194,19 @@ const AddSource = ({ onSave, onBack }) => {
         </div>
       </main>
 
-      {/* Footer Fixo para o Botão Salvar */}
-      <footer className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 p-4 shadow-lg">
+      {/* footer */}
+      <footer
+        className="fixed bottom-0 left-0 right-4 md:right-2 md:left-0
+       bg-white border-t border-gray-200 p-4 shadow-lg"
+      >
         <div className="max-w-xl mx-auto flex justify-between items-center">
-          <p className="text-lg font-montserrat">
+          <p className="text-base md:text-lg font-montserrat">
             **{selectedCount}** source(s) selected
           </p>
           <button
             onClick={handleSave}
             disabled={selectedCount === 0}
-            className={`px-6 py-3 rounded-lg text-white font-bold font-montserrat transition-colors ${
+            className={`px-3 py-2 md:px-5 md:py-3 rounded-lg text-white text-xs md:text-sm font-medium md:font-bold font-montserrat transition-colors ${
               selectedCount > 0
                 ? "bg-black hover:bg-gray-800"
                 : "bg-gray-400 cursor-not-allowed"

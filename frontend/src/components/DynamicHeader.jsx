@@ -1,92 +1,71 @@
 import React, { useState, useEffect } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
-import { toast } from "react-toastify";
-import ArrowDownIcon from "../icons/arrow-down.svg";
-import BackIcon from "../icons/back-svgrepo-com.svg";
+
 import { usersAPI } from "../services/api";
 
-// Utility function to read a cookie by name
-function getCookie(name) {
-  const value = `; ${document.cookie}`;
-  const parts = value.split(`; ${name}=`);
-  if (parts.length === 2) return parts.pop().split(";").shift();
-  return null;
-}
+import { toast } from "react-toastify";
+import { motion, AnimatePresence } from "framer-motion";
+
+import ArrowDownIcon from "../icons/arrow-down.svg";
+import BackIcon from "../icons/back-svgrepo-com.svg";
 
 const DynamicHeader = ({
-  userEmail: propUserEmail, // Email do usuário passado como prop (opcional)
-  isAuthenticated: propIsAuthenticated, // Status de autenticação passado como prop (opcional)
-  showBackButton = true, // Controla a visibilidade do botão de voltar
-  backTo, // Caminho explícito para onde o botão de voltar deve levar
-  backText, // Texto explícito para o botão de voltar
+  userEmail,
+  isAuthenticated,
+  showBackButton = true,
+  backTo,
+  backText,
+  onBackClick,
 }) => {
+  const dropdownVariants = {
+    hidden: {
+      opacity: 0,
+      y: -10,
+      scale: 0.95,
+      transition: { duration: 0.2, ease: "easeInOut" },
+    },
+    visible: {
+      opacity: 1,
+      y: 0,
+      scale: 1,
+      transition: { duration: 0.2, ease: "easeInOut" },
+    },
+  };
   const [dropdownOpen, setDropdownOpen] = useState(false);
-  const [localUserEmail, setLocalUserEmail] = useState(propUserEmail || "");
-  const [localIsAuthenticated, setLocalIsAuthenticated] = useState(
-    propIsAuthenticated !== undefined ? propIsAuthenticated : false
-  );
   const navigate = useNavigate();
   const location = useLocation();
 
-  // Busca dados do usuário se não forem fornecidos via props
-  useEffect(() => {
-    // Só busca se o email não foi fornecido ou se o status de autenticação é desconhecido
-    if (!propUserEmail || propIsAuthenticated === undefined) {
-      const fetchUserData = async () => {
-        try {
-          const response = await usersAPI.getUserProfile();
-          setLocalUserEmail(response.data.email || "");
-          setLocalIsAuthenticated(true);
-        } catch (err) {
-          // Se falhar, o usuário não está autenticado
-          console.error("Failed to fetch user data in DynamicHeader:", err);
-          setLocalIsAuthenticated(false);
-        }
-      };
-      fetchUserData();
+  const actualBackText = backText || (location.state?.from ? "Back" : "Back");
+
+  const handleBackClick = () => {
+    if (onBackClick) {
+      onBackClick();
+    } else if (location.state?.fromCategory) {
+      navigate("/feed", {
+        state: { activeCategory: location.state.fromCategory },
+      });
+    } else {
+      navigate(-1);
     }
-  }, [propUserEmail, propIsAuthenticated]);
-
-  // Determina a navegação de volta dinamicamente
-  // Prioriza 'backTo' explícito, depois 'location.state.from', senão '/feed'
-  const actualBackTo = backTo || location.state?.from || "/feed";
-  // Prioriza 'backText' explícito, senão "Back" se veio de algum lugar, senão "Back to feed"
-  const actualBackText =
-    backText || (location.state?.from ? "Back" : "Back to feed");
-
-  // Função de logout
+  };
   const handleLogout = async () => {
     try {
-      const apiUrl = import.meta.env.VITE_API_BASE_URL;
-      const csrfToken = getCookie("csrf_access_token");
-
-      await fetch(`${apiUrl}/users/logout`, {
-        method: "POST",
-        headers: { "X-CSRF-TOKEN": csrfToken || "" }, // Garante que csrfToken não seja nulo
-        credentials: "include",
-      });
+      await usersAPI.logout();
       toast.success("Logout successful!");
     } catch (error) {
       console.error("Logout failed:", error);
-      toast.error("Logout failed. Please try again.");
+      toast.error(error.message || "Logout failed. Please try again.");
     } finally {
       navigate("/login");
     }
   };
 
-  // Usa o email e status de autenticação das props se existirem, senão usa os estados locais
-  const displayEmail = propUserEmail || localUserEmail;
-  const displayIsAuthenticated =
-    propIsAuthenticated !== undefined
-      ? propIsAuthenticated
-      : localIsAuthenticated;
-
   return (
     <>
-      <header className="flex justify-between items-center p-6 bg-white border-b border-gray-300 relative">
+      <header className="flex justify-between items-center p-6 bg-white border-b border-gray-300 relative z-30">
         {/* lado esquerdo: botão "Back" ou espaço vazio */}
         <div className="flex items-center w-1/3">
-          {location.pathname === "/feed" ? ( // caso esteja no feed, Synapse vai para a esquerda
+          {location.pathname === "/feed" ? (
             <Link to="/feed" onClick={() => setDropdownOpen(false)}>
               <h1 className="text-3xl font-bold text-black font-rajdhani">
                 Synapse
@@ -96,11 +75,15 @@ const DynamicHeader = ({
             // exibe o botão de voltar (se showBackButton for true)
             showBackButton && (
               <button
-                onClick={() => navigate(actualBackTo)}
+                onClick={handleBackClick}
                 className="flex items-center text-gray-800 hover:text-gray-600"
               >
-                <img src={BackIcon} alt="Back Icon" className="w-5 h-5 mr-2" />
-                <span className="font-medium font-montserrat">
+                <img
+                  src={BackIcon}
+                  alt="Back Icon"
+                  className="w-5 h-5 sm:mr-2"
+                />
+                <span className="hidden sm:inline font-medium font-montserrat">
                   {actualBackText}
                 </span>
               </button>
@@ -110,7 +93,7 @@ const DynamicHeader = ({
 
         {/* centro: logo Synapse */}
         <div className="flex justify-center w-1/3">
-          {location.pathname !== "/feed" && ( // caso NÃO estiver no feed, Synapse fica no centro
+          {location.pathname !== "/feed" && ( // caso ñ estiver no feed, Synapse fica no centro
             <Link to="/feed" onClick={() => setDropdownOpen(false)}>
               <h1 className="text-3xl font-bold text-black font-rajdhani">
                 Synapse
@@ -121,65 +104,85 @@ const DynamicHeader = ({
 
         {/* lado direito: dropdown do usuário ou botões de Login/Signup */}
         <div className="relative flex justify-end w-1/3">
-          {displayIsAuthenticated ? (
+          {isAuthenticated ? (
             <div>
               <button
                 className="flex items-center rounded-md text-gray-800 hover:text-gray-600 focus:outline-none text-base font-montserrat"
                 onClick={() => setDropdownOpen((open) => !open)}
               >
-                <span className="font-medium font-montserrat">
-                  {displayEmail}
+                <span className="hidden min-[700px]:inline font-medium font-montserrat">
+                  {userEmail}
                 </span>
+                <span className="inline min-[700px]:hidden font-medium font-montserrat">
+                  {userEmail.split("@")[0]}
+                </span>
+
                 <img
                   src={ArrowDownIcon}
                   alt="Arrow Down Icon"
                   className="ml-2 w-4 h-4"
                 />
               </button>
-              {dropdownOpen && (
-                <div className="absolute right-0 mt-2 w-32 bg-white border border-gray-200 rounded-xl shadow-lg z-10 text-xs font-montserrat">
-                  <Link
-                    to="/account"
-                    className="block px-4 py-2 text-gray-800 hover:bg-gray-100 font-montserrat"
-                    onClick={() => setDropdownOpen(false)}
+              <AnimatePresence>
+                {dropdownOpen && (
+                  <motion.div
+                    variants={dropdownVariants}
+                    initial="hidden"
+                    animate="visible"
+                    exit="hidden"
+                    className="absolute right-0 mt-2 w-36 sm:w-48 bg-white rounded-md shadow-lg z-10 text-xs font-montserrat ring-1 ring-black ring-opacity-5"
                   >
-                    My Account
-                  </Link>
-                  <Link
-                    to="/saved-news"
-                    className="block px-4 py-2 text-gray-800 hover:bg-gray-100 font-montserrat"
-                    onClick={() => setDropdownOpen(false)}
-                  >
-                    Saved News
-                  </Link>
-                  <Link
-                    to="/history"
-                    className="block px-4 py-2 text-gray-800 hover:bg-gray-100 font-montserrat"
-                    onClick={() => setDropdownOpen(false)}
-                  >
-                    News History
-                  </Link>
-                  <hr className="border-gray-200" />
-                  <button
-                    onClick={handleLogout}
-                    className="block w-full text-left px-4 py-2 text-gray-800 hover:bg-gray-100 font-montserrat"
-                  >
-                    Logout
-                  </button>
-                </div>
-              )}
+                    <div className="p-1">
+                      <Link
+                        to="/account"
+                        className="group flex w-full items-center rounded-t-md px-4 py-2 text-gray-900 transition-colors duration-100 hover:bg-black hover:text-white font-medium font-montserrat"
+                        onClick={() => setDropdownOpen(false)}
+                      >
+                        <i className="fa-regular fa-user fa-fw mr-3 text-gray-900 group-hover:text-white"></i>
+                        My Account
+                      </Link>
+                      <Link
+                        to="/saved-news"
+                        className="group flex w-full items-center rounded-sm px-4 py-2 text-gray-900 transition-colors duration-100 hover:bg-black hover:text-white font-medium font-montserrat"
+                        onClick={() => setDropdownOpen(false)}
+                      >
+                        <i className="fa-regular fa-bookmark fa-fw mr-3 text-gray-900 group-hover:text-white"></i>
+                        Saved News
+                      </Link>
+                      <Link
+                        to="/history"
+                        className="group flex w-full items-center rounded-sm px-4 py-2 text-gray-900 transition-colors duration-100 hover:bg-black hover:text-white font-medium font-montserrat"
+                        onClick={() => setDropdownOpen(false)}
+                      >
+                        <i className="fa-solid fa-clock-rotate-left fa-fw mr-3 text-gray-900 group-hover:text-white"></i>
+                        News History
+                      </Link>
+                    </div>
+                    <div className="border-t border-gray-100"></div>
+                    <div className="p-1">
+                      <button
+                        onClick={handleLogout}
+                        className="group flex w-full items-center text-left rounded-b-md px-4 py-2 text-gray-900 transition-colors duration-100 hover:bg-black hover:text-white font-medium font-montserrat"
+                      >
+                        <i className="fa-solid fa-arrow-right-from-bracket fa-fw mr-3 text-gray-900 group-hover:text-white"></i>
+                        Logout
+                      </button>
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
             </div>
           ) : (
             <>
               <Link
                 to="/login"
-                className="bg-black text-white font-bold py-2 px-4 rounded hover:bg-gray-800 transition-colors duration-200 font-montserrat text-sm"
+                className="sm:bg-black sm:text-white font-medium sm:font-bold py-2 px-2 sm:py-2 sm:px-4 rounded hover:bg-gray-200 sm:hover:bg-gray-800 transition-colors duration-200 font-montserrat text-sm"
               >
                 Login
               </Link>
               <Link
                 to="/registrar"
-                className="ml-4 text-black border border-black font-bold py-2 px-4 rounded hover:bg-gray-100 transition-colors duration-200 font-montserrat text-sm"
+                className="ml-4 text-black sm:border border-black font-medium sm:font-bold py-2 px-2 sm:py-2 sm:px-4 rounded hover:bg-gray-200 transition-colors duration-200 font-montserrat text-sm"
               >
                 Sign Up
               </Link>

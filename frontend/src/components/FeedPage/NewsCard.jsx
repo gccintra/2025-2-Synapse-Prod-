@@ -13,14 +13,15 @@ const NewsCard = forwardRef(
       isListItem = false,
       isLoading = false,
       isLoggedIn = false,
-      showSaveButton = true,
+      showSaveButton = false,
+      activeCategory,
     },
     ref
   ) => {
     const [isSaved, setIsSaved] = useState(news?.is_favorited || false);
-    const [isSaving, setIsSaving] = useState(false); // Estado de carregamento para o botão
-    const [isClicked, setIsClicked] = useState(false); // Estado para a animação de clique
-    const location = useLocation(); // Hook para obter a localização atual
+    const [isSaving, setIsSaving] = useState(false);
+    const [isClicked, setIsClicked] = useState(false);
+    const location = useLocation();
     const LinkComponent = isLoading ? "div" : Link;
 
     // impede que o clique no ícone navegue para a notícia
@@ -37,7 +38,7 @@ const NewsCard = forwardRef(
       if (isSaving) return; // previne múltiplos cliques
 
       setIsClicked(true); // animação
-      setTimeout(() => setIsClicked(false), 300); // Reseta a animação
+      setTimeout(() => setIsClicked(false), 300);
 
       setIsSaving(true);
 
@@ -59,12 +60,12 @@ const NewsCard = forwardRef(
 
     if (isListItem) {
       return (
-        // Card da lista
+        // card da lista
         <LinkComponent
           to={!isLoading ? `/article/${news?.id}` : undefined}
-          state={{ from: location.pathname }} // Passa o caminho atual como estado
+          state={{ from: location.pathname, fromCategory: activeCategory }}
           ref={ref}
-          className={`relative group flex items-start gap-4 p-4 border-b border-gray-200 ${
+          className={`relative group flex flex-row items-start gap-4 p-4 border-b border-gray-200 ${
             !isLoading && "hover:bg-gray-100 transition-colors cursor-pointer"
           }`}
         >
@@ -74,11 +75,11 @@ const NewsCard = forwardRef(
             <img
               src={news?.image_url || TestNewsImage}
               alt={news?.title}
-              className="w-24 h-24 object-cover flex-shrink-0 rounded-md"
+              className="w-20 h-20 lg:w-24 lg:h-24 object-cover flex-shrink-0 rounded-md"
             />
           )}
 
-          {/* Texto */}
+          {/* texto */}
           <div className="flex-grow">
             {isLoading ? (
               <div className="animate-pulse">
@@ -88,10 +89,10 @@ const NewsCard = forwardRef(
               </div>
             ) : (
               <>
-                <h3 className="text-base font-semibold text-gray-900 mb-1 font-montserrat">
+                <h3 className="text-sm lg:text-base font-semibold text-gray-900 mb-1 font-montserrat">
                   {news?.title}
                 </h3>
-                <p className="text-sm text-gray-600 line-clamp-2 font-montserrat mb-2">
+                <p className="text-xs lg:text-sm text-gray-600 line-clamp-2 font-montserrat mb-2">
                   {news?.description || news?.summary}
                 </p>
                 <NewsMetadata
@@ -104,12 +105,12 @@ const NewsCard = forwardRef(
             )}
           </div>
 
-          {/* --- ÍCONE DE SALVAR --- */}
+          {/* ícone salvar */}
           {!isLoading && showSaveButton && (
             <button
               onClick={handleSaveClick}
               disabled={isSaving}
-              className={`absolute top-3 right-3 z-10 p-1.5 text-gray-600 hover:text-black transition-all duration-200 ${
+              className={`hidden sm:block absolute top-3 right-3 z-10 p-1.5 text-gray-600 hover:text-black transition-all duration-200 ${
                 isSaved ? "opacity-100" : "opacity-0 group-hover:opacity-100"
               } ${isSaving ? "cursor-wait" : ""}`}
               aria-label="Salvar notícia"
@@ -118,7 +119,7 @@ const NewsCard = forwardRef(
                 xmlns="http://www.w3.org/2000/svg"
                 className={`h-5 w-5 transition-colors ${
                   isSaved ? "text-black" : "text-gray-600"
-                } ${isClicked ? "animate-pop-in" : ""}`} // Aplica a animação aqui
+                } ${isClicked ? "animate-pop-in" : ""}`}
                 fill={isSaved ? "currentColor" : "none"}
                 viewBox="0 0 24 24"
                 stroke="black"
@@ -136,33 +137,59 @@ const NewsCard = forwardRef(
       );
     }
     return (
-      // Card destaques
+      // card destaques
       <LinkComponent
         to={!isLoading ? `/article/${news?.id}` : undefined}
-        state={{ from: location.pathname }} // Passa o caminho atual como estado
-        className={`relative group text-base rounded-lg overflow-hidden font-montserrat h-full ${
+        state={{ from: location.pathname, fromCategory: activeCategory }}
+        className={`relative group text-sm md:text-base overflow-hidden font-montserrat h-full w-11/12 mx-auto md:w-full md:mx-0 ${
           !isLoading &&
-          "transition-all duration-300 ease-in-out hover:scale-[1.02] cursor-pointer"
+          "cursor-pointer sm:transition-all sm:duration-300 sm:ease-in-out sm:hover:scale-[1.02]"
         }`}
       >
-        <div>
-          {/* Imagem */}
+        <div className="mt-6 flex flex-col h-full">
+          {/* imagem */}
           {isLoading ? (
-            <div className="w-full h-48 bg-gray-300 animate-pulse"></div>
+            <div className="w-full h-48 bg-gray-300 animate-pulse rounded-lg flex-shrink-0"></div>
           ) : (
             <img
               src={news?.image_url || Test2NewsImage}
               alt={news?.title}
-              className="w-full h-48 object-cover"
+              className="w-full h-48 object-cover rounded-lg flex-shrink-0"
             />
           )}
-
-          {/* --- ÍCONE DE SALVAR (DESTAQUES) --- */}
+          {/* conteúdo */}
+          <div className="p-1 mt-8 flex-grow flex flex-col">
+            {isLoading ? (
+              <div className="animate-pulse space-y-2">
+                <div className="h-5 bg-gray-300 rounded w-full mb-3"></div>
+                <div className="h-3 bg-gray-300 rounded w-full"></div>
+                <div className="h-3 bg-gray-300 rounded w-4/5"></div>
+                <div className="h-3 bg-gray-300 rounded w-1/3 mt-4"></div>
+              </div>
+            ) : (
+              <>
+                {/* texto */}
+                <h3 className="text-base font-bold text-gray-900 mb-2 font-montserrat">
+                  {news?.title}
+                </h3>
+                <p className="text-sm text-gray-600 line-clamp-3 font-montserrat mb-3">
+                  {news?.description || news?.summary}
+                </p>
+                <NewsMetadata
+                  sourceName={news?.source_name}
+                  publishedAt={news?.published_at}
+                  className="text-xs font-montserrat"
+                  showTimeAgo={true}
+                />
+              </>
+            )}
+          </div>
+          {/* ícone salvar destaques */}
           {!isLoading && showSaveButton && (
             <button
               onClick={handleSaveClick}
               disabled={isSaving}
-              className={`absolute top-3 right-3 z-10 p-2 bg-white/70 backdrop-blur-sm rounded-full text-gray-700 hover:bg-white hover:text-black transition-all duration-200 ${
+              className={`hidden sm:block absolute top-3 right-3 z-10 p-2 bg-white/70 backdrop-blur-sm rounded-full text-gray-700 hover:bg-white hover:text-black transition-all duration-200 ${
                 isSaved ? "opacity-100" : "opacity-0 group-hover:opacity-100"
               } ${isSaving ? "cursor-wait" : ""}`}
               aria-label="Salvar notícia"
@@ -185,34 +212,12 @@ const NewsCard = forwardRef(
               </svg>
             </button>
           )}
-          <div className="mt-3">
-            {isLoading ? (
-              <div className="animate-pulse">
-                <div className="h-6 bg-gray-300 rounded w-full mb-3"></div>
-                <div className="h-4 bg-gray-300 rounded w-full mb-1"></div>
-                <div className="h-4 bg-gray-300 rounded w-5/6"></div>
-              </div>
-            ) : (
-              <>
-                <h3 className="text-base font-bold text-gray-900 mb-2 font-montserrat">
-                  {news?.title}
-                </h3>
-                <p className="text-sm text-gray-600 line-clamp-3 font-montserrat mb-3">
-                  {news?.description || news?.summary}
-                </p>
-                <NewsMetadata
-                  sourceName={news?.source_name}
-                  publishedAt={news?.published_at}
-                  className="text-xs font-montserrat"
-                  showTimeAgo={true}
-                />
-              </>
-            )}
-          </div>
         </div>
       </LinkComponent>
     );
   }
 );
+
+NewsCard.displayName = "NewsCard";
 
 export default NewsCard;

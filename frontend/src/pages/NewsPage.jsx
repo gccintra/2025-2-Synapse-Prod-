@@ -1,10 +1,12 @@
-// src/pages/NewsPage.jsx
-
 import React, { useState, useEffect, useRef } from "react";
 import { useParams } from "react-router-dom";
 import { toast } from "react-toastify";
-import DynamicHeader from "../components/DynamicHeader"; // Import the new DynamicHeader
-import NewsPageSkeleton from "../components/NewsPage/NewsPageSkeleton"; // Importe o usersAPI
+
+import DynamicHeader from "../components/DynamicHeader";
+import NewsPageSkeleton from "../components/NewsPage/NewsPageSkeleton";
+import ScrollToTopButton from "../components/ScrollToTopButton";
+import { motion } from "framer-motion";
+
 import { newsAPI } from "../services/api";
 import { usersAPI } from "../services/api";
 import { formatDateLong } from "../utils/dateUtils";
@@ -17,6 +19,7 @@ const NewsPage = () => {
   const [isSaved, setIsSaved] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [userData, setUserData] = useState({ email: "" });
   const historyAddedRef = useRef(false);
 
   useEffect(() => {
@@ -26,18 +29,13 @@ const NewsPage = () => {
         setLoading(false);
         return;
       }
-
       try {
         setLoading(true);
         setError(null);
-
-        // Busca a notícia e o status de login em paralelo
         const [newsResponse, authResponse] = await Promise.allSettled([
           newsAPI.getNewsById(newsId),
-          usersAPI.getUserProfile(), // Verifica se o usuário está logado
+          usersAPI.getUserProfile(),
         ]);
-
-        // Adaptar os dados da API para o formato esperado
         if (newsResponse.status === "rejected") throw newsResponse.reason;
         const newsData = newsResponse.value.data;
         setArticleData({
@@ -51,11 +49,13 @@ const NewsPage = () => {
             "Conteúdo não disponível",
         });
 
-        // Define o estado inicial do botão de salvar
         setIsSaved(newsData.is_favorited || false);
 
         // status de login
-        setIsLoggedIn(authResponse.status === "fulfilled");
+        if (authResponse.status === "fulfilled") {
+          setIsLoggedIn(true);
+          setUserData(authResponse.value.data);
+        }
       } catch (err) {
         console.error("Erro ao carregar notícia:", err);
         setError(err.message || "Erro ao carregar a notícia");
@@ -67,7 +67,6 @@ const NewsPage = () => {
     fetchNewsData();
   }, [newsId]);
 
-  //useEffect: Registro de Histórico
   useEffect(() => {
     if (isLoggedIn && newsId && !historyAddedRef.current) {
       const addHistory = async () => {
@@ -82,14 +81,11 @@ const NewsPage = () => {
     }
   }, [isLoggedIn, newsId]);
 
-  // Função de segurança para HTML
   const createMarkup = (htmlContent) => {
     return { __html: htmlContent };
   };
 
-  // Função para lidar com o clique no botão de salvar
   const handleSaveClick = async () => {
-    // Adiciona a verificação de login
     if (!isLoggedIn) {
       toast.warn("To save a news story, you need to be logged in.");
       return;
@@ -97,7 +93,6 @@ const NewsPage = () => {
 
     if (isSaving) return;
     setIsSaving(true);
-
     try {
       if (isSaved) {
         await newsAPI.unfavoriteNews(newsId);
@@ -121,8 +116,10 @@ const NewsPage = () => {
   if (error) {
     return (
       <div className="bg-white min-h-screen">
-        <DynamicHeader isAuthenticated={isLoggedIn} />{" "}
-        {/* backTo/backText will use location.state.from */}
+        <DynamicHeader
+          userEmail={userData.email}
+          isAuthenticated={isLoggedIn}
+        />
         <main className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 pt-10 pb-20">
           <div className="text-center py-12">
             <h1 className="text-2xl font-bold text-gray-900 mb-4">
@@ -144,8 +141,10 @@ const NewsPage = () => {
   if (!articleData) {
     return (
       <div className="bg-white min-h-screen">
-        <DynamicHeader isAuthenticated={isLoggedIn} />{" "}
-        {/* backTo/backText will use location.state.from */}
+        <DynamicHeader
+          userEmail={userData.email}
+          isAuthenticated={isLoggedIn}
+        />
         <main className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 pt-10 pb-20">
           <div className="text-center py-12">
             <h1 className="text-2xl font-bold text-gray-900 mb-4">
@@ -167,70 +166,84 @@ const NewsPage = () => {
   }
 
   return (
-    <div className="bg-white min-h-screen">
-      {/* Header da Página de Notícias (mantendo o email do usuário) */}
-      <DynamicHeader isAuthenticated={isLoggedIn} />{" "}
-      {/* backTo/backText will use location.state.from */}
-      <main className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 pt-10 pb-20">
-        {/* Imagem de Destaque */}
-        <img
-          src={articleData.image}
-          alt={articleData.title}
-          className="w-full h-96 object-cover rounded-lg mb-8 shadow-md"
-        />
-
-        {/* Título e Metadados */}
-        <div className="mb-10 border-b border-gray-300 pb-4">
-          <h1 className="text-4xl font-extrabold text-gray-900 font-montserrat mb-3 leading-tight">
-            {articleData.title}
-          </h1>
-          <div className="flex justify-between items-center">
-            <p className="text-base text-gray-600 font-montserrat">
-              Fonte:{" "}
-              <span className="font-semibold text-black">
-                {articleData.source}
-              </span>{" "}
-              | {articleData.date}
-            </p>
-
-            {/* --- ÍCONE DE SALVAR --- */}
-            <button
-              onClick={handleSaveClick}
-              disabled={isSaving}
-              className={`p-2 rounded-full hover:bg-gray-100 transition-colors focus:outline-none focus:ring-2 focus:ring-gray-400 ${
-                isSaving ? "cursor-wait" : ""
-              }`}
-              aria-label="Salvar notícia"
-            >
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                className={`h-6 w-6 transition-colors ${
-                  isSaved ? "text-black" : "text-gray-500"
-                }`}
-                fill={isSaved ? "currentColor" : "none"}
-                viewBox="0 0 24 24"
-                stroke="black"
-                strokeWidth={2}
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z"
-                />
-              </svg>
-            </button>
-          </div>
-        </div>
-
-        {/* 🛑 Conteúdo do Artigo com dangerouslySetInnerHTML 🛑 */}
-        <article>
-          {/* A classe 'prose' do Tailwind é crucial aqui para aplicar estilos de leitura padrão ao HTML que vem da API (p, h2, img, a, etc.) */}
-          <div
-            className="prose prose-lg max-w-none font-montserrat text-gray-800"
-            dangerouslySetInnerHTML={createMarkup(articleData.contentHtml)}
+    <div className="bg-gray-50 min-h-screen">
+      <ScrollToTopButton />
+      <DynamicHeader userEmail={userData.email} isAuthenticated={isLoggedIn} />
+      <motion.main
+        className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 pt-10 pb-20"
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5, ease: "easeInOut" }}
+      >
+        <>
+          {/* Imagem de Destaque */}
+          <img
+            src={articleData.image}
+            alt={articleData.title}
+            className="w-11/12 mx-auto md:w-full md:mx-0 h-96 object-cover rounded-lg mb-8 shadow-md"
           />
-        </article>
-      </main>
+          {/* Título e Metadados */}
+          <div className="w-11/12 mx-auto md:w-full md:mx-0 mb-10 border-b border-gray-300 pb-4">
+            <h1 className="text-2xl sm:text-4xl font-extrabold text-gray-900 font-montserrat mb-3 leading-tight">
+              {articleData.title}
+            </h1>
+            <div className="flex justify-between items-center">
+              <p className="text-sm sm:text-base text-gray-600 font-montserrat">
+                Fonte:{" "}
+                <span className="font-semibold text-black">
+                  {articleData.source}
+                </span>{" "}
+                | {articleData.date}
+              </p>
+              {/* ícone salvar */}
+              <button
+                onClick={handleSaveClick}
+                disabled={isSaving}
+                className={`p-2 rounded-full hover:bg-gray-100 transition-colors focus:outline-none focus:ring-2 focus:ring-gray-400 ${
+                  isSaving ? "cursor-wait" : ""
+                }`}
+                aria-label="Salvar notícia"
+              >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  className={`h-6 w-6 transition-colors ${
+                    isSaved ? "text-black" : "text-gray-500"
+                  }`}
+                  fill={isSaved ? "currentColor" : "none"}
+                  viewBox="0 0 24 24"
+                  stroke="black"
+                  strokeWidth={2}
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z"
+                  />
+                </svg>
+              </button>
+            </div>
+          </div>
+          <style>
+            {`
+              .article-content img {
+                display: block;
+                margin-left: auto;
+                margin-right: auto;
+                border-radius: 0.5rem; /* Bordas arredondadas */
+                box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1); /* Sombra suave */
+                margin-top: 2em;
+                margin-bottom: 2em;
+              }
+            `}
+          </style>
+          <article>
+            <div
+              className="w-11/12 mx-auto md:w-full prose prose-lg max-w-none font-montserrat text-gray-800 article-content"
+              dangerouslySetInnerHTML={createMarkup(articleData.contentHtml)}
+            />
+          </article>
+        </>
+      </motion.main>
     </div>
   );
 };

@@ -3,15 +3,10 @@ import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
 import DynamicHeader from "../components/DynamicHeader";
 import LockIcon from "../icons/lock-regular-full.svg";
+import { usersAPI } from "../services/api";
+import AnimatedPage from "../components/AnimatedPage";
 import SeeEye from "../icons/eye-regular-full.svg";
 import BlockedEye from "../icons/eye-slash-regular-full.svg";
-
-// Função auxiliar para ler um cookie pelo nome
-function getCookie(name) {
-  const value = `; ${document.cookie}`;
-  const parts = value.split(`; ${name}=`);
-  if (parts.length === 2) return parts.pop().split(";").shift();
-}
 
 function ChangePassword() {
   const navigate = useNavigate();
@@ -31,18 +26,12 @@ function ChangePassword() {
   useEffect(() => {
     const fetchUserData = async () => {
       try {
-        const apiUrl = import.meta.env.VITE_API_BASE_URL;
-        const response = await fetch(`${apiUrl}/users/profile`, {
-          method: "GET",
-          headers: { "Content-Type": "application/json" },
-          credentials: "include",
-        });
-        const data = await response.json();
-        if (response.ok) {
-          setUserEmail(data.data.email);
+        const response = await usersAPI.getUserProfile();
+        if (response.success) {
+          setUserEmail(response.data.email);
         }
       } catch (err) {
-        console.error("Error fetching user data:", err);
+        console.error("Error fetching user data in ChangePassword:", err);
       }
     };
     fetchUserData();
@@ -102,49 +91,41 @@ function ChangePassword() {
     const passwordData = { new_password: formData.newPassword };
 
     try {
-      const apiUrl = import.meta.env.VITE_API_BASE_URL;
-      const csrfToken = getCookie("csrf_access_token");
+      const response = await usersAPI.changePassword(passwordData);
 
-      const response = await fetch(`${apiUrl}/users/profile/change_password`, {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-          "X-CSRF-TOKEN": csrfToken,
-        },
-        body: JSON.stringify(passwordData),
-        credentials: "include",
-      });
-
-      const data = await response.json();
-
-      if (response.ok) {
+      if (response.success) {
         toast.success("Password updated successfully!");
         setTimeout(() => {
           navigate("/account");
         }, 2000);
       } else {
-        toast.error(data.error || "An unknown error occurred.");
+        toast.error(response.error || "An unknown error occurred.");
       }
     } catch (err) {
-      toast.error("Could not connect to the server. Please try again later.");
+      toast.error(
+        err.message ||
+          "Could not connect to the server. Please try again later."
+      );
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <>
+    <AnimatedPage>
       <DynamicHeader
-        userEmail={userEmail} // Opcional, se o email já estiver no contexto de autenticação
-        isAuthenticated={true} // Opcional, se o status de autenticação já estiver no contexto
+        userEmail={userEmail}
+        isAuthenticated={true}
+        onBackClick={() => navigate(-1)}
+        backText="Back"
       />
-      <div className="h-[calc(100vh-4.625rem)] flex flex-col justify-start items-center bg-[#f5f5f5] pt-16">
-        <div className="w-full max-w-lg">
+      <div className="h-[calc(100vh-10rem)] flex flex-col justify-start items-center bg-[#f5f5f5] pt-16">
+        <div className="w-full max-w-lg px-4">
           <div className="w-full text-center">
-            <h2 className=" mb-2 text-3xl font-bold text-black font-montserrat">
+            <h2 className=" mb-2 text-xl md:text-2xl font-bold text-black font-montserrat">
               Change your password
             </h2>
-            <p className="mt-5 mb-8 text-sm text-gray-600 font-montserrat">
+            <p className="mt-5 mb-8 text-xs md:text-sm text-gray-600 font-montserrat">
               To change your password, enter a new one below and confirm it.
             </p>
           </div>
@@ -152,7 +133,7 @@ function ChangePassword() {
           <form onSubmit={handleSubmit} className="mt-8 space-y-4">
             <div className="relative">
               <label
-                className="mt-6 block text-sm font-medium text-gray-900 font-montserrat"
+                className="mt-6 block text-xs md:text-sm font-medium text-gray-900 font-montserrat"
                 htmlFor="newPassword"
               >
                 New Password
@@ -167,7 +148,7 @@ function ChangePassword() {
                     value={formData.newPassword}
                     onChange={handleChange}
                     placeholder="enter your password.."
-                    className={`w-full border rounded py-2 px-9 focus:outline-none focus:ring-1 font-montserrat ${
+                    className={`w-full border rounded py-4 px-9 md:py-2 md:px-9 focus:outline-none focus:ring-1 font-montserrat ${
                       errors.newPassword
                         ? "border-red-500 focus:ring-red-500"
                         : "border-gray-800 focus:ring-black"
@@ -195,7 +176,7 @@ function ChangePassword() {
 
             <div className="relative">
               <label
-                className="mt-6 block text-sm font-medium text-gray-900 font-montserrat"
+                className="mt-6 block text-xs md:text-sm font-medium text-gray-900 font-montserrat"
                 htmlFor="confirmPassword"
               >
                 Confirm your Password
@@ -210,7 +191,7 @@ function ChangePassword() {
                     value={formData.confirmPassword}
                     onChange={handleChange}
                     placeholder="enter your password.."
-                    className={`w-full border rounded py-2 px-9 focus:outline-none focus:ring-1 font-montserrat ${
+                    className={`w-full border rounded py-4 px-9 md:py-2 md:px-9 focus:outline-none focus:ring-1 font-montserrat ${
                       errors.confirmPassword
                         ? "border-red-500 focus:ring-red-500"
                         : "border-gray-800 focus:ring-black"
@@ -238,7 +219,7 @@ function ChangePassword() {
 
             <button
               type="submit"
-              className="mt-6 w-full rounded-md bg-black py-3 px-5 text-white hover:bg-gray-900"
+              className="mt-6 w-full rounded-md bg-black py-3 px-3 md:py-3 md:px-5 text-white font-medium md:font-bold hover:bg-gray-900"
               disabled={loading}
             >
               {loading ? "Confirming..." : "Confirm"}
@@ -246,7 +227,7 @@ function ChangePassword() {
           </form>
         </div>
       </div>
-    </>
+    </AnimatedPage>
   );
 }
 
