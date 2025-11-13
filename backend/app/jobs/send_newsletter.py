@@ -20,49 +20,163 @@ from app.services.news_service import NewsService
 
 def build_newsletter_email(user_name, intro_text, news_items):
     header = f"""
-    <div style="text-align:center;margin-bottom:40px;">
-    <span style="display:block;font-weight:700;font-size:44px;letter-spacing:-2px;line-height:0.8;margin-bottom:5px;">Synapse</span>
-    <span style="display:block;font-size:22px;letter-spacing:1px;color:#666;">Newsletter</span>
+    <div style="margin-bottom:40px">
+      <span
+        style="
+          display: block;
+          font-weight: 700;
+          font-size: 60px;
+          font-family: 'Rajdhani', sans-serif;
+          line-height: 0.8;
+          text-align: center;
+          margin-bottom: 5px;
+        "
+        >Synapse</span
+      >
+      <span
+        style="
+          display: block;
+          font-size: 22px;
+          font-family: 'Montserrat', sans-serif;
+          font-weight: 400;
+          margin-top: -3px;
+          margin-left: 242px;
+          color: #000000;
+        "
+        >Newsletter</span
+      >
     </div>
-    <div style="border:2px solid #222; border-radius:7px; background:#f7f7f7; padding:18px 24px; margin-bottom:36px;">
-    <p style="margin:0 0 12px 0;">Olá {user_name},</p>
-    <p style="margin:0 0 12px 0;">Bem-vindo à Synapse newsletter.</p>
-    <p style="margin:0;">{intro_text}</p>
+    <div
+      style="
+        margin: auto;
+        width: 78%;
+        font-family: 'Montserrat', sans-serif;
+        border: 1.5px solid #222;
+        border-radius: 4px;
+        background: #ececec;
+        padding: 16px 22px;
+        margin-bottom: 36px;
+      "
+    >
+      <p style="margin: 2 0 0; font-size: 14px; font-weight: 700">
+        Olá {user_name},
+      </p>
+      <p style="margin: 2 0 0; font-size: 14px">
+        Bem-vindo à Synapse newsletter.
+      </p>
+      <p style="margin: 2; font-size: 14px">
+        {intro_text}
+      </p>
     </div>
     """
 
     sections = []
     for item in news_items:
         block = f"""
-        <section style="margin-bottom:38px;">
-        <div style="margin-bottom:8px;">
-            <span style="font-size:12px;letter-spacing:1px;color:#222;text-transform:uppercase;font-weight:500; border-bottom:1px solid #999;padding-bottom:2px;">{item['category']}</span>
-        </div>
-        <h2 style="margin:0 0 8px 0;font-size:20px;line-height:1.2;font-weight:700;">{item['title']}</h2>
-        <img src="{item['img_url']}" alt="{item['title']}" style="width:100%;max-width:445px;border-radius:6px;margin-bottom:15px;display:block;" />
-        <p style="color:#444;margin:0 0 10px 0;font-size:15px;line-height:1.5;">{item['summary']}</p>
-        <div style="font-size:12px;color:#888;margin-top:8px;border-top:1px solid #eee;padding-top:7px;">
+        <section style="margin-bottom: 38px">
+          <div style="margin-bottom: 8px">
+            <span
+              style="
+                font-size: 12px;
+                font-family: 'Montserrat', sans-serif;
+                color: #222;
+                text-transform: uppercase;
+                font-weight: 500;
+                border-bottom: 1px solid #999;
+                padding-bottom: 2px;
+                background: #ececec;
+              "
+              >{item['category']}</span
+            >
+          </div>
+          <h2
+            style="
+              margin: 2 0 8px 0;
+              font-family: 'Montserrat', sans-serif;
+              font-size: 18px;
+              font-weight: 600;
+            "
+          >
+            {item['title']}
+          </h2>
+          <img
+            src="{item['img_url']}"
+            alt="{item['title']}"
+            style="
+              width: 100%;
+              max-width: 445px;
+              border-radius: 6px;
+              margin-bottom: 15px;
+              display: block;
+            "
+          />
+          <p
+            style="
+              color: #444;
+              margin: 0 0 10px 0;
+              font-family: 'Montserrat', sans-serif;
+              font-size: 14px;
+            "
+          >
+            {item['summary']}
+          </p>
+          <div
+            style="
+              color: #888;
+              margin-top: 8px;
+              border-top: 1px solid #eee;
+              padding-top: 7px;
+              font-family: 'Montserrat', sans-serif;
+              font-size: 10px;
+            "
+          >
             {item['source']} | {item['date']}
-        </div>
+          </div>
         </section>
         """
         sections.append(block)
-    
+
     html = f"""<!DOCTYPE html>
-    <html lang="pt" style="background-color:#fafafa;">
-    <head>
-        <meta charset="UTF-8">
+    <html lang="pt" style="background-color: #fafafa">
+      <head>
+        <meta charset="UTF-8" />
         <title>Synapse Newsletter</title>
-        <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-    </head>
-    <body style="margin:0;padding:0;font-family: Arial, sans-serif; background-color:#fafafa; color: #181818;">
-        <div style="max-width: 518px;margin:40px auto;background:#fff;box-shadow:0 2px 8px rgba(60,60,67,0.07);border-radius:10px;padding:40px 20px;">
-        {header}
-        <div>{" ".join(sections)}</div>
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+        <link
+          href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;500;700&display=swap"
+          rel="stylesheet"
+        />
+        <link
+          href="https://fonts.googleapis.com/css2?family=Montserrat:wght@200;400;500;600;700&display=swap"
+          rel="stylesheet"
+        />
+      </head>
+      <body
+        style="margin: 0; padding: 0; background-color: #fafafa; color: #181818"
+      >
+        <div
+          style="
+            max-width: 518px;
+            margin: 40px auto;
+            background: #fff;
+            box-shadow: 0 2px 8px rgba(60, 60, 67, 0.07);
+            border-radius: 10px;
+            padding: 40px 20px;
+          "
+        >
+          {header}
+          <div>
+            <div style="max-width: 445px; margin: 0 auto">
+              {"".join(sections)}
+            </div>
+          </div>
         </div>
-    </body>
+      </body>
     </html>
     """
+
     return html
 
 
