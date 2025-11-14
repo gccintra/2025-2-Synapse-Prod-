@@ -25,7 +25,7 @@ def test_create_duplicate_url_fails(news_source_repo):
         news_source_repo.create(source2)
 
 def test_create_sqlalchemy_error(news_source_repo):
-    """Testa o tratamento de erro do SQLAlchemy ao criar."""
+
     source_model = NewsSource(name="Error Source", url="http://errorsource.com")
     with patch.object(news_source_repo.session, 'commit', side_effect=SQLAlchemyError("DB Error")), \
          patch.object(news_source_repo.session, 'rollback') as mock_rollback:
@@ -136,13 +136,13 @@ def test_list_unassociated_by_user_id_all_associated(news_source_repo, db):
     ("list_unassociated_by_user_id", [1]),
 ])
 def test_sqlalchemy_error_handling_execute(news_source_repo, method_name, method_args):
-    """Testa o tratamento de SQLAlchemyError para métodos que usam session.execute."""
+
     with patch.object(news_source_repo.session, 'execute', side_effect=SQLAlchemyError("DB Error")):
         with pytest.raises(SQLAlchemyError):
             getattr(news_source_repo, method_name)(*method_args)
 
 def test_sqlalchemy_error_handling_get(news_source_repo):
-    """Testa o tratamento de SQLAlchemyError para o método find_by_id (que usa session.get)."""
+
     with patch.object(news_source_repo.session, 'get', side_effect=SQLAlchemyError("DB Error")):
         with pytest.raises(SQLAlchemyError):
             news_source_repo.find_by_id(1)
