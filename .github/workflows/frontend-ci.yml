@@ -3,9 +3,6 @@ name: Frontend CI (Build)
 on:
   pull_request:
     branches: [dev, main]
-    paths:
-      - "frontend/**"
-      - ".github/workflows/frontend-ci.yml"
 
   push:
     branches: [dev, main]
@@ -53,3 +50,7 @@ jobs:
       - name: Run build
         if: steps.changed-files.outputs.any_changed == 'true'
         run: npm run build
+
+      - name: Mark as successful if no files were changed
+        if: steps.changed-files.outputs.any_changed == 'false'
+        run: echo "No frontend files changed. Skipping CI."
