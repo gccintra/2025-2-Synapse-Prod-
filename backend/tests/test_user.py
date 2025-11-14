@@ -19,12 +19,12 @@ def valid_user_data():
 
 
 def test_user_creation_with_plain_password(valid_user_data):
-    """Testa a criação de um usuário com senha em texto plano."""
+    
     user = User(**valid_user_data)
 
     assert user.id == 1
-    assert user.full_name == "Test User Name"  # Deve ser normalizado
-    assert user.email == "test.user@example.com"  # Deve ser normalizado
+    assert user.full_name == "Test User Name"  
+    assert user.email == "test.user@example.com"  
     assert user.birthdate == date(2000, 1, 1)
     assert hasattr(user, "_password_hash")
     assert user.verify_password("ValidPassword123") is True
@@ -32,7 +32,7 @@ def test_user_creation_with_plain_password(valid_user_data):
 
 
 def test_user_creation_with_hashed_password():
-    """Testa a criação de um usuário com uma senha já hasheada."""
+    
     hashed_password = "some_pre_hashed_password"
     user = User(
         full_name="Hashed User",
@@ -46,7 +46,7 @@ def test_user_creation_with_hashed_password():
 
 @pytest.mark.parametrize("invalid_name", [None, "", "  ", "ab", 123])
 def test_full_name_validation_raises_error(valid_user_data, invalid_name):
-    """Testa se nomes inválidos levantam UserValidationError."""
+    
     with pytest.raises(UserValidationError, match="Nome completo deve ter pelo menos 3 caracteres"):
         valid_user_data["full_name"] = invalid_name
         User(**valid_user_data)
@@ -54,14 +54,14 @@ def test_full_name_validation_raises_error(valid_user_data, invalid_name):
 
 @pytest.mark.parametrize("invalid_email", [None, "", "invalid-email", "test@", "@example.com", 123])
 def test_email_validation_raises_error(valid_user_data, invalid_email):
-    """Testa se e-mails inválidos levantam UserValidationError."""
+
     with pytest.raises(UserValidationError, match="Formato de email inválido|Email não pode ser vazio"):
         valid_user_data["email"] = invalid_email
         User(**valid_user_data)
 
 
 def test_reading_password_raises_attribute_error(valid_user_data):
-    """Testa se a tentativa de ler o atributo 'password' levanta um erro."""
+    
     user = User(**valid_user_data)
     with pytest.raises(AttributeError, match="'password' não é um atributo legível"):
         _ = user.password
@@ -76,16 +76,16 @@ def test_reading_password_raises_attribute_error(valid_user_data):
     ("NoNumber", "A senha deve conter ao menos um número"),
 ])
 def test_password_setter_validation_raises_error(valid_user_data, invalid_password, error_msg):
-    """Testa se senhas inválidas levantam InvalidPasswordError."""
+    
     with pytest.raises(InvalidPasswordError, match=error_msg):
         valid_user_data["password"] = invalid_password
         User(**valid_user_data)
 
 
 def test_verify_password_with_no_hash(valid_user_data):
-    """Testa a verificação de senha em um objeto sem hash de senha."""
+
     user = User(**valid_user_data)
-    user._password_hash = None  # Simula um estado inválido
+    user._password_hash = None
     assert user.verify_password("any_password") is False
 
 
@@ -103,7 +103,6 @@ def mock_user_entity():
 
 
 def test_from_entity_with_full_data(mock_user_entity):
-    """Testa a criação de um User a partir de uma entidade com todos os dados."""
     # Mockar a função de verificação para isolar o teste
     with patch('app.models.user.check_password_hash', return_value=True) as mock_check:
         user = User.from_entity(mock_user_entity)
@@ -120,15 +119,12 @@ def test_from_entity_with_full_data(mock_user_entity):
 
 
 def test_from_entity_with_none_entity():
-    """Testa se from_entity retorna None para uma entidade nula."""
+
     assert User.from_entity(None) is None
 
 
 def test_to_orm(valid_user_data):
-    """
-    Testa a conversão de uma instância de User para uma UserEntity.
-    Verifica se os atributos corretos são passados para o construtor da entidade.
-    """
+    
     # Usamos patch para substituir a UserEntity no módulo 'app.models.user'
     with patch('app.models.user.UserEntity') as MockUserEntity:
         user = User(**valid_user_data)
@@ -149,7 +145,7 @@ def test_to_orm(valid_user_data):
 
 
 def test_repr_method(valid_user_data):
-    """Testa a representação em string do objeto User."""
+
     user = User(**valid_user_data)
     expected_repr = f"<User(id={user.id}, email='{user.email}')>"
     assert repr(user) == expected_repr

@@ -64,18 +64,16 @@ def mock_services():
         }
 
 def test_send_newsletter_job_happy_path(mock_services, caplog):
-    """
-    Testa o caminho feliz: dois usuários recebem a newsletter com sucesso.
-    """
+    
     caplog.set_level(logging.INFO)
     
-    # Configuração dos mocks
+    
     mock_services["user_repo"].get_users_to_newsletter.return_value = [MOCK_USER_1, MOCK_USER_2]
     mock_services["news_service"].get_news_to_email.return_value = MOCK_NEWS_DATA
     mock_services["ai_service"].generate_content.return_value = MOCK_INTRO_TEXT
     mock_services["mail_service"].sendemail.return_value = True
 
-    # Execução do job
+
     send_newsletter_job()
 
     # Verificações
@@ -84,7 +82,7 @@ def test_send_newsletter_job_happy_path(mock_services, caplog):
     assert mock_services["ai_service"].generate_content.call_count == 2
     assert mock_services["mail_service"].sendemail.call_count == 2
 
-    # Verifica se o email para o primeiro usuário foi chamado com os dados corretos
+  
     first_call_args = mock_services["mail_service"].sendemail.call_args_list[0].kwargs
     assert first_call_args['recipient_email'] == MOCK_USER_1.email
     assert MOCK_USER_1.full_name in first_call_args['html_content']
@@ -95,9 +93,7 @@ def test_send_newsletter_job_happy_path(mock_services, caplog):
     assert "RESULTADO: 2 enviados com sucesso, 0 falhas." in caplog.text
 
 def test_send_newsletter_job_no_users(mock_services, caplog):
-    """
-    Testa o cenário onde não há usuários interessados na newsletter.
-    """
+
     caplog.set_level(logging.INFO)
     mock_services["user_repo"].get_users_to_newsletter.return_value = []
 
@@ -108,9 +104,7 @@ def test_send_newsletter_job_no_users(mock_services, caplog):
     assert mock_services["mail_service"].sendemail.call_count == 0
 
 def test_send_newsletter_job_user_with_no_news(mock_services, caplog):
-    """
-    Testa o cenário onde um usuário não tem notícias para receber.
-    """
+
     caplog.set_level(logging.INFO)
     mock_services["user_repo"].get_users_to_newsletter.return_value = [MOCK_USER_1]
     mock_services["news_service"].get_news_to_email.return_value = []
@@ -122,9 +116,7 @@ def test_send_newsletter_job_user_with_no_news(mock_services, caplog):
     assert "RESULTADO: 0 enviados com sucesso, 0 falhas." in caplog.text
 
 def test_send_newsletter_job_email_send_fails(mock_services, caplog):
-    """
-    Testa o cenário onde o serviço de e-mail falha ao enviar.
-    """
+
     caplog.set_level(logging.INFO)
     mock_services["user_repo"].get_users_to_newsletter.return_value = [MOCK_USER_1]
     mock_services["news_service"].get_news_to_email.return_value = MOCK_NEWS_DATA
@@ -137,9 +129,7 @@ def test_send_newsletter_job_email_send_fails(mock_services, caplog):
     assert "RESULTADO: 0 enviados com sucesso, 1 falhas." in caplog.text
 
 def test_send_newsletter_job_exception_during_user_processing(mock_services, caplog):
-    """
-    Testa se o job continua para o próximo usuário se ocorrer um erro em um.
-    """
+
     caplog.set_level(logging.INFO) # Alterado de ERROR para INFO
     mock_services["user_repo"].get_users_to_newsletter.return_value = [MOCK_USER_1, MOCK_USER_2]
     
@@ -164,9 +154,7 @@ def test_send_newsletter_job_exception_during_user_processing(mock_services, cap
     assert "RESULTADO: 1 enviados com sucesso, 1 falhas." in caplog.text
 
 def test_build_newsletter_email():
-    """
-    Testa a função pura que constrói o HTML do e-mail.
-    """
+
     html = build_newsletter_email(
         user_name="Tester",
         intro_text="Test intro.",
@@ -184,9 +172,7 @@ def test_build_newsletter_email():
     assert 'Science Today' in html
 
 def test_gerar_texto_intro_success():
-    """
-    Testa a geração de texto introdutório com sucesso.
-    """
+
     mock_ai_service = MagicMock()
     mock_ai_service.generate_content.return_value = "  Intro gerada pela IA.  "
 
@@ -201,9 +187,7 @@ def test_gerar_texto_intro_success():
     assert intro == "Intro gerada pela IA." # Verifica se o .strip() funcionou
 
 def test_gerar_texto_intro_fallback():
-    """
-    Testa o fallback quando a IA não retorna texto.
-    """
+
     mock_ai_service = MagicMock()
     mock_ai_service.generate_content.return_value = None # Simula falha da IA
 

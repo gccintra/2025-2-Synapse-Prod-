@@ -29,14 +29,10 @@ def valid_news_data():
 
 
 def test_news_creation_with_valid_data(valid_news_data):
-    """
-    Testa a criação de uma instância de News com dados válidos.
-    Verifica se os atributos são definidos corretamente, incluindo a limpeza do título.
-    """
     news = News(**valid_news_data)
 
     assert news.id == valid_news_data["id"]
-    assert news.title == "Test Title with extra spaces"  # Título deve ser normalizado
+    assert news.title == "Test Title with extra spaces"
     assert news.url == valid_news_data["url"]
     assert news.published_at == valid_news_data["published_at"]
     assert news.source_id == valid_news_data["source_id"]
@@ -51,7 +47,7 @@ def test_news_creation_with_valid_data(valid_news_data):
 
 @pytest.mark.parametrize("invalid_title", [None, "", "   ", 123])
 def test_title_validation_raises_error(valid_news_data, invalid_title):
-    """Testa se títulos inválidos levantam NewsValidationError."""
+
     with pytest.raises(NewsValidationError, match="title.*não pode ser vazio"):
         valid_news_data["title"] = invalid_title
         News(**valid_news_data)
@@ -66,14 +62,14 @@ def test_title_validation_raises_error(valid_news_data, invalid_title):
     (123, "não pode ser vazia"),
 ])
 def test_url_validation_raises_error(valid_news_data, invalid_url, error_msg):
-    """Testa se URLs inválidas levantam NewsValidationError."""
+
     with pytest.raises(NewsValidationError, match=f"url.*{error_msg}"):
         valid_news_data["url"] = invalid_url
         News(**valid_news_data)
 
 
 def test_image_url_can_be_none(valid_news_data):
-    """Testa se image_url pode ser None."""
+
     valid_news_data["image_url"] = None
     news = News(**valid_news_data)
     assert news.image_url is None
@@ -84,7 +80,7 @@ def test_image_url_can_be_none(valid_news_data):
     ("not-a-url", "formato ou tamanho inválido"),
 ])
 def test_image_url_validation_raises_error(valid_news_data, invalid_image_url, error_msg):
-    """Testa se image_urls inválidas levantam NewsValidationError."""
+
     with pytest.raises(NewsValidationError, match=f"image_url.*{error_msg}"):
         valid_news_data["image_url"] = invalid_image_url
         News(**valid_news_data)
@@ -92,7 +88,7 @@ def test_image_url_validation_raises_error(valid_news_data, invalid_image_url, e
 
 @pytest.mark.parametrize("invalid_published_at", [None, "not-a-date", 123])
 def test_published_at_validation_raises_error(valid_news_data, invalid_published_at):
-    """Testa se published_at inválido levanta NewsValidationError."""
+
     with pytest.raises(NewsValidationError, match="published_at.*deve ser um datetime válido"):
         valid_news_data["published_at"] = invalid_published_at
         News(**valid_news_data)
@@ -100,7 +96,7 @@ def test_published_at_validation_raises_error(valid_news_data, invalid_published
 
 @pytest.mark.parametrize("invalid_id", [None, 0, -1, "a", 1.5])
 def test_source_id_validation_raises_error(valid_news_data, invalid_id):
-    """Testa se source_id inválido levanta NewsValidationError."""
+    
     with pytest.raises(NewsValidationError, match="source_id.*deve ser um inteiro positivo"):
         valid_news_data["source_id"] = invalid_id
         News(**valid_news_data)
@@ -108,7 +104,7 @@ def test_source_id_validation_raises_error(valid_news_data, invalid_id):
 
 @pytest.mark.parametrize("invalid_id", [None, 0, -1, "a", 1.5])
 def test_topic_id_validation_raises_error(valid_news_data, invalid_id):
-    """Testa se topic_id inválido levanta NewsValidationError."""
+
     with pytest.raises(NewsValidationError, match="topic_id.*deve ser um inteiro positivo"):
         valid_news_data["topic_id"] = invalid_id
         News(**valid_news_data)
@@ -116,7 +112,7 @@ def test_topic_id_validation_raises_error(valid_news_data, invalid_id):
 
 @pytest.fixture
 def mock_news_entity():
-    """Fixture que cria um mock de NewsEntity com relacionamentos."""
+
     entity = MagicMock()
     entity.id = 1
     entity.title = "Entity Title"
@@ -139,7 +135,7 @@ def mock_news_entity():
 
 
 def test_from_entity_with_full_data(mock_news_entity):
-    """Testa a criação de News a partir de uma entidade com todos os dados."""
+
     news = News.from_entity(mock_news_entity)
 
     assert news.id == mock_news_entity.id
@@ -150,7 +146,7 @@ def test_from_entity_with_full_data(mock_news_entity):
 
 
 def test_from_entity_with_missing_relations(mock_news_entity):
-    """Testa a criação de News a partir de uma entidade sem relacionamentos."""
+    
     mock_news_entity.source = None
     mock_news_entity.topic = None
 
@@ -161,17 +157,12 @@ def test_from_entity_with_missing_relations(mock_news_entity):
 
 
 def test_from_entity_with_none_entity():
-    """Testa se from_entity retorna None para uma entidade nula."""
+
     assert News.from_entity(None) is None
 
 
 def test_to_orm(valid_news_data):
-    """
-    Testa a conversão de uma instância de News para uma NewsEntity.
-    Verifica se os atributos corretos são passados para o construtor da entidade.
-    """
-    # Usamos patch para substituir a NewsEntity no módulo 'app.models.news'
-    # onde ela é realmente importada e usada.
+
     with patch('app.models.news.NewsEntity') as MockNewsEntity:
         news = News(**valid_news_data)
         orm_entity = news.to_orm()
