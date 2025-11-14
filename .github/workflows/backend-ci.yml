@@ -3,9 +3,6 @@ name: Backend CI (Build & Test)
 on:
   pull_request:
     branches: [dev, main]
-    paths:
-      - "backend/**"
-      - ".github/workflows/backend-ci.yml"
 
   push:
     branches: [dev, main]
@@ -55,3 +52,7 @@ jobs:
       - name: Run tests (and enforce 90% coverage)
         if: steps.changed-files.outputs.any_changed == 'true'
         run: pytest --cov=. --cov-fail-under=90
+
+      - name: Mark as successful if no files were changed
+        if: steps.changed-files.outputs.any_changed == 'false'
+        run: echo "No backend files changed. Skipping CI."
