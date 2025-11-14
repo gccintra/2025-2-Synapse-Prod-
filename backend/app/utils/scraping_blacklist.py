@@ -56,7 +56,7 @@ class ScrapingBlacklist:
             return self.blacklist_data
 
     def save(self) -> None:
-        """Salva a blacklist no disco."""
+
         try:
             # Criar diretório se não existir
             os.makedirs(os.path.dirname(self.blacklist_file_path), exist_ok=True)
