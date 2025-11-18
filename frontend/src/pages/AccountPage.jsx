@@ -5,9 +5,7 @@ import { usersAPI, topicsAPI, newsSourcesAPI } from "../services/api";
 import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "react-toastify";
 
-import DynamicHeader from "../components/DynamicHeader";
 import PreferredTopics from "../components/PreferredTopics";
-import AddSource from "../components/AddSource";
 
 const InfoRow = ({ label, value, action, actionLink }) => (
   <div className="flex justify-between items-center py-3">
@@ -119,62 +117,19 @@ const SourceCard = ({ source, onDelete }) => {
   );
 };
 
-// ler um cookie pelo nome
-function getCookie(name) {
-  const value = `; ${document.cookie}`;
-  const parts = value.split(`; ${name}=`);
-  if (parts.length === 2) return parts.pop().split(";").shift();
-}
-
 const AccountPage = () => {
   const [userData, setUserData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [newTopic, setNewTopic] = useState("");
   const [topicError, setTopicError] = useState("");
-  const [isAddingSource, setIsAddingSource] = useState(false);
   const navigate = useNavigate();
 
-  const handleOpenAddSource = () => setIsAddingSource(true);
+  const handleOpenAddSource = () => navigate("/add-source");
 
-  const handleSaveSources = async (newSources) => {
-    const apiUrl = import.meta.env.VITE_API_BASE_URL;
-    const csrfToken = getCookie("csrf_access_token");
-
-    const attachPromises = newSources.map((source) => {
-      return fetch(`${apiUrl}/news_sources/attach`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "X-CSRF-TOKEN": csrfToken,
-        },
-        body: JSON.stringify({ source_id: source.id }),
-        credentials: "include",
-      });
-    });
-
-    try {
-      const responses = await Promise.all(attachPromises);
-      const failedResponses = responses.filter((res) => !res.ok);
-
-      if (failedResponses.length > 0) {
-        // tratar erros individuais
-        toast.error("Some sources could not be added.");
-      }
-
-      setUserData((prevData) => ({
-        ...prevData,
-        preferred_sources: [...prevData.preferred_sources, ...newSources],
-      }));
-    } catch (err) {
-      toast.error("Connection error while saving sources.");
-    } finally {
-      setIsAddingSource(false);
-    }
-  };
   useEffect(() => {
     const fetchUserData = async () => {
-      setLoading(true);
+      setLoading(true); // Garante que o estado de loading seja ativado no início.
       setError(null);
       try {
         // buscando dados do perfil, tópicos e fontes em paralelo
@@ -198,7 +153,7 @@ const AccountPage = () => {
       }
     };
     fetchUserData();
-  }, [navigate]);
+  }, []); // A dependência 'navigate' foi removida, pois não afeta a busca de dados.
 
   // adicionar um novo tópico à lista.
   const handleAddTopic = async () => {
@@ -250,18 +205,9 @@ const AccountPage = () => {
   // Função para deletar uma fonte da lista pelo seu ID.
   const handleDeleteSource = async (sourceId) => {
     try {
-      const apiUrl = import.meta.env.VITE_API_BASE_URL;
-      const csrfToken = getCookie("csrf_access_token");
-      const response = await fetch(
-        `${apiUrl}/news_sources/detach/${sourceId}`,
-        {
-          method: "DELETE",
-          headers: { "X-CSRF-TOKEN": csrfToken },
-          credentials: "include",
-        }
-      );
+      const result = await newsSourcesAPI.detachSource(sourceId);
 
-      if (response.ok) {
+      if (result.success) {
         setUserData((currentUserData) => ({
           ...currentUserData,
           preferred_sources: currentUserData.preferred_sources.filter(
@@ -269,7 +215,6 @@ const AccountPage = () => {
           ),
         }));
       } else {
-        const result = await response.json();
         toast.error(result.error || "Could not remove source.");
       }
     } catch (err) {
@@ -293,33 +238,9 @@ const AccountPage = () => {
       opacity: 1,
     },
   };
-  // spinner de carregamento
-  if (loading) {
-    return (
-      <div className="flex justify-center items-center h-screen">
-        <svg
-          className="animate-spin h-10 w-10 text-black"
-          xmlns="http://www.w3.org/2000/svg"
-          fill="none"
-          viewBox="0 0 24 24"
-        >
-          <circle
-            className="opacity-25"
-            cx="12"
-            cy="12"
-            r="10"
-            stroke="currentColor"
-            strokeWidth="4"
-          />
-          <path
-            className="opacity-75"
-            fill="currentColor"
-            d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"
-          />
-        </svg>
-      </div>
-    );
-  }
+
+  // Não renderiza nada até que os dados sejam carregados ou ocorra um erro.
+  if (loading || !userData) return null;
 
   // mensagem de erro se a busca de dados falhar
   if (error) {
@@ -329,123 +250,72 @@ const AccountPage = () => {
       </div>
     );
   }
-  if (isAddingSource) {
-    return (
-      <AddSource
-        onSave={handleSaveSources}
-        onBack={() => setIsAddingSource(false)}
-        userEmail={userData.email}
-      />
-    );
-  }
 
   return (
-    <div className="bg-gray-50 min-h-screen">
-      <DynamicHeader
-        userEmail={userData.email}
-        isAuthenticated={true}
-        onBackClick={() => navigate(-1)}
-        backText="Back"
-      />
-      <main className="max-w-7xl mx-auto px-6">
-        <div className="flex flex-col items-center min-[670px]:flex-row min-[670px]:items-start">
-          <motion.aside
-            className="mt-16 w-11/12 min-[670px]:w-1/3 min-[670px]:sticky min-[670px]:top-24 min-[670px]:self-start min-[670px]:ml-12"
-            variants={sectionVariants}
-            initial="hidden"
-            animate="visible"
-          >
-            <div className="h-full">
-              <nav>
-                <ul>
-                  <li>
-                    <a
-                      href="#"
-                      className="relative block py-2 pl-4 text-base font-semibold text-black font-montserrat before:content-[''] before:absolute before:left-0 before:top-1/2 before:h-1/2 before:w-1.5 before:-translate-y-1/2 before:bg-black"
-                    >
-                      Account
-                    </a>
-                  </li>
-                  <li>
-                    <a
-                      href="#"
-                      className="block py-2 text-base text-gray-500 hover:text-black pl-4 font-montserrat"
-                    >
-                      Newsletter
-                    </a>
-                  </li>
-                </ul>
-              </nav>
+    <motion.section
+      className="mt-16 w-11/12 min-[670px]:w-1/2"
+      variants={containerVariants}
+      initial="hidden"
+      animate="visible"
+    >
+      {/* seção 1 -> informações da Conta */}
+      <motion.div variants={sectionVariants}>
+        <AccountInformation user={userData} />
+      </motion.div>
+
+      {/* seção 2 -> tópicos Preferidos */}
+      <motion.div variants={sectionVariants}>
+        <PreferredTopics
+          key={userData.email}
+          topics={userData.preferred_topics}
+          newTopic={newTopic}
+          onNewTopicChange={(e) => {
+            setNewTopic(e.target.value);
+            if (topicError) setTopicError("");
+          }}
+          onAddTopic={handleAddTopic}
+          onDeleteTopic={handleDeleteTopic}
+          topicError={topicError}
+        />
+      </motion.div>
+
+      {/* seção 3 -> fontes Preferidas */}
+      <motion.div variants={sectionVariants}>
+        <div className="mt-11 rounded-lg ">
+          <div className="flex justify-between items-center">
+            <h2 className="text-xl font-medium text-gray-900 font-montserrat">
+              Preferred news sources
+            </h2>
+          </div>
+          <hr className="my-4 border-t-2 border-black" />
+          <div className="mt-6 mb-6">
+            <div className="flex justify-between items-center mb-4">
+              <p className="text-base font-medium text-gray-900 font-montserrat">
+                Your Sources
+              </p>
+              <motion.button
+                onClick={handleOpenAddSource}
+                className="h-11 flex items-center bg-black text-white text-xs font-bold px-4 rounded hover:bg-gray-800 font-montserrat"
+                whileTap={{ scale: 0.95 }}
+              >
+                Add Source
+              </motion.button>
             </div>
-          </motion.aside>
-
-          <motion.section
-            className="mt-16 w-11/12 min-[670px]:w-1/2"
-            variants={containerVariants}
-            initial="hidden"
-            animate="visible"
-          >
-            {/* seção 1 -> informações da Conta */}
-            <motion.div variants={sectionVariants}>
-              <AccountInformation user={userData} />
-            </motion.div>
-
-            {/* seção 2 -> tópicos Preferidos */}
-            <motion.div variants={sectionVariants}>
-              <PreferredTopics
-                key={userData.email}
-                topics={userData.preferred_topics}
-                newTopic={newTopic}
-                onNewTopicChange={(e) => {
-                  setNewTopic(e.target.value);
-                  if (topicError) setTopicError("");
-                }}
-                onAddTopic={handleAddTopic}
-                onDeleteTopic={handleDeleteTopic}
-                topicError={topicError}
-              />
-            </motion.div>
-
-            {/* seção 3 -> fontes Preferidas */}
-            <motion.div variants={sectionVariants}>
-              <div className="mt-11 rounded-lg ">
-                <div className="flex justify-between items-center">
-                  <h2 className="text-xl font-medium text-gray-900 font-montserrat">
-                    Preferred news sources
-                  </h2>
-                </div>
-                <hr className="my-4 border-t-2 border-black" />
-                <div className="mt-6 mb-6">
-                  <div className="flex justify-between items-center mb-4">
-                    <p className="text-base font-medium text-gray-900 font-montserrat">
-                      Your Sources
-                    </p>
-                    <motion.button
-                      onClick={handleOpenAddSource}
-                      className="h-11 flex items-center bg-black text-white text-xs font-bold px-4 rounded hover:bg-gray-800 font-montserrat"
-                      whileTap={{ scale: 0.95 }}
-                    >
-                      Add Source
-                    </motion.button>
-                  </div>
-                  <AnimatePresence>
-                    <div className="mt-6 space-y-6">
-                      {userData.preferred_sources.map((source) => (
-                        <SourceCard
-                          key={source.id}
-                          source={source}
-                          onDelete={handleDeleteSource}
-                        />
-                      ))}
-                    </div>
-                  </AnimatePresence>
-                </div>
+            <AnimatePresence>
+              <div className="mt-6 space-y-6">
+                {userData.preferred_sources.map((source) => (
+                  <SourceCard
+                    key={source.id}
+                    source={source}
+                    onDelete={handleDeleteSource}
+                  />
+                ))}
               </div>
-            </motion.div>
-          </motion.section>
+            </AnimatePresence>
+          </div>
         </div>
-      </main>
-    </div>
+      </motion.div>
+    </motion.section>
   );
 };
 

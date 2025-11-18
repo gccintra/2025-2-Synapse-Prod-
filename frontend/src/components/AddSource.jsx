@@ -1,8 +1,14 @@
 import React, { useState, useEffect } from "react";
-import { Link } from "react-router-dom";
-import DynamicHeader from "./DynamicHeader";
+import { useNavigate } from "react-router-dom";
 import { newsSourcesAPI, usersAPI } from "../services/api";
+import { toast } from "react-toastify";
+import DynamicHeader from "./DynamicHeader";
 
+function getCookie(name) {
+  const value = `; ${document.cookie}`;
+  const parts = value.split(`; ${name}=`);
+  if (parts.length === 2) return parts.pop().split(";").shift();
+}
 // sub-componente que representa cada card de fonte
 const SourceSelectCard = ({ source, isSelected, onToggle }) => {
   const baseClasses =
@@ -50,13 +56,15 @@ const SourceSelectCard = ({ source, isSelected, onToggle }) => {
   );
 };
 
-const AddSource = ({ onSave, onBack }) => {
+const AddSource = () => {
   const [sources, setSources] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedSources, setSelectedSources] = useState({});
   const [userData, setUserData] = useState({ email: "" });
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const navigate = useNavigate();
 
   useEffect(() => {
     const fetchUnattachedSources = async () => {
@@ -83,6 +91,7 @@ const AddSource = ({ onSave, onBack }) => {
           userProfileResponse.value.success
         ) {
           setUserData(userProfileResponse.value.data);
+          setIsAuthenticated(true);
         }
       } catch (err) {
         setError(err.message || "Connection error. Please try again.");
@@ -113,8 +122,29 @@ const AddSource = ({ onSave, onBack }) => {
   };
 
   const handleSave = () => {
-    const sourcesArray = Object.values(selectedSources);
-    onSave(sourcesArray); // função passada da AccountPage
+    const handleSaveSources = async (newSources) => {
+      const csrfToken = getCookie("csrf_access_token");
+
+      const attachPromises = newSources.map((source) =>
+        newsSourcesAPI.attachSource(source.id, csrfToken)
+      );
+
+      try {
+        const responses = await Promise.all(attachPromises);
+        const failedResponses = responses.filter((res) => !res.ok);
+
+        if (failedResponses.length > 0) {
+          toast.error("Some sources could not be added.");
+        } else {
+          toast.success("Sources added successfully!");
+        }
+        navigate("/account");
+      } catch (err) {
+        toast.error("Connection error while saving sources.");
+      }
+    };
+
+    handleSaveSources(Object.values(selectedSources));
   };
 
   const selectedCount = Object.keys(selectedSources).length;
@@ -123,9 +153,9 @@ const AddSource = ({ onSave, onBack }) => {
     <div className="bg-white min-h-screen">
       <DynamicHeader
         userEmail={userData.email}
-        isAuthenticated={true}
-        onBackClick={onBack}
-        backText="Back"
+        isAuthenticated={isAuthenticated}
+        onBackClick={() => navigate("/account")}
+        backText="Back to Account"
       />
       <main className="max-w-xl mx-auto py-12 px-4 w-full text-center">
         <h2 className=" mb-2 text-xl sm:text-3xl font-bold text-black font-montserrat">
