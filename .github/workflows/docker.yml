@@ -1,0 +1,71 @@
+name: CD - Build and Publish Docker Images
+
+on:
+  push:
+    branches:
+      - dev
+      - main
+    paths:
+      - "backend/**"
+      - "frontend/**"
+      - "cron/**"
+      - ".github/workflows/docker.yml"
+
+permissions:
+  contents: read
+  packages: write
+
+jobs:
+  build-and-push-images:
+    name: Build and Push Images
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        # Define cada imagem como um item na matriz de estratégia
+        # Adicione novas imagens aqui no futuro
+        image: [backend, frontend, cron]
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          # Necessário para a detecção de alterações de caminho
+          fetch-depth: 2
+
+      # Passo para verificar se houve alterações no diretório da imagem atual da matriz
+      - name: Check for changes in '${{ matrix.image }}' directory
+        id: check_changes
+        run: |
+          if git diff-tree --no-commit-id --name-only -r HEAD | grep -q "^${{ matrix.image }}/" || git diff-tree --no-commit-id --name-only -r HEAD | grep -q "^\.github/workflows/docker\.yml"; then
+            echo "changed=true" >> $GITHUB_OUTPUT
+          else
+            echo "No changes detected in ${{ matrix.image }} directory. Skipping build."
+            echo "changed=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Log in to GHCR
+        if: steps.check_changes.outputs.changed == 'true'
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract metadata for Docker image
+        if: steps.check_changes.outputs.changed == 'true'
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ghcr.io/${{ github.repository }}/${{ matrix.image }}
+
+      - name: Build and push Docker image for ${{ matrix.image }}
+        if: steps.check_changes.outputs.changed == 'true'
+        uses: docker/build-push-action@v6
+        with:
+          context: ./${{ matrix.image }}
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          # Habilita o cache para acelerar builds futuros
+          cache-from: type=gha
+          cache-to: type=gha,mode=max

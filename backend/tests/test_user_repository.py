@@ -107,7 +107,7 @@ def test_update_user_sqlalchemy_error_raises_exception(user_repository, db):
         mock_rollback.assert_called_once()
 
 def test_list_all_returns_list_of_users(user_repository):
-    """Testa se list_all retorna uma lista de usuários."""
+    
     user_repository.create(User(full_name="User One", email="user1@example.com", password="Password123"))
     user_repository.create(User(full_name="User Two", email="user2@example.com", password="Password123"))
 
@@ -118,12 +118,12 @@ def test_list_all_returns_list_of_users(user_repository):
     assert all(isinstance(u, User) for u in users)
 
 def test_list_all_returns_empty_list_when_no_users(user_repository):
-    """Testa se list_all retorna uma lista vazia se não houver usuários."""
+
     users = user_repository.list_all()
     assert users == []
 
 def test_add_favorite_news_success(user_repository, db):
-    """Testa adicionar uma notícia favorita com sucesso."""
+
     user_entity = UserEntity(id=1, full_name="Test", email="test@test.com", password_hash="hash")
     news_entity = NewsEntity(id=10, title="News", url="http://news.com")
     user_entity.saved_news = [] # Garante que a lista de favoritos está vazia
@@ -137,13 +137,13 @@ def test_add_favorite_news_success(user_repository, db):
     mock_commit.assert_called_once()
 
 def test_add_favorite_news_user_not_found(user_repository, db):
-    """Testa adicionar favorito quando o usuário não existe."""
+    
     with patch.object(db.session, 'get', return_value=None):
         with pytest.raises(UserNotFoundError):
             user_repository.add_favorite_news(user_id=999, news_id=10)
 
 def test_add_favorite_news_news_not_found(user_repository, db):
-    """Testa adicionar favorito quando a notícia não existe."""
+    
     user_entity = UserEntity(id=1, full_name="Test", email="test@test.com", password_hash="hash")
     with patch.object(db.session, 'get') as mock_get:
         mock_get.side_effect = [user_entity, None]
@@ -151,7 +151,7 @@ def test_add_favorite_news_news_not_found(user_repository, db):
             user_repository.add_favorite_news(user_id=1, news_id=999)
 
 def test_add_favorite_news_already_favorited(user_repository, db):
-    """Testa adicionar favorito quando a notícia já foi favoritada."""
+
     user_entity = UserEntity(id=1, full_name="Test", email="test@test.com", password_hash="hash")
     news_entity = NewsEntity(id=10, title="News", url="http://news.com")
     user_entity.saved_news = [news_entity] # Notícia já está na lista
@@ -162,7 +162,7 @@ def test_add_favorite_news_already_favorited(user_repository, db):
             user_repository.add_favorite_news(user_id=1, news_id=10)
 
 def test_add_favorite_news_sqlalchemy_error(user_repository, db):
-    """Testa o tratamento de erro do SQLAlchemy ao adicionar favorito."""
+
     user_entity = UserEntity(id=1, full_name="Test", email="test@test.com", password_hash="hash")
     news_entity = NewsEntity(id=10, title="News", url="http://news.com")
     user_entity.saved_news = []
@@ -176,7 +176,7 @@ def test_add_favorite_news_sqlalchemy_error(user_repository, db):
             mock_rollback.assert_called_once()
 
 def test_remove_favorite_news_success(user_repository, db):
-    """Testa remover uma notícia favorita com sucesso."""
+
     user_entity = UserEntity(id=1, full_name="Test", email="test@test.com", password_hash="hash")
     news_entity = NewsEntity(id=10, title="News", url="http://news.com")
     user_entity.saved_news = [news_entity] # Notícia está na lista
@@ -190,16 +190,16 @@ def test_remove_favorite_news_success(user_repository, db):
     mock_commit.assert_called_once()
 
 def test_remove_favorite_news_user_not_found(user_repository, db):
-    """Testa remover favorito quando o usuário não existe."""
+
     with patch.object(db.session, 'get', return_value=None):
         with pytest.raises(UserNotFoundError):
             user_repository.remove_favorite_news(user_id=999, news_id=10)
 
 def test_remove_favorite_news_not_favorited(user_repository, db):
-    """Testa remover favorito quando a notícia não está nos favoritos."""
+
     user_entity = UserEntity(id=1, full_name="Test", email="test@test.com", password_hash="hash")
     news_entity = NewsEntity(id=10, title="News", url="http://news.com")
-    user_entity.saved_news = [] # Lista de favoritos está vazia
+    user_entity.saved_news = []
 
     with patch.object(db.session, 'get') as mock_get:
         mock_get.side_effect = [user_entity, news_entity]
@@ -207,7 +207,7 @@ def test_remove_favorite_news_not_favorited(user_repository, db):
             user_repository.remove_favorite_news(user_id=1, news_id=10)
 
 def test_remove_favorite_news_sqlalchemy_error(user_repository, db):
-    """Testa o tratamento de erro do SQLAlchemy ao remover favorito."""
+
     user_entity = UserEntity(id=1, full_name="Test", email="test@test.com", password_hash="hash")
     news_entity = NewsEntity(id=10, title="News", url="http://news.com")
     user_entity.saved_news = [news_entity]
