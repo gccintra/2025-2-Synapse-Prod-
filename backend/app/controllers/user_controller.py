@@ -272,3 +272,61 @@ class UserController:
                     "error": "Ocorreu um erro inesperado durante o logout.",
                 }
             ), 500
+        
+    def google_login(self, data):
+        try:
+            id_token = data.get("id_token")
+            if not id_token:
+                raise KeyError("'id_token'")
+
+            # O serviço valida o token, encontra ou cria o usuário e retorna o objeto User
+            user = self.service.google_login(id_token)
+            
+            # Geração do JWT e resposta (mesmo padrão do método login)
+            access_token = create_access_token(identity=str(user.id))
+            
+            user_data = {
+                "full_name": user.full_name,
+                "email": user.email,
+            }
+            response = jsonify({
+                "success": True,
+                "message": "Login com Google bem-sucedido.",
+                "data": user_data,
+                "error": None,
+            })
+            set_access_cookies(response, access_token)
+            return response, 200
+
+        except KeyError as e:
+            return jsonify({
+                "success": False,
+                "message": "Dados inválidos.",
+                "data": None,
+                "error": f"Campo obrigatório ausente: {e}",
+            }), 400
+        except ValueError as e: 
+            # Captura falhas na validação do token (invalidez, expiração, etc.)
+            logging.warning(f"Falha na validação do token Google: {e}")
+            return jsonify({
+                "success": False,
+                "message": "Falha na autenticação do Google.",
+                "data": None,
+                "error": str(e) or "Token de ID do Google inválido ou expirado.",
+            }), 401
+        except EmailInUseError as e: 
+            # Captura caso o e-mail do Google já esteja registrado com senha/outro provedor
+            return jsonify({
+                "success": False,
+                "message": "Conflito de dados.",
+                "data": None,
+                "error": str(e),
+            }), 409
+        except Exception as e:
+            logging.error(f"Erro inesperado durante o login com Google: {e}", exc_info=True)
+            return jsonify({
+                "success": False,
+                "message": "Erro interno do servidor.",
+                "data": None,
+                "error": "Ocorreu um erro inesperado durante o login com Google.",
+            }), 500
