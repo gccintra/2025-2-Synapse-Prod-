@@ -139,8 +139,6 @@ def test_to_orm(valid_user_data):
             password_hash=user._password_hash,
             newsletter=user.newsletter,
         )
-
-
         assert orm_entity == MockUserEntity.return_value
 
 
