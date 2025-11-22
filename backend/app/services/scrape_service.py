@@ -11,6 +11,7 @@ import bleach
 from newspaper import Article, Config
 from newspaper.exceptions import ArticleException
 import requests
+import difflib
 import html # Importar para desescapar entidades HTML
 from app.utils.scraping_blacklist import ScrapingBlacklist
 
@@ -116,6 +117,12 @@ class ScrapeService:
             article.download()
             article.parse()
             
+            article_text = article.text
+            # 1. Checagem de Obfuscação
+            if self._is_content_obfuscated(article_text):
+                logging.warning(f"Conteúdo ofuscado detectado em {url}")
+                return None
+
             # Extrair texto em linguagem natural
             article_text = article.text
             if not article_text or len(article_text.strip()) < 100:
@@ -146,20 +153,22 @@ class ScrapeService:
             except Exception as e:
                 raise ArticleException(f"Falha ao converter top_node para HTML: {e}")
             
-            # Processar HTML com limpeza agressiva
-            processed_html = self._process_html_aggressive(raw_html, url)
+            # 2. Processamento com "Trim" baseado no texto
+            processed_html = self._process_html_aggressive(raw_html, url, reference_text=article_text)
             
             # Validar conteúdo extraído
-            if not self._validar_conteudo_extraido(processed_html):
-                logging.warning(f"Validação de conteúdo falhou para {url}")
-                self._add_to_blacklist(
-                    url=url,
-                    error_type='Content Validation Failed',
-                    error_message='Conteúdo contém palavras-chave de falha',
-                    reason='Conteúdo bloqueado ou inválido'
-                )
-                return None
-            
+            # 3. Scoring System
+            quality = self._calculate_quality_score(processed_html, article_text)
+
+            if not quality['is_valid']:
+                logging.warning(f"Baixa qualidade ({quality['score']}) para {url}: {quality['reasons']}")
+                
+                # Opcional: Tentar Fallback IA aqui se score > 20
+                # if quality['score'] > 20: processed_html = self._fallback_ai_extraction(raw_html)
+                
+                return None # ou salvar com flag de 'revisão necessária'
+
+
             # Inserir a galeria de mídia no início do HTML processado
             
             logging.info(
@@ -176,20 +185,29 @@ class ScrapeService:
                 'publish_date': article.publish_date.isoformat() if article.publish_date else None
             }
             
+        except requests.exceptions.HTTPError as e:
+            status_code = e.response.status_code
+            # Bloquear APENAS erros de permissão explícita
+            if status_code in [401, 403]:
+                logging.warning(f"Acesso negado ({status_code}) para {url}. Adicionando à blacklist.")
+                self._add_to_blacklist(url, 'Access Denied', str(e), 'Bloqueio de permissão')
+            elif status_code == 404:
+                 logging.info(f"Página não encontrada: {url}. Ignorando sem blacklist (pode voltar).")
+            else:
+                logging.error(f"Erro HTTP {status_code} temporário para {url}")
+            return None
+
         except requests.exceptions.Timeout:
-            error_msg = "Request timeout"
-            logging.error(f"Timeout ao acessar {url}")
-            self._add_to_blacklist(
-                url=url,
-                error_type='Timeout Error',
-                error_message=error_msg,
-                reason='Site demorou muito para responder'
-            )
+            # NUNCA adicionar à blacklist por timeout (pode ser instabilidade momentânea)
+            logging.warning(f"Timeout em {url}. Tentaremos novamente em outra execução.")
             return None
             
         except requests.exceptions.RequestException as e:
             error_msg = f"Request error: {str(e)}"
             logging.error(f"Erro de requisição para {url}: {error_msg}")
+            # Evitar blacklist para erros genéricos de rede que podem ser temporários
+            # Apenas erros persistentes ou de acesso devem ir para a blacklist
+            # self._add_to_blacklist(...)
             self._add_to_blacklist(
                 url=url,
                 error_type='Request Error',
@@ -210,21 +228,16 @@ class ScrapeService:
             return None
         
         except ArticleException as e:
-            error_msg = f"Newspaper error: {str(e)}"
-            logging.error(f"Erro do Newspaper4k para {url}: {error_msg}")
-            self._add_to_blacklist(
-                url=url,
-                error_type='Article Exception',
-                error_message=error_msg,
-                reason='Falha no download ou parse do artigo'
-            )
+             # Erros de parse do newspaper não devem bloquear o domínio, talvez apenas a URL específica
+             logging.error(f"Falha de parse em {url}: {e}")
+             return None
             
         except Exception as e:
             error_msg = str(e)
             logging.error(f"Erro no scraping de {url}: {error_msg}", exc_info=True)
             return None
 
-    def _process_html_aggressive(self, html: str, base_url: str) -> str:
+    def _process_html_aggressive(self, html: str, base_url: str, reference_text: str = "") -> str:
         """
         Processa HTML com limpeza agressiva: remove scripts, styles, classes, ids, etc.
         
@@ -245,10 +258,13 @@ class ScrapeService:
 
 
         # 3. SANITIZAR E PADRONIZAR EMBEDS
+        self._sanitize_generic_social_embeds(soup)
         self._sanitize_twitter_embeds(soup)
         self._sanitize_youtube_embeds(soup)
         self._filter_iframes(soup, base_url)
 
+        # Remover estruturas de anúncios aninhadas
+        self._remove_deeply_nested_empty_tags(soup)
         
 
         for tag in list(soup.find_all(['div', 'p', 'figure'])):
@@ -517,6 +533,9 @@ class ScrapeService:
                     tag.decompose()
                     changed = True
 
+        # Cortar o final do HTML que não corresponde ao texto extraído
+        self._trim_html_tail_by_content(soup, reference_text)
+
         # 7. Converter de volta para string
         clean_html = str(soup)
         
@@ -531,6 +550,120 @@ class ScrapeService:
         
         return final_html
     
+    def _trim_html_tail_by_content(self, soup: BeautifulSoup, reference_text: str):
+        """
+        Corta o HTML onde o texto do newspaper termina.
+        Isso remove seções de 'comentários', 'leia mais' e rodapés que o newspaper ignorou.
+        Usa difflib para uma comparação robusta.
+        """
+        if not reference_text or not soup.body:
+            return
+
+        # Normaliza ambos os textos para uma comparação mais limpa
+        ref_text_norm = ' '.join(reference_text.split())
+        soup_text_norm = ' '.join(soup.get_text().split())
+
+        # Usa difflib para encontrar o maior bloco correspondente
+        matcher = difflib.SequenceMatcher(None, soup_text_norm, ref_text_norm)
+        match = matcher.find_longest_match(0, len(soup_text_norm), 0, len(ref_text_norm))
+
+        # O ponto de corte é o final do texto correspondente no HTML
+        cutoff_point = match.a + match.size
+
+        # Encontra o elemento onde o corte deve ocorrer
+        char_count = 0
+        last_valid_element = None
+
+        for element in soup.find_all(string=True):
+            if not element.parent or element.parent.name in ['script', 'style']:
+                continue
+
+            text_len = len(' '.join(element.string.split()))
+            if char_count + text_len >= cutoff_point:
+                # Encontramos o elemento onde o texto bom termina
+                last_valid_element = element
+                break
+            char_count += text_len
+
+        if last_valid_element:
+            # Sobe na árvore até encontrar um bloco de conteúdo (p, div, figure, etc.)
+            parent_block = last_valid_element.find_parent(['p', 'div', 'figure', 'h1', 'h2', 'h3', 'ul', 'ol'])
+            if parent_block:
+                # Remove todos os elementos irmãos que vêm depois deste bloco
+                for sibling in list(parent_block.find_next_siblings()):
+                    sibling.decompose()
+
+    def _remove_deeply_nested_empty_tags(self, soup: BeautifulSoup, max_depth=15):
+        """Remove estruturas excessivamente profundas que geralmente são wrappers de anúncios"""
+        def get_depth(element):
+            depth = 0
+            while element.parent:
+                depth += 1
+                element = element.parent
+            return depth
+
+        for element in soup.find_all():
+            if get_depth(element) > max_depth:
+                # Se for muito profundo e não tiver texto significativo próprio, remove
+                if not element.get_text(strip=True):
+                    element.decompose()
+
+    def _calculate_quality_score(self, html_content: str, text_content: str) -> dict:
+        score = 100
+        reasons = []
+
+        soup = BeautifulSoup(html_content, 'html.parser')
+        
+        # 1. Densidade de Texto (HTML não deve ser muito maior que o texto útil)
+        len_html = len(html_content)
+        len_text = len(text_content)
+        if len_html > 0:
+            ratio = len_text / len_html
+            if ratio < 0.2: # Muito código para pouco texto
+                score -= 20
+                reasons.append("Low text-to-code ratio")
+
+        # 2. Estrutura Mínima
+        if not soup.find(['p']):
+            score -= 30
+            reasons.append("No paragraphs found")
+        
+        # 3. Comprimento do Texto
+        if len_text < 300: # Notícia muito curta
+            score -= 40
+            reasons.append("Text too short")
+
+        # 4. Detecção de "Cookie Wall" ou Paywall
+        text_lower = text_content.lower()
+        suspicious_phrases = ['subscribe now', 'read the full story', 'accept cookies', 'register to continue']
+        if any(p in text_lower for p in suspicious_phrases):
+            score -= 50
+            reasons.append("Possible paywall/cookie wall detected")
+
+        return {'score': max(0, score), 'reasons': reasons, 'is_valid': score > 50}
+
+
+    def _sanitize_generic_social_embeds(self, soup: BeautifulSoup):
+        # TikTok
+        for block in soup.find_all('blockquote', class_='tiktok-embed'):
+             video_id = block.get('data-video-id')
+             if video_id:
+                 placeholder = self._create_generic_placeholder(soup, 'tiktok', video_id)
+                 block.replace_with(placeholder)
+
+        # Instagram
+        for block in soup.find_all('blockquote', class_='instagram-media'):
+             link = block.get('data-instgrm-permalink')
+             if link:
+                 placeholder = self._create_generic_placeholder(soup, 'instagram', link)
+                 block.replace_with(placeholder)
+
+    def _create_generic_placeholder(self, soup, platform, content_id):
+        div = soup.new_tag('div')
+        div['class'] = f'{platform}-placeholder'
+        div[f'data-{platform}-id'] = content_id
+        return div
+
     def _sanitize_twitter_embeds(self, soup: BeautifulSoup) -> None:
         """
         Encontra embeds de tweets (iframe, divs, blockquotes) e os converte
@@ -639,35 +772,52 @@ class ScrapeService:
 
     def _sanitize_youtube_embeds(self, soup: BeautifulSoup) -> None:
         """
-        Encontra divs que são fachadas de vídeos do YouTube e os converte
-        para iframes padronizados.
+        Encontra qualquer ocorrência de links do YouTube (texto, embeds, iframes)
+        e os converte para um placeholder padronizado.
         """
         video_ids_processados = set()
+        # Regex para encontrar qualquer URL do YouTube
+        youtube_regex = re.compile(r"https?://(?:www\.)?(?:youtube\.com/(?:watch\?v=|embed/)|youtu\.be/)([a-zA-Z0-9_-]{11})")
 
-        # 1. Encontrar todos os iframes do YouTube e substituí-los por placeholders
-        for iframe in soup.find_all('iframe', src=re.compile(r"youtube\.com|youtu\.be")):
-            src = iframe.get('src', '')
-            match = re.search(r"(?:embed\/|v=|\/)([a-zA-Z0-9_-]{11})", src)
+        # 1. Busca universal por texto em todo o documento
+        # Encontra todos os nós de texto que contêm uma URL do YouTube
+        text_nodes = soup.find_all(string=youtube_regex)
 
+        for node in text_nodes:
+            match = youtube_regex.search(str(node))
             if match:
                 video_id = match.group(1)
                 if video_id not in video_ids_processados:
                     placeholder = self._create_youtube_placeholder(soup, video_id)
-                    iframe.replace_with(placeholder)
+                    
+                    # Encontra o elemento "container" mais próximo para substituir.
+                    # Isso evita colocar um <div> dentro de um <a> ou <p>.
+                    parent_to_replace = node.find_parent(['p', 'div', 'figure'])
+                    
+                    if parent_to_replace:
+                        parent_to_replace.replace_with(placeholder)
+                    else:
+                        # Fallback: se não encontrar um pai adequado, substitui o nó de texto
+                        node.replace_with(placeholder)
+                        
                     video_ids_processados.add(video_id)
+
+        # 2. Limpeza final de iframes e links que possam ter sobrado
+        # Isso garante que se um vídeo já foi processado, seu iframe duplicado seja removido.
+        for tag in soup.find_all(['iframe', 'a'], src=youtube_regex) if 'iframe' in soup.find_all() else soup.find_all('a', href=youtube_regex):
+            url = tag.get('src') or tag.get('href', '')
+            match = youtube_regex.search(url)
+            if match:
+                video_id = match.group(1)
+                if video_id in video_ids_processados:
+                    # Se o vídeo já foi convertido em placeholder, remove a tag original
+                    tag.decompose()
                 else:
-                    iframe.decompose()  # Remove iframe duplicado
+                    # Se por algum motivo não foi pego antes, converte agora
+                    placeholder = self._create_youtube_placeholder(soup, video_id)
+                    tag.replace_with(placeholder)
+                    video_ids_processados.add(video_id)
 
-        # 2. Encontrar divs de fachada e substituí-los por placeholders
-        for youtube_div in soup.find_all('div', class_=re.compile(r'youtube-video|youtube-facade')):
-            video_id = self._extract_video_id_from_div(youtube_div)  # (Helper)
-
-            if video_id and video_id not in video_ids_processados:
-                placeholder = self._create_youtube_placeholder(soup, video_id)
-                youtube_div.replace_with(placeholder)
-                video_ids_processados.add(video_id)
-            elif youtube_div:
-                youtube_div.decompose()  # Remove o div se for duplicado ou sem ID
 
     def _create_youtube_placeholder(self, soup: BeautifulSoup, video_id: str):
         """
@@ -711,32 +861,37 @@ class ScrapeService:
                 # Garante que a URL do iframe é absoluta
                 iframe['src'] = urljoin(base_url, src)
 
-    def _validar_conteudo_extraido(self, clean_html: str) -> bool:
+    def _is_content_obfuscated(self, text: str) -> bool:
         """
-        Valida se o conteúdo extraído não contém palavras-chave de falha.
+        Verifica se o conteúdo parece ofuscado ou criptografado.
+        Isso é útil para detectar sites com anti-scraping que retornam texto "lixo".
         
         Args:
-            clean_html: HTML limpo para validação
-            
+            text: O texto puro extraído do artigo.
+
         Returns:
-            True se o conteúdo é válido, False caso contrário
+            True se o conteúdo parece ofuscado, False caso contrário.
         """
-        if not clean_html or len(clean_html.strip()) < 100:
+        if not text:
             return False
         
-        # Converter para lowercase para busca case-insensitive
-        content_lower = clean_html.lower()
+        words = text.split()
+        long_words = [w for w in words if len(w) > 30]
         
-        # Verificar se contém palavras-chave de falha
+        # Se mais de 5% das palavras forem gigantescas (base64 ou hashes)
+        if len(words) > 0 and (len(long_words) / len(words)) > 0.05:
+            logging.warning("Detecção de ofuscamento: alta densidade de palavras longas.")
+            return True
+            
+        # Verifica se há palavras-chave de falha no texto
+        text_lower = text.lower()
         for keyword in self.PALAVRAS_CHAVE_DE_FALHA:
-            if keyword in content_lower:
-                logging.warning(
-                    f"Palavra-chave de falha encontrada: '{keyword}'"
-                )
-                return False
-        
-        return True
-    
+            if keyword in text_lower:
+                logging.warning(f"Detecção de ofuscamento: palavra-chave de falha encontrada ('{keyword}').")
+                return True
+
+        return False
+   
     def _add_to_blacklist(
         self,
         url: str,

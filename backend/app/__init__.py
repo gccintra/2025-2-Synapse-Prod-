@@ -10,7 +10,7 @@ from app.routes.news_source_routes import news_source_bp
 from app.routes.news_routes import news_bp
 
 STANDARD_TOPICS = [
-    'Technology', 'Crypto', 'Games', 'Economy', 'Business', 'Health',
+    'Technology', 'Crypto', 'Games', 'Economy', 'Business',
     'Science', 'Entertainment', 'World'
 ]
 
