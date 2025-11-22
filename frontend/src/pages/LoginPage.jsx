@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
 
@@ -21,6 +21,43 @@ function LoginPage() {
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
+  };
+
+  useEffect(() => {
+    if (window.google) {
+      window.google.accounts.id.initialize({
+        client_id: import.meta.env.VITE_GOOGLE_CLIENT_ID,
+        callback: handleGoogleResponse,
+      });
+    }
+  }, []);
+
+  const handleGoogleLoginClick = () => {
+    if (window.google) {
+      window.google.accounts.id.prompt();
+    }
+  };
+
+  const handleGoogleResponse = async (response) => {
+    const id_token = response.credential;
+    try {
+      const apiUrl = import.meta.env.VITE_API_BASE_URL;
+      const res = await fetch(`${apiUrl}/login/google`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ id_token }),
+      });
+      const data = await res.json();
+      if (res.ok) {
+        toast.success(`Login com Google bem-sucedido! Bem-vindo, ${data.data.full_name}.`);
+        navigate("/");
+      } else {
+        toast.error(data.error || "Erro ao autenticar com Google.");
+      }
+    } catch (err) {
+      toast.error("Não foi possível conectar ao servidor. Tente novamente mais tarde.");
+    }
   };
 
   const GoogleIcon = () => (
@@ -169,12 +206,11 @@ function LoginPage() {
 
             <button
               type="button"
-              onClick={""}
-              disabled={""}
-              className={`w-full rounded-lg py-3 px-5 mt-4 text-gray-700 font-semibold border border-gray-300 bg-white hover:bg-gray-50 shadow-sm transition duration-200 flex items-center justify-center`}
+              onClick={handleGoogleLoginClick}
+              className="w-full rounded-md py-3 px-5 mt-4 text-gray-700 font-semibold border border-gray-300 bg-white hover:bg-gray-50 shadow-sm transition duration-200 flex items-center justify-center"
             >
               <GoogleIcon />
-              Login with Google
+              <span className="ml-2">Login with Google</span>
             </button>
           </form>
 
