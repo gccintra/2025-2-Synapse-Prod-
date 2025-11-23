@@ -4,14 +4,16 @@ import { motion, AnimatePresence } from "framer-motion";
 const ScrollToTopButton = () => {
   const [isVisible, setIsVisible] = useState(false);
 
+  // Verifica a visibilidade com base no scroll e na largura da tela
   const toggleVisibility = () => {
-    if (window.scrollY > 300) {
+    if (window.scrollY > 300 && window.innerWidth >= 910) {
       setIsVisible(true);
     } else {
       setIsVisible(false);
     }
   };
 
+  // Rola a página para o topo
   const scrollToTop = () => {
     window.scrollTo({
       top: 0,
@@ -20,10 +22,13 @@ const ScrollToTopButton = () => {
   };
 
   useEffect(() => {
+    // Adiciona listeners para scroll e redimensionamento da janela
     window.addEventListener("scroll", toggleVisibility);
+    window.addEventListener("resize", toggleVisibility);
 
     return () => {
       window.removeEventListener("scroll", toggleVisibility);
+      window.removeEventListener("resize", toggleVisibility);
     };
   }, []);
 
