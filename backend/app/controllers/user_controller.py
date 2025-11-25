@@ -4,11 +4,13 @@ import logging
 from app.services.user_service import UserService
 from flask_jwt_extended import set_access_cookies, create_access_token, unset_jwt_cookies
 from app.models.exceptions import UserNotFoundError, EmailInUseError
+from app.services.google_service import GoogleAuthService
 
 class UserController:
     def __init__(self):
         self.service = UserService()
-
+        self.google_service = GoogleAuthService()
+        
     def register(self, data):
         try:
             self.service.register(data)
@@ -280,7 +282,7 @@ class UserController:
                 raise KeyError("'id_token'")
 
             # O serviço valida o token, encontra ou cria o usuário e retorna o objeto User
-            user = self.service.google_login(id_token)
+            user =  self.google_service.google_login(id_token)
             
             # Geração do JWT e resposta (mesmo padrão do método login)
             access_token = create_access_token(identity=str(user.id))

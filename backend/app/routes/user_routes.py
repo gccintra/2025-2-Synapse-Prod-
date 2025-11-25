@@ -77,4 +77,5 @@ def update_my_password(user_id: int):
 @user_bp.route("/login/google", methods=["POST"])
 def google_login():
     data = request.get_json()
+    print(data)
     return user_controller.google_login(data)

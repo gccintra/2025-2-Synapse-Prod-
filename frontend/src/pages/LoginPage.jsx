@@ -42,7 +42,7 @@ function LoginPage() {
     const id_token = response.credential;
     try {
       const apiUrl = import.meta.env.VITE_API_BASE_URL;
-      const res = await fetch(`${apiUrl}/login/google`, {
+      const res = await fetch(`${apiUrl}users/login/google`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
