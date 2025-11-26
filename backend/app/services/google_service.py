@@ -13,9 +13,6 @@ from app.entities.user_providers import UserProviderEntity
 
 class GoogleAuthService:
 
-    # -----------------------------
-    # 1) VALIDAR TOKEN DO GOOGLE
-    # -----------------------------
     def verify_google_token(self, token: str) -> dict:
         try:
             client_id = os.getenv("GOOGLE_CLIENT_ID")
@@ -30,54 +27,44 @@ class GoogleAuthService:
                 "email": payload.get("email"),
                 "full_name": payload.get("name"),
                 "picture": payload.get("picture"),
-                "sub": payload.get("sub"),  # Google UID
+                "sub": payload.get("sub"),
             }
 
         except Exception as e:
             logging.warning(f"Token Google inválido: {e}")
             raise ValueError("Token inválido ou expirado.")
 
-
-    # --------------------------------------------
-    # 2) FLUXO PRINCIPAL DE LOGIN VIA GOOGLE
-    # --------------------------------------------
     def google_login(self, id_token_str: str) -> UserEntity:
-        # 1. Validar token no Google
         google_data = self.verify_google_token(id_token_str)
 
         email = google_data["email"]
         google_uid = google_data["sub"]
 
-        # 2. Verificar se já existe um provider Google para esse usuário
         provider = UserProviderEntity.query.filter_by(
             provider_name="google",
             provider_user_id=google_uid
         ).first()
 
         if provider:
-            return provider.user  # Login direto
+            return provider.user
 
-        # 3. Não existe provider ainda — verificar usuário pelo e-mail
         user = UserEntity.query.filter_by(email=email).first()
 
         if user:
-            # Usuário já existe mas talvez tenha cadastro normal (senha)
             if user.password_hash is not None:
                 raise EmailInUseError(
                     "Este e-mail já está em uso em uma conta sem Google Login."
                 )
         else:
-            # Criar novo usuário
             user = UserEntity(
                 full_name=google_data["full_name"],
                 email=email,
-                password_hash="",  # vazio porque login é pelo Google
+                password_hash="",
                 created_at=datetime.now(timezone.utc)
             )
             db.session.add(user)
             db.session.flush()
 
-        # 4. Registrar o provedor Google
         new_provider = UserProviderEntity(
             user_id=user.id,
             provider_name="google",
