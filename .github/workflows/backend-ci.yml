@@ -22,7 +22,17 @@ jobs:
         working-directory: ./backend
 
     steps:
+      # Este passo verifica se arquivos no diretório do backend foram alterados.
+      - name: Check for file changes
+        id: changed-files
+        uses: tj-actions/changed-files@v44
+        with:
+          files: |
+            backend/**
+            .github/workflows/backend-ci.yml
+
       - name: Checkout repository
+        if: steps.changed-files.outputs.any_changed == 'true'
         uses: actions/checkout@v4
 
       - name: Check for file changes
