@@ -33,8 +33,6 @@ jobs:
             frontend/**
             .github/workflows/frontend-ci.yml
 
-      # Os passos seguintes só rodam se houver mudanças nos arquivos do frontend.
-      # A condição 'if' garante que o job termine com sucesso rapidamente se não houver nada a fazer.
       - name: Set up Node.js
         if: steps.changed-files.outputs.any_changed == 'true'
         uses: actions/setup-node@v4
