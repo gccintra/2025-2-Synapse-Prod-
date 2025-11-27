@@ -139,19 +139,11 @@ def test_to_orm(valid_user_data):
             password_hash=user._password_hash,
             newsletter=user.newsletter,
         )
-<<<<<<< HEAD
-=======
-
-
->>>>>>> ab0f01a (:broom: cleanup: cleaning codes)
         assert orm_entity == MockUserEntity.return_value
 
 
 def test_repr_method(valid_user_data):
-<<<<<<< HEAD
     """Testa a representação em string do objeto User."""
-=======
->>>>>>> ab0f01a (:broom: cleanup: cleaning codes)
     user = User(**valid_user_data)
     expected_repr = f"<User(id={user.id}, email='{user.email}')>"
     assert repr(user) == expected_repr

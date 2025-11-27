@@ -1,4 +1,4 @@
-name: Backend CI (Build & Test)
+name: Backend CI
 
 on:
   pull_request:
@@ -14,7 +14,7 @@ on:
 
 jobs:
   build-and-test:
-    name: Backend Build, Test & Coverage
+    name: Backend Build & Test
     runs-on: ubuntu-latest
 
     defaults:
@@ -22,7 +22,9 @@ jobs:
         working-directory: ./backend
 
     steps:
-      # Este passo verifica se arquivos no diretório do backend foram alterados.
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
       - name: Check for file changes
         id: changed-files
         uses: tj-actions/changed-files@v44
@@ -31,10 +33,8 @@ jobs:
             backend/**
             .github/workflows/backend-ci.yml
 
-      - name: Checkout repository
-        if: steps.changed-files.outputs.any_changed == 'true'
-        uses: actions/checkout@v4
-
+      # Os passos seguintes só rodam se houver mudanças nos arquivos do backend.
+      # A condição 'if' garante que o job termine com sucesso rapidamente se não houver nada a fazer.
       - name: Set up Python 3.12
         if: steps.changed-files.outputs.any_changed == 'true'
         uses: actions/setup-python@v5
