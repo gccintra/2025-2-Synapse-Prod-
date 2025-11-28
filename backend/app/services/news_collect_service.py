@@ -31,7 +31,11 @@ class NewsCollectService():
         self.keyword_service = KeywordGenerationService()
         self.blacklist = ScrapingBlacklist('/tmp/scraping_blacklist.json')
         self.blacklist.load()
-        self.scrape_service = ScrapeService(self.blacklist)
+        
+        # Injetar a instância da blacklist no ScrapeService
+        # para garantir que ambos usem o mesmo objeto em memória.
+        self.scrape_service = ScrapeService()
+        self.scrape_service.set_blacklist(self.blacklist)
 
         self.gnews_api_key = os.getenv('GNEWS_API_KEY')
         self.api_endpoint = "https://gnews.io/api/v4/top-headlines"
@@ -231,7 +235,12 @@ class NewsCollectService():
                     continue
 
                 if self.news_repo.find_by_url(article_url):
-                    logging.debug(f"    Artigo {i} já existe: {article_url}")
+                    logging.debug(f"    Artigo {i} já existe (URL): {article_url}")
+                    continue
+
+                # Verificar se já existe uma notícia com o mesmo título
+                if self.news_repo.find_by_title(title):
+                    logging.debug(f"    Artigo {i} já existe (Título): '{title}'")
                     continue
 
                 source_name = article_meta.get('source', {}).get('name')

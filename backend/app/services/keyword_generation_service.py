@@ -98,37 +98,40 @@ class KeywordGenerationService:
         """
         keywords_per_topic = 5
 
-        prompt = f"""Para cada tópico da lista, gere {keywords_per_topic} palavras-chave que APARECEM EM MANCHETES REAIS de jornais e sites de notícias.
+        prompt = f"""Sua tarefa é gerar {keywords_per_topic} palavras-chave de alta relevância para cada tópico listado. Pense como um editor de notícias: seu objetivo é encontrar os termos mais quentes e específicos que estão dominando as manchetes AGORA.
 
 **Regras OBRIGATÓRIAS:**
-1. Use APENAS termos que jornalistas usam em manchetes (nomes de empresas, pessoas famosas, eventos populares).
-2. EVITE jargão técnico, acadêmico ou termos muito específicos (ex: "ESG reporting", "Supply chain resilience").
-3. PREFIRA nomes próprios: empresas (Apple, Google), pessoas (CEOs, políticos), lugares, eventos.
-4. As keywords devem estar no mesmo idioma do tópico.
-5. Para tópicos em português, o país é 'br'. Para inglês, o país é 'us'.
-6. CADA KEYWORD DEVE TER NO MÁXIMO 4 PALAVRAS.
-7. A query final (keywords separadas por OR) deve ter no máximo 200 caracteres.
-8. USE APENAS LETRAS, NÚMEROS E ESPAÇOS nas keywords.
-9. EVITE hífens, vírgulas, pontos ou outros caracteres especiais.
+1. **FOCO NO AGORA:** As keywords DEVEM refletir os eventos, empresas e pessoas mais comentados no noticiário de HOJE.
+2. **MÁXIMA ESPECIFICIDADE:** Gere termos fortemente associados ao tópico. Por exemplo, para "Tecnologia", em vez de "AI", prefira "lançamento GPT-5" ou "Nvidia Blackwell". Evite termos genéricos.
+3. **NOMES PRÓPRIOS SÃO PRIORIDADE:** Dê preferência a nomes de empresas (ex: OpenAI, Tesla), produtos (ex: iPhone 16), pessoas (ex: CEOs, líderes mundiais) e eventos (ex: Olimpíadas, Web Summit).
+4. **NÃO COPIE OS EXEMPLOS:** Os exemplos enviados nesse prompt são apenas para ilustrar o formato. Gere keywords originais e atuais para os tópicos solicitados.
+5. **IDIOMA E REGIÃO:** As keywords devem estar no mesmo idioma do tópico. Para tópicos em português, o país é 'br'. Para inglês, o país é 'us'.
+6. **FORMATO DA KEYWORD:** Cada keyword deve ter no **MÁXIMO 3 PALAVRAS**. Use apenas letras, números e espaços. EVITE hífens, vírgulas ou outros caracteres especiais.
 
 **Formato de Saída OBRIGATÓRIO:**
-Retorne APENAS um objeto JSON sem nenhum texto adicional, markdown ou formatação.
-A estrutura deve ser:
+Retorne APENAS um objeto JSON válido, sem nenhum texto, markdown ou formatação antes ou depois. A estrutura para cada tópico é:
 {{
   "nome_do_topico": {{
     "keywords": [
-      "keyword1", "keyword2", "keyword3", "keyword4", "keyword5"
+      "keyword específica 1", "keyword específica 2", "keyword específica 3", "keyword específica 4", "keyword específica 5"
     ],
     "language": "pt",
     "country": "br"
   }}
 }}
 
-**Exemplo de Resposta Completa:**
+**Exemplo de Resposta IDEAL (mostra a especificidade desejada):**
 {{
-  "Water": {{
+  "Technology": {{
     "keywords": [
-      "Sea", "Ocean", "Whale", "Fish"
+      "Nvidia Blackwell", "Apple Vision Pro", "GPT-5 release", "AI regulation", "Sam Altman"
+    ],
+    "language": "en",
+    "country": "us"
+  }},
+  "Games": {{
+    "keywords": [
+      "Playstation 6", "new Zelda game", "eSports championship", "GTA 7 leaks", "Steam Next Fest"
     ],
     "language": "en",
     "country": "us"
@@ -138,7 +141,7 @@ A estrutura deve ser:
 **Tópicos para gerar keywords:**
 {json.dumps(topic_names, indent=2, ensure_ascii=False)}
 
-**Seu JSON de resposta:**"""
+**Seu JSON de resposta (comece diretamente com '{{'):**"""
 
         return prompt
 

@@ -115,6 +115,16 @@ class NewsRepository:
             logging.error(f"Erro de banco ao buscar notícia por URL: {e}", exc_info=True)
             raise
 
+    def find_by_title(self, title: str) -> News | None:
+        """Busca uma notícia pelo título (case-insensitive)."""
+        try:
+            stmt = select(NewsEntity).where(func.lower(NewsEntity.title) == title.lower())
+            entity = self.session.execute(stmt).scalar_one_or_none()
+            return News.from_entity(entity) if entity else None
+        except SQLAlchemyError as e:
+            logging.error(f"Erro de banco ao buscar notícia por título: {e}", exc_info=True)
+            raise
+
     def count_all(self) -> int:
         """Conta o total de notícias no banco de dados."""
         try:

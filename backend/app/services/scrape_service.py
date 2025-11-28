@@ -81,8 +81,8 @@ class ScrapeService:
         'fb.watch'
     }
     
-    def __init__(self, blacklist: ScrapingBlacklist):
-        self.blacklist = blacklist
+    def __init__(self):
+        self.blacklist: Optional[ScrapingBlacklist] = None
         
         # Configuração do newspaper4k
         self.config = Config()
@@ -96,9 +96,16 @@ class ScrapeService:
         self.config.clean_article_html = False
         self.config.memoize_articles = False
         self.config.request_timeout = 15
+
+    def set_blacklist(self, blacklist: ScrapingBlacklist):
+        """Define a instância da blacklist a ser usada pelo serviço."""
+        self.blacklist = blacklist
+        logging.info("Instância da ScrapingBlacklist foi definida no ScrapeService.")
         
     def scrape_article_content(self, url: str) -> Optional[Dict[str, str]]:
         try:
+            if not self.blacklist:
+                raise Exception("ScrapingBlacklist não foi inicializada no ScrapeService.")
             # Verificar blacklist
             if self.blacklist.is_blocked(url):
                 blocked_info = self.blacklist.get_blocked_info(url)
@@ -185,23 +192,6 @@ class ScrapeService:
                 'publish_date': article.publish_date.isoformat() if article.publish_date else None
             }
             
-        except requests.exceptions.HTTPError as e:
-            status_code = e.response.status_code
-            # Bloquear APENAS erros de permissão explícita
-            if status_code in [401, 403]:
-                logging.warning(f"Acesso negado ({status_code}) para {url}. Adicionando à blacklist.")
-                self._add_to_blacklist(url, 'Access Denied', str(e), 'Bloqueio de permissão')
-            elif status_code == 404:
-                 logging.info(f"Página não encontrada: {url}. Ignorando sem blacklist (pode voltar).")
-            else:
-                logging.error(f"Erro HTTP {status_code} temporário para {url}")
-            return None
-
-        except requests.exceptions.Timeout:
-            # NUNCA adicionar à blacklist por timeout (pode ser instabilidade momentânea)
-            logging.warning(f"Timeout em {url}. Tentaremos novamente em outra execução.")
-            return None
-            
         except requests.exceptions.RequestException as e:
             error_msg = f"Request error: {str(e)}"
             logging.error(f"Erro de requisição para {url}: {error_msg}")
@@ -228,9 +218,32 @@ class ScrapeService:
             return None
         
         except ArticleException as e:
-             # Erros de parse do newspaper não devem bloquear o domínio, talvez apenas a URL específica
-             logging.error(f"Falha de parse em {url}: {e}")
-             return None
+            error_msg = str(e).lower()
+            logging.error(f"Falha de parse/download em {url}: {e}")
+
+            # Extrair o status code da mensagem de erro, se existir
+            status_match = re.search(r'status code (\d+)', error_msg)
+            if status_match:
+                status_code = int(status_match.group(1))
+                if status_code in [401, 403]:
+                    logging.warning(f"Acesso negado ({status_code}) detectado via ArticleException. Adicionando à blacklist.")
+                    self._add_to_blacklist(url, f'Access Denied ({status_code})', str(e), 'Bloqueio de permissão')
+                elif status_code == 404:
+                    logging.info(f"Página não encontrada (404) para {url}. Ignorando sem blacklist.")
+            # Adicionar verificação para mensagens de erro de proteção (ex: Cloudflare, PerimeterX)
+            elif any(keyword in error_msg for keyword in ['perimeterx', 'cloudflare', 'protected by', 'access to this page has been denied']):
+                logging.warning(f"Proteção anti-scraping detectada em {url}. Adicionando à blacklist.")
+                self._add_to_blacklist(
+                    url=url,
+                    error_type='Anti-Scraping Protection',
+                    error_message=str(e),
+                    reason='Site protegido por serviço anti-bot'
+                )
+            elif 'timeout' in error_msg:
+                logging.warning(f"Timeout detectado em {url} via ArticleException. Ignorando sem blacklist.")
+            
+            # Retorna None para qualquer ArticleException
+            return None
             
         except Exception as e:
             error_msg = str(e)
