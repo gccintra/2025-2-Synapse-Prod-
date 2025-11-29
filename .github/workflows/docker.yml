@@ -1,6 +1,12 @@
 name: CD - Build and Publish Docker Images
 
 on:
+  pull_request:
+    paths:
+      - "backend/**"
+      - "frontend/**"
+      - "cron/**"
+      - ".github/workflows/docker.yml"
   push:
     branches:
       - dev
@@ -36,7 +42,7 @@ jobs:
       - name: Check for changes in '${{ matrix.image }}' directory
         id: check_changes
         run: |
-          if git diff-tree --no-commit-id --name-only -r HEAD | grep -q "^${{ matrix.image }}/" || git diff-tree --no-commit-id --name-only -r HEAD | grep -q "^\.github/workflows/docker\.yml"; then
+          if git diff --name-only HEAD~1 HEAD | grep -q "^${{ matrix.image }}/" || git diff --name-only HEAD~1 HEAD | grep -q "^\.github/workflows/docker\.yml$"; then
             echo "changed=true" >> $GITHUB_OUTPUT
           else
             echo "No changes detected in ${{ matrix.image }} directory. Skipping build."
@@ -63,7 +69,8 @@ jobs:
         uses: docker/build-push-action@v6
         with:
           context: ./${{ matrix.image }}
-          push: true
+          # Só faz push se o evento for um push em 'dev' ou 'main', não em um PR
+          push: ${{ github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/dev') }}
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
           # Habilita o cache para acelerar builds futuros
