@@ -28,12 +28,15 @@ jobs:
         # Define cada imagem como um item na matriz de estratégia
         # 'name' é o nome da imagem e 'context' é o diretório do Dockerfile
         include:
-          - name: backend
+          - name: backend # Imagem do backend
             context: ./backend
-          - name: frontend
+            dockerfile: ./backend/Dockerfile
+          - name: frontend # Imagem do frontend
             context: ./frontend
-          - name: cron
-            context: ./backend/dockerfile.cron
+            dockerfile: ./frontend/Dockerfile
+          - name: cron # Imagem do cron
+            context: ./backend # O contexto é o backend (para acessar requirements.txt, etc)
+            dockerfile: ./backend/dockerfile.cron # O arquivo específico do Dockerfile
 
     steps:
       - name: Checkout repository
@@ -77,6 +80,7 @@ jobs:
         uses: docker/build-push-action@v6
         with:
           context: ${{ matrix.context }}
+          file: ${{ matrix.dockerfile }}
           # Só faz push se o evento for um push em 'dev' ou 'main', não em um PR
           push: ${{ github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/dev') }}
           tags: ${{ steps.meta.outputs.tags }}
