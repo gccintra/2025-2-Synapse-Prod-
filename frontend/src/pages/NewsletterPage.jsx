@@ -2,6 +2,8 @@ import React, { useState, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import ConfirmationModal from "../components/ConfirmationModal";
 
+import { usersAPI } from "../services/api";
+
 const FAQItem = ({ question, answer, isLast }) => {
   const [isOpen, setIsOpen] = useState(false);
   const itemRef = useRef(null);
@@ -83,6 +85,8 @@ const FAQItem = ({ question, answer, isLast }) => {
 // --- página principal ---
 const NewsletterPage = () => {
   const [isSubscribed, setIsSubscribed] = useState(null);
+  const [loading, setLoading] = useState(true);
+
   const [modalState, setModalState] = useState({
     isOpen: false,
     title: "",
@@ -90,23 +94,51 @@ const NewsletterPage = () => {
     onConfirm: () => {},
   });
 
+  useEffect(() => {
+    const fetchNewsletter = async () => {
+      try {
+        const json = await usersAPI.getUserProfile();
+
+        if (json.success && json.data.newsletter !== undefined) {
+          setIsSubscribed(json.data.newsletter);
+        }
+      } catch (err) {
+        console.error("Erro ao carregar newsletter:", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchNewsletter();
+  }, []);
+
+  const updateNewsletter = async (value) => {
+    try {
+      await usersAPI.changeNewsletter(value);
+    } catch (err) {
+      console.error("Erro ao salvar newsletter:", err);
+    }
+  };
+
   const handleSubscriptionChange = (subscribe) => {
+    if (loading) return;
+
     setModalState({
       isOpen: true,
       title: subscribe ? "Confirm Subscription" : "Confirm Unsubscription",
       message: subscribe
         ? "Do you want to subscribe to receive our Newsletter?"
         : "Do you really want to unsubscribe from our Newsletter?",
-      onConfirm: () => {
+      onConfirm: async () => {
         setIsSubscribed(subscribe);
-        setModalState({ ...modalState, isOpen: false });
-        // Aqui você pode adicionar a chamada à API para salvar a preferência
+        await updateNewsletter(subscribe);
+        setModalState((prev) => ({ ...prev, isOpen: false }));
       },
     });
   };
 
   const closeModal = () => {
-    setModalState({ ...modalState, isOpen: false });
+    setModalState((prev) => ({ ...prev, isOpen: false }));
   };
 
   const containerVariants = {
@@ -134,20 +166,24 @@ const NewsletterPage = () => {
           <hr className="border-t-2 border-black mb-8" />
 
           <div className="border border-black rounded-md p-6 bg-gray-50 shadow-lg">
-            <p className="text-[15px] font-medium font-montserrat mb-6">
+            {loading ? (
+              <p className="text-sm font-montserrat">Loading...</p>
+            ) : (
+              <>
+                <p className="text-[15px] font-medium font-montserrat mb-6">
               Do you want to receive a summary of all the news everyday by
               email?
-            </p>
+                </p>
 
-            <div className="flex gap-6">
+                <div className="flex gap-6">
               {/* Checkbox YES */}
-              <label className="flex items-center cursor-pointer group">
-                <div
-                  className={`w-5 h-5 border border-black rounded mr-2 flex items-center justify-center transition-colors ${
-                    isSubscribed === true ? "bg-black" : "bg-transparent"
-                  }`}
-                >
-                  {isSubscribed === true && (
+                  <label className="flex items-center cursor-pointer group">
+                    <div
+                      className={`w-5 h-5 border border-black rounded mr-2 flex items-center justify-center transition-colors ${
+                        isSubscribed === true ? "bg-black" : "bg-transparent"
+                      }`}
+                    >
+                      {isSubscribed === true && (
                     <svg
                       className="w-3 h-3 text-white"
                       fill="none"
@@ -160,27 +196,27 @@ const NewsletterPage = () => {
                         strokeWidth="3"
                         d="M5 13l4 4L19 7"
                       ></path>
-                    </svg>
-                  )}
-                </div>
-                <span className="text-sm font-montserrat">yes</span>
-                <input
-                  type="radio"
-                  name="newsletter"
-                  className="hidden"
-                  checked={isSubscribed === true}
-                  onChange={() => handleSubscriptionChange(true)}
-                />
-              </label>
+                        </svg>
+                      )}
+                    </div>
+                    <span className="text-sm font-montserrat">yes</span>
+                    <input
+                      type="radio"
+                      name="newsletter"
+                      className="hidden"
+                      checked={isSubscribed === true}
+                      onChange={() => handleSubscriptionChange(true)}
+                    />
+                  </label>
 
               {/* Checkbox NO */}
-              <label className="flex items-center cursor-pointer group">
-                <div
-                  className={`w-5 h-5 border border-black rounded mr-2 flex items-center justify-center transition-colors ${
-                    isSubscribed === false ? "bg-black" : "bg-transparent"
-                  }`}
-                >
-                  {isSubscribed === false && (
+                  <label className="flex items-center cursor-pointer group">
+                    <div
+                      className={`w-5 h-5 border border-black rounded mr-2 flex items-center justify-center transition-colors ${
+                        isSubscribed === false ? "bg-black" : "bg-transparent"
+                      }`}
+                    >
+                      {isSubscribed === false && (
                     <svg
                       className="w-3 h-3 text-white"
                       fill="none"
@@ -193,19 +229,21 @@ const NewsletterPage = () => {
                         strokeWidth="3"
                         d="M5 13l4 4L19 7"
                       ></path>
-                    </svg>
-                  )}
+                        </svg>
+                      )}
+                    </div>
+                    <span className="text-sm font-montserrat">no</span>
+                    <input
+                      type="radio"
+                      name="newsletter"
+                      className="hidden"
+                      checked={isSubscribed === false}
+                      onChange={() => handleSubscriptionChange(false)}
+                    />
+                  </label>
                 </div>
-                <span className="text-sm font-montserrat">no</span>
-                <input
-                  type="radio"
-                  name="newsletter"
-                  className="hidden"
-                  checked={isSubscribed === false}
-                  onChange={() => handleSubscriptionChange(false)}
-                />
-              </label>
-            </div>
+              </>
+            )}
           </div>
         </motion.div>
 
@@ -242,12 +280,10 @@ const NewsletterPage = () => {
 
       <ConfirmationModal
         isOpen={modalState.isOpen}
-        onClose={closeModal}
-        onConfirm={modalState.onConfirm}
         title={modalState.title}
         message={modalState.message}
-        confirmText="Yes"
-        cancelText="No"
+        onConfirm={modalState.onConfirm}
+        onCancel={closeModal}
       />
     </>
   );

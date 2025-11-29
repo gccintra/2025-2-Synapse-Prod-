@@ -108,3 +108,12 @@ class UserService:
         except Exception as e:
             logging.error(f"Erro inesperado ao desfavoritar notícia (user_id={user_id}, news_id={news_id}): {e}", exc_info=True)
             raise Exception("Ocorreu um erro interno ao desfavoritar a notícia.")
+        
+    def update_newsletter(self, user_id: int, newsletter):
+        user = self.repo.find_by_id(user_id)
+        if not user:
+            raise UserNotFoundError("Usuário não encontrado.")
+        
+        user.newsletter = newsletter
+        
+        return self.repo.update(user)

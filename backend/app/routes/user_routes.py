@@ -73,3 +73,10 @@ def update_profile(user_id: int):
 def update_my_password(user_id: int):
     data = request.get_json()
     return user_controller.update_password(user_id, data)
+
+@user_bp.route("/profile/newsletter", methods=["PUT"])
+@jwt_required()
+@get_user_id_from_token
+def update_newsletter(user_id: int):
+    data = request.get_json()
+    return user_controller.update_newsletter(user_id, data)
