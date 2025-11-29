@@ -33,7 +33,7 @@ jobs:
           - name: frontend
             context: ./frontend
           - name: cron
-            context: ./backend/cron
+            context: ./backend/dockerfile.cron
 
     steps:
       - name: Checkout repository
