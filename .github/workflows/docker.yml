@@ -1,14 +1,18 @@
 name: CD - Build and Publish Docker Images
 
 on:
+  pull_request:
+    paths:
+      - "backend/**" # Inclui o cron que está dentro do backend
+      - "frontend/**"
+      - ".github/workflows/docker.yml"
   push:
     branches:
       - dev
       - main
     paths:
-      - "backend/**"
+      - "backend/**" # Inclui o cron que está dentro do backend
       - "frontend/**"
-      - "cron/**"
       - ".github/workflows/docker.yml"
 
 permissions:
@@ -22,8 +26,17 @@ jobs:
     strategy:
       matrix:
         # Define cada imagem como um item na matriz de estratégia
-        # Adicione novas imagens aqui no futuro
-        image: [backend, frontend, cron]
+        # 'name' é o nome da imagem e 'context' é o diretório do Dockerfile
+        include:
+          - name: backend # Imagem do backend
+            context: ./backend
+            dockerfile: ./backend/Dockerfile
+          - name: frontend # Imagem do frontend
+            context: ./frontend
+            dockerfile: ./frontend/Dockerfile
+          - name: cron # Imagem do cron
+            context: ./backend # O contexto é o backend (para acessar requirements.txt, etc)
+            dockerfile: ./backend/dockerfile.cron # O arquivo específico do Dockerfile
 
     steps:
       - name: Checkout repository
@@ -33,15 +46,19 @@ jobs:
           fetch-depth: 2
 
       # Passo para verificar se houve alterações no diretório da imagem atual da matriz
-      - name: Check for changes in '${{ matrix.image }}' directory
+      - name: Check for changes in '${{ matrix.name }}' directory
         id: check_changes
         run: |
-          if git diff-tree --no-commit-id --name-only -r HEAD | grep -q "^${{ matrix.image }}/" || git diff-tree --no-commit-id --name-only -r HEAD | grep -q "^\.github/workflows/docker\.yml"; then
+          if git diff --name-only HEAD~1 HEAD | grep -q "^${{ matrix.context }}/" || git diff --name-only HEAD~1 HEAD | grep -q "^\.github/workflows/docker\.yml$"; then
             echo "changed=true" >> $GITHUB_OUTPUT
           else
-            echo "No changes detected in ${{ matrix.image }} directory. Skipping build."
+            echo "No changes detected in ${{ matrix.context }} directory. Skipping build."
             echo "changed=false" >> $GITHUB_OUTPUT
           fi
+
+      - name: Set up Docker Buildx
+        if: steps.check_changes.outputs.changed == 'true'
+        uses: docker/setup-buildx-action@v3
 
       - name: Log in to GHCR
         if: steps.check_changes.outputs.changed == 'true'
@@ -56,14 +73,16 @@ jobs:
         id: meta
         uses: docker/metadata-action@v5
         with:
-          images: ghcr.io/${{ github.repository }}/${{ matrix.image }}
+          images: ghcr.io/${{ github.repository }}/${{ matrix.name }}
 
-      - name: Build and push Docker image for ${{ matrix.image }}
+      - name: Build and push Docker image for ${{ matrix.name }}
         if: steps.check_changes.outputs.changed == 'true'
         uses: docker/build-push-action@v6
         with:
-          context: ./${{ matrix.image }}
-          push: true
+          context: ${{ matrix.context }}
+          file: ${{ matrix.dockerfile }}
+          # Só faz push se o evento for um push em 'dev' ou 'main', não em um PR
+          push: ${{ github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/dev') }}
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
           # Habilita o cache para acelerar builds futuros
