@@ -307,7 +307,11 @@ class UserController:
             }), 400
         except Exception as e:
             logging.error(f"Erro ao atualizar newsletter (ID: {user_id}): {e}", exc_info=True)
-              "error": "Erro inesperado ao atualizar newsletter.",
+            return jsonify({
+                "success": False,
+                "message": "Erro interno do servidor.",
+                "data": None,
+                "error": "Erro inesperado ao atualizar newsletter.",
             }), 500
             
     def google_login(self, data):
