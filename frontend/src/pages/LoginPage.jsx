@@ -2,6 +2,11 @@ import React, { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
 
+import FormField from "../components/FormField";
+import emailIcon from "../icons/envelope-regular-full.svg";
+import lockIcon from "../icons/lock-regular-full.svg";
+import H2Login from "../components/H2Login";
+
 function LoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -50,18 +55,28 @@ function LoginPage() {
       });
       const data = await res.json();
       if (res.ok) {
-        toast.success(`Login com Google bem-sucedido! Bem-vindo, ${data.data.full_name}.`);
+        toast.success(
+          `Login com Google bem-sucedido! Bem-vindo, ${data.data.full_name}.`
+        );
         navigate("/");
       } else {
         toast.error(data.error || "Erro ao autenticar com Google.");
       }
     } catch (err) {
-      toast.error("Não foi possível conectar ao servidor. Tente novamente mais tarde.");
+      toast.error(
+        "Não foi possível conectar ao servidor. Tente novamente mais tarde."
+      );
     }
   };
 
   const GoogleIcon = () => (
-    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" width="20px" height="20px" className="mr-2">
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      viewBox="0 0 48 48"
+      width="20px"
+      height="20px"
+      className="mr-2"
+    >
       <path
         fill="#FFC107"
         d="M43.611,20.083H42V20H24v8h11.303c-1.649,4.657-6.08,8-11.303,8c-6.627,0-12-5.373-12-12c0-6.627,5.373-12,12-12c3.059,0,5.842,1.158,7.961,3.039l5.657-5.657C34.046,6.053,29.268,4,24,4C12.955,4,4,12.955,4,24c0,11.045,8.955,20,20,20c11.045,0,19.003-7.97,19.611-18.083z"
@@ -83,8 +98,6 @@ function LoginPage() {
 
   const handleSubmit = async (event) => {
     event.preventDefault();
-
-    setErrors({});
 
     if (!validateForm()) {
       toast.error("Please correct the errors in the form.");
@@ -123,84 +136,67 @@ function LoginPage() {
   return (
     <div className="min-h-screen lg:flex bg-[#f5f5f5]">
       {/* Lado esquerdo (formulário) */}
-      <div
-        className="
-      flex w-full lg:w-1/2 flex-col
-      items-center justify-center lg:justify-start
-      bg-[#f5f5f5] p-8"
-      >
-        {/* Container para o "Synapse" - alinhado à esquerda */}
-        <div className="mt-12 w-full max-w-lg text-left">
-          <h1 className="mb-10 text-64xl font-bold text-black font-rajdhani">Synapse</h1>
-        </div>
-        <div className="w-full max-w-lg">
-          <form onSubmit={handleSubmit} className="space-y-4">
-            {/* Campo Email */}
+      <div className="flex w-full lg:w-1/2 flex-col items-center justify-center p-6 min-h-screen lg:min-h-0">
+        <div className="w-5/6 md:w-full max-w-md">
+          <div className="text-left">
+            <h1 className="mb-10 text-[56px] md:text-64xl font-bold text-black font-rajdhani">
+              Synapse
+            </h1>
+          </div>
 
-            <label className="block text-sm font-medium text-gray-900 font-montserrat" htmlFor="email">
-              Email Address
-              <div className="relative mt-1">
-                <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
-                  <img src="./src/icons/envelope-regular-full.svg" alt="email icon" className="h-5 w-5" />
-                </div>
-                <input
-                  id="email"
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  placeholder="Enter your e-mail..."
-                  className={`w-full border rounded py-2 px-9 focus:outline-none focus:ring-1 font-montserrat ${
-                    errors.email ? "border-red-500 focus:ring-red-500" : "border-gray-800 focus:ring-black"
-                  }`}
-                  required
-                />
-              </div>
-              {errors.email && <p className="mt-1 text-sm text-red-600">{errors.email}</p>}
-            </label>
-            {/* Campo de Senha */}
-            <label className="mt-6 block text-sm font-medium text-gray-900 font-montserrat" htmlFor="password">
-              Password
-              <div className="relative mt-1">
-                <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
-                  <img src="./src/icons/lock-regular-full.svg" alt="lock icon" className="h-5 w-5" />
-                </div>
-                <input
-                  id="password"
-                  type="password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  placeholder="Your password..."
-                  className={`w-full border rounded py-2 px-9 focus:outline-none focus:ring-1 font-montserrat ${
-                    errors.password ? "border-red-500 focus:ring-red-500" : "border-gray-800 focus:ring-black"
-                  }`}
-                  required
-                />
-              </div>
-              {errors.password && <p className="mt-1 text-sm text-red-600">{errors.password}</p>}
-            </label>
+          <form onSubmit={handleSubmit} className="-mt-2 md:-mt-4 space-y-4">
+            <FormField
+              id="email"
+              label="Email Address"
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="Enter your e-mail..."
+              error={errors.email}
+              iconSrc={emailIcon}
+              iconAlt="email icon"
+              required
+            />
 
-            {/* Links Adicionais */}
+            <FormField
+              id="password"
+              label="Password"
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              placeholder="Your password..."
+              error={errors.password}
+              iconSrc={lockIcon}
+              iconAlt="lock icon"
+              required
+            />
+
             <div className="flex justify-between items-center text-sm font-montserrat">
               <div className="flex items-center">
                 <input
                   id="remember-me"
                   type="checkbox"
-                  className="h-4 w-4 text-black border-gray-300 rounded py-2
-                 px-7"
+                  className="mt-3 h-4 w-4 rounded border-gray-300 text-black focus:ring-black"
                 />
-                <label htmlFor="remember-me" className="ml-2 block text-gray-900 pt-0.2">
+                <label
+                  htmlFor="remember-me"
+                  className="ml-2 block text-gray-900 pt-0.2"
+                >
                   Remember me
                 </label>
               </div>
               <a
                 href="#"
-                className="font-medium text-[#111] no-underline hover:underline hover:bg-[#1c1c1c] hover:text-[#fff] pt-0.2 px-0.5"
+                className="mt-3 rounded px-0.5 pt-0.5 text-sm font-medium text-[#111] no-underline hover:bg-[#1c1c1c] hover:text-[#fff] hover:underline"
               >
                 Forgot my password
               </a>
             </div>
 
-            <button type="submit" className="mt-8 w-full rounded-md bg-black py-3 px-5 text-white hover:bg-gray-900">
+            <button
+              type="submit"
+              className="mt-8 w-full rounded-md bg-black py-3 px-5 text-white hover:bg-gray-900"
+            >
               Sign In
             </button>
 
@@ -214,11 +210,11 @@ function LoginPage() {
             </button>
           </form>
 
-          <p className="mt-4 text-center text-sm text-black border-t border-[#111] pt-3">
+          <p className="mt-4 border-t border-[#111] pt-3 text-center text-xs text-black font-montserrat">
             Don't have an account?{" "}
             <Link
               to="/registrar"
-              className="font-medium text-[#111] no-underline hover:underline hover:bg-[#1c1c1c] hover:text-[#fff] pt-0.2 px-0.5"
+              className="rounded px-0.5 pt-0.5 font-medium text-[#111] no-underline hover:bg-[#1c1c1c] hover:text-[#fff] hover:underline"
             >
               Sign up here
             </Link>
@@ -227,15 +223,20 @@ function LoginPage() {
       </div>
 
       {/* Lado direito (design system) */}
-      <div className="hidden lg:flex w-full lg:w-1/2 flex-col items-left justify-center bg-black p-4 sm:p-8 text-white">
-        <h2 className="ml-8 text-160xl font-light leading-none font-rajdhani">Know</h2>
-        <h2 className="ml-8 text-160xl font-light leading-none font-rajdhani">Your</h2>
-        <h2 className="ml-8 text-160xl font-light leading-none font-rajdhani">World,</h2>
-        <h2 className="ml-8 text-160xl font-bold leading-none font-rajdhani">
-          <Link to="/feed" className="hover:text-gray-300 transition-colors duration-200">
-            <button>Faster.</button>
-          </Link>
-        </h2>
+      <div className="hidden lg:flex w-full lg:w-1/2 flex-col items-start justify-center bg-black p-8 text-white">
+        <div className="ml-12">
+          <H2Login>Know</H2Login>
+          <H2Login>Your</H2Login>
+          <H2Login>World,</H2Login>
+          <H2Login className="font-bold">
+            <Link
+              to="/feed"
+              className="transition-colors duration-200 hover:text-gray-300"
+            >
+              Faster.
+            </Link>
+          </H2Login>
+        </div>
       </div>
     </div>
   );

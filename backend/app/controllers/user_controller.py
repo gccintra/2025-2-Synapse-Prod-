@@ -128,6 +128,7 @@ class UserController:
                     "full_name": user.full_name,
                     "email": user.email,
                     "birthdate": user.birthdate.isoformat() if user.birthdate else None,
+                    "newsletter": user.newsletter
                 }
                 return jsonify(
                     {
@@ -275,6 +276,44 @@ class UserController:
                 }
             ), 500
         
+    def update_newsletter(self, user_id: int, data):
+        try:
+            if not data:
+                raise ValueError("Erro ao receber os dados da requisição.")
+
+            newletter = data.get("value")
+
+            self.service.update_newsletter(user_id,newletter)
+
+            return jsonify({
+                "success": True,
+                "message": "Preferência de newsletter atualizada com sucesso.",
+                "data": {"newsletter": ""},
+                "error": None,
+            }), 200
+        except UserNotFoundError as e:
+            return jsonify({
+                "success": False,
+                "message": "Usuário não encontrado.",
+                "data": None,
+                "error": str(e),
+            }), 404
+        except ValueError as e:
+            return jsonify({
+                "success": False,
+                "message": "Dados inválidos.",
+                "data": None,
+                "error": str(e),
+            }), 400
+        except Exception as e:
+            logging.error(f"Erro ao atualizar newsletter (ID: {user_id}): {e}", exc_info=True)
+            return jsonify({
+                "success": False,
+                "message": "Erro interno do servidor.",
+                "data": None,
+                "error": "Erro inesperado ao atualizar newsletter.",
+            }), 500
+            
     def google_login(self, data):
         try:
             id_token = data.get("id_token")

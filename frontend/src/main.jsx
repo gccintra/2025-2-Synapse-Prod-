@@ -16,13 +16,16 @@ import EditAccount from "./pages/EditAccount.jsx";
 import ChangePassword from "./pages/ChangePassword.jsx";
 import AccountPage from "./pages/AccountPage";
 import PublicRoute from "./components/PublicRoute.jsx";
+import AddSource from "./components/AddSource.jsx";
 import PrivateRoute from "./components/PrivateRoute.jsx";
 import FeedPage from "./pages/FeedPage.jsx";
 import NewsPage from "./pages/NewsPage.jsx";
 import SavedNewsPage from "./pages/SavedNewsPage.jsx";
 import NewsHistoryPage from "./pages/NewsHistoryPage";
+import NewsletterPage from "./pages/NewsletterPage.jsx";
 
 import RootLayout from "./layouts/RootLayout";
+import AccountLayout from "./layouts/AccountLayout.jsx";
 
 const router = createBrowserRouter([
   {
@@ -63,9 +66,16 @@ const router = createBrowserRouter([
         // Rotas privadas (apenas para usuários logados)
         element: <PrivateRoute />,
         children: [
-          { path: "/account", element: <AccountPage /> },
+          {
+            element: <AccountLayout />,
+            children: [
+              { path: "/account", element: <AccountPage /> },
+              { path: "/newsletter", element: <NewsletterPage /> },
+            ],
+          },
           { path: "/edit-account", element: <EditAccount /> },
           { path: "/change-password", element: <ChangePassword /> },
+          { path: "/add-source", element: <AddSource /> },
           { path: "/saved-news", element: <SavedNewsPage /> },
         ],
       },

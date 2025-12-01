@@ -119,6 +119,12 @@ export const usersAPI = {
       body: JSON.stringify(passwordData),
     }),
 
+  changeNewsletter: (value) =>
+    apiRequest("/users/profile/newsletter", {
+      method: "PUT",
+      body: JSON.stringify({ value }),
+    }),
+
   // Fazer logout
   logout: () => apiRequest("/users/logout", { method: "POST" }),
 };
