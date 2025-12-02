@@ -196,7 +196,14 @@ function RegisterPage() {
           <H2Login>Know</H2Login>
           <H2Login>Your</H2Login>
           <H2Login>World,</H2Login>
-          <H2Login className="font-bold">Faster.</H2Login>
+          <H2Login className="font-bold">
+            <Link
+              to="/feed"
+              className="transition-colors duration-200 hover:text-gray-300"
+            >
+              Faster.
+            </Link>
+          </H2Login>
         </div>
       </div>
     </div>

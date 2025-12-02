@@ -176,18 +176,18 @@ function LoginPage() {
                 <input
                   id="remember-me"
                   type="checkbox"
-                  className="mt-3 h-4 w-4 rounded border-gray-300 text-black focus:ring-black"
+                  className="h-4 w-4 rounded border-gray-300 text-black focus:ring-black"
                 />
                 <label
                   htmlFor="remember-me"
-                  className="ml-2 block text-gray-900 pt-0.2"
+                  className="ml-2 block text-gray-900"
                 >
                   Remember me
                 </label>
               </div>
               <a
                 href="#"
-                className="mt-3 rounded px-0.5 pt-0.5 text-sm font-medium text-[#111] no-underline hover:bg-[#1c1c1c] hover:text-[#fff] hover:underline"
+                className="rounded px-0.5 pt-0.5 text-sm font-medium text-[#111] no-underline hover:bg-[#1c1c1c] hover:text-[#fff] hover:underline"
               >
                 Forgot my password
               </a>
@@ -206,7 +206,7 @@ function LoginPage() {
               className="w-full rounded-md py-3 px-5 mt-4 text-gray-700 font-semibold border border-gray-300 bg-white hover:bg-gray-50 shadow-sm transition duration-200 flex items-center justify-center"
             >
               <GoogleIcon />
-              <span className="ml-2">Sign in with Google</span>
+              <span className="font-medium ml-2">Sign In with Google</span>
             </button>
           </form>
 

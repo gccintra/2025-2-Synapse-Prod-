@@ -171,12 +171,12 @@ const NewsletterPage = () => {
             ) : (
               <>
                 <p className="text-[15px] font-medium font-montserrat mb-6">
-              Do you want to receive a summary of all the news everyday by
-              email?
+                  Do you want to receive a summary of all the news everyday by
+                  email?
                 </p>
 
                 <div className="flex gap-6">
-              {/* Checkbox YES */}
+                  {/* Checkbox YES */}
                   <label className="flex items-center cursor-pointer group">
                     <div
                       className={`w-5 h-5 border border-black rounded mr-2 flex items-center justify-center transition-colors ${
@@ -184,18 +184,18 @@ const NewsletterPage = () => {
                       }`}
                     >
                       {isSubscribed === true && (
-                    <svg
-                      className="w-3 h-3 text-white"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth="3"
-                        d="M5 13l4 4L19 7"
-                      ></path>
+                        <svg
+                          className="w-3 h-3 text-white"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth="3"
+                            d="M5 13l4 4L19 7"
+                          ></path>
                         </svg>
                       )}
                     </div>
@@ -209,7 +209,7 @@ const NewsletterPage = () => {
                     />
                   </label>
 
-              {/* Checkbox NO */}
+                  {/* Checkbox NO */}
                   <label className="flex items-center cursor-pointer group">
                     <div
                       className={`w-5 h-5 border border-black rounded mr-2 flex items-center justify-center transition-colors ${
@@ -217,18 +217,18 @@ const NewsletterPage = () => {
                       }`}
                     >
                       {isSubscribed === false && (
-                    <svg
-                      className="w-3 h-3 text-white"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth="3"
-                        d="M5 13l4 4L19 7"
-                      ></path>
+                        <svg
+                          className="w-3 h-3 text-white"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth="3"
+                            d="M5 13l4 4L19 7"
+                          ></path>
                         </svg>
                       )}
                     </div>
@@ -283,7 +283,7 @@ const NewsletterPage = () => {
         title={modalState.title}
         message={modalState.message}
         onConfirm={modalState.onConfirm}
-        onCancel={closeModal}
+        onClose={closeModal}
       />
     </>
   );
