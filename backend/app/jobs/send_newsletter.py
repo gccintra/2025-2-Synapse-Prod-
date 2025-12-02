@@ -12,222 +12,13 @@ logging.basicConfig(
 project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
 sys.path.insert(0, project_root)
 
-from app import create_app 
+from app import create_app
 from app.repositories.user_repository import UserRepository
-from app.services.mail_service import MailService
-from app.services.ai_service import AIService
-from app.services.news_service import NewsService
-
-def build_newsletter_email(user_name, intro_text, news_items):
-    header = f"""
-    <div style="margin-bottom:40px">
-      <span
-        style="
-          display: block;
-          font-weight: 700;
-          font-size: 60px;
-          font-family: 'Rajdhani', sans-serif;
-          line-height: 0.8;
-          text-align: center;
-          margin-bottom: 5px;
-        "
-        >Synapse</span
-      >
-      <span
-        style="
-          display: block;
-          font-size: 22px;
-          font-family: 'Montserrat', sans-serif;
-          font-weight: 400;
-          margin-top: -3px;
-          margin-left: 242px;
-          color: #000000;
-        "
-        >Newsletter</span
-      >
-    </div>
-    <div
-      style="
-        margin: auto;
-        width: 78%;
-        font-family: 'Montserrat', sans-serif;
-        border: 1.5px solid #222;
-        border-radius: 4px;
-        background: #ececec;
-        padding: 16px 22px;
-        margin-bottom: 36px;
-      "
-    >
-      <p style="margin: 2 0 0; font-size: 14px; font-weight: 700">
-        Olá {user_name},
-      </p>
-      <p style="margin: 2 0 0; font-size: 14px">
-        Bem-vindo à Synapse newsletter.
-      </p>
-      <p style="margin: 2; font-size: 14px">
-        {intro_text}
-      </p>
-    </div>
-    """
-
-    sections = []
-    for item in news_items:
-        block = f"""
-        <section style="margin-bottom: 38px">
-          <div style="margin-bottom: 8px">
-            <span
-              style="
-                font-size: 12px;
-                font-family: 'Montserrat', sans-serif;
-                color: #222;
-                text-transform: uppercase;
-                font-weight: 500;
-                border-bottom: 1px solid #999;
-                padding-bottom: 2px;
-                background: #ececec;
-              "
-              >{item['category']}</span
-            >
-          </div>
-          <h2
-            style="
-              margin: 2 0 8px 0;
-              font-family: 'Montserrat', sans-serif;
-              font-size: 18px;
-              font-weight: 600;
-            "
-          >
-            {item['title']}
-          </h2>
-          <img
-            src="{item['img_url']}"
-            alt="{item['title']}"
-            style="
-              width: 100%;
-              max-width: 445px;
-              border-radius: 6px;
-              margin-bottom: 15px;
-              display: block;
-            "
-          />
-          <p
-            style="
-              color: #444;
-              margin: 0 0 10px 0;
-              font-family: 'Montserrat', sans-serif;
-              font-size: 14px;
-            "
-          >
-            {item['summary']}
-          </p>
-          <div
-            style="
-              color: #888;
-              margin-top: 8px;
-              border-top: 1px solid #eee;
-              padding-top: 7px;
-              font-family: 'Montserrat', sans-serif;
-              font-size: 10px;
-            "
-          >
-            {item['source']} | {item['date']}
-          </div>
-        </section>
-        """
-        sections.append(block)
-
-    html = f"""<!DOCTYPE html>
-    <html lang="pt" style="background-color: #fafafa">
-      <head>
-        <meta charset="UTF-8" />
-        <title>Synapse Newsletter</title>
-        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-        <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-        <link
-          href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;500;700&display=swap"
-          rel="stylesheet"
-        />
-        <link
-          href="https://fonts.googleapis.com/css2?family=Montserrat:wght@200;400;500;600;700&display=swap"
-          rel="stylesheet"
-        />
-      </head>
-      <body
-        style="margin: 0; padding: 0; background-color: #fafafa; color: #181818"
-      >
-        <div
-          style="
-            max-width: 518px;
-            margin: 40px auto;
-            background: #fff;
-            box-shadow: 0 2px 8px rgba(60, 60, 67, 0.07);
-            border-radius: 10px;
-            padding: 40px 20px;
-          "
-        >
-          {header}
-          <div>
-            <div style="max-width: 445px; margin: 0 auto">
-              {"".join(sections)}
-            </div>
-          </div>
-        </div>
-      </body>
-    </html>
-    """
-
-    return html
-
-
-def gerar_texto_intro(ai_service: AIService, user, news_data) -> str:
-    """
-    Gera um texto introdutório usando a IA (Gemini).
-    """
-
-    if isinstance(news_data, str):
-        try:
-            news_data = json.loads(news_data)
-        except json.JSONDecodeError:
-            logging.warning("news_data era string simples, convertendo para lista vazia.")
-            news_data = []
-    elif isinstance(news_data, list) and all(isinstance(n, str) for n in news_data):
-        try:
-            news_data = [json.loads(n) for n in news_data]
-        except Exception:
-            logging.warning("Erro ao converter elementos de news_data (strings JSON) para dicionários.")
-            news_data = []
-
-    noticias_resumo = "\n".join(
-        [f"- {n.get('title')}: {n.get('summary', '')}" for n in news_data if isinstance(n, dict)]
-    )
-
-    #Deve ser alterado para que cada usuario cadastre um prompt personalizado
-    prompt = f"""
-        Você é um assistente que cria introduções de newsletter.
-        Crie um parágrafo introdutório amigável e envolvente para o usuário {user.full_name}.
-        As notícias selecionadas para ele são:
-
-        {noticias_resumo}
-
-        O texto deve ser curto (3 a 5 frases), convidativo e fazer uma transição natural para a lista de notícias.
-        Escreva em português do Brasil.
-        """
-
-    resposta = ai_service.generate_content(prompt)
-    if not resposta:
-        return f"Olá {user.full_name}, aqui está sua seleção personalizada de notícias da semana."
-
-    return resposta.strip()
+from app.services.newsletter_service import NewsletterService
 
 
 def send_newsletter_job():
     app = create_app()
-
-    import os
-    logging.info(f"MAILTRAP_USER: {os.getenv('MAILTRAP_USER')}")
-    logging.info(f"MAILTRAP_PASSWORD set? {'Sim' if os.getenv('MAILTRAP_PASSWORD') else 'Não'}")
-
 
     with app.app_context():
         logging.info("=" * 80)
@@ -236,9 +27,7 @@ def send_newsletter_job():
 
         try:
             user_repo = UserRepository()
-            mail_service = MailService()
-            news_service = NewsService()
-            ai_service = AIService()
+            newsletter_service = NewsletterService()
 
             logging.info("Buscando usuários...")
             users = user_repo.get_users_to_newsletter()
@@ -253,36 +42,13 @@ def send_newsletter_job():
 
             for user in users:
                 logging.info(f"--- Processando: {user.full_name} <{user.email}> ---")
-                try:
-                    news_data = news_service.get_news_to_email(user.id, page=1, per_page=5)
 
-                    if not news_data:
-                        logging.warning(f"Nenhuma notícia encontrada para {user.email}. Pulando...")
-                        continue
+                result = newsletter_service.send_newsletter_to_user(user)
 
-                    intro = gerar_texto_intro(ai_service, user, news_data)
-
-                    newsletter_html = build_newsletter_email(
-                        user_name=user.full_name,
-                        intro_text=intro,
-                        news_items=news_data
-                    )
-                    assunto = "Seu Resumo Personalizado de Notícias Synapse"
-
-                    sucesso = mail_service.sendemail(
-                        recipient_email=user.email,
-                        recipient_name=user.full_name,
-                        subject=assunto,
-                        html_content=newsletter_html
-                    )
-
-                    if sucesso:
-                        success_count += 1
-                    else:
-                        fail_count += 1
-
-                except Exception as e:
-                    logging.error(f"ERRO no envio para {user.email}. Detalhes: {e}", exc_info=True)
+                if result['success']:
+                    success_count += 1
+                else:
+                    logging.warning(f"Falha no envio para {user.email}. Razão: {result['reason']}")
                     fail_count += 1
 
             logging.info("=" * 80)
@@ -293,6 +59,8 @@ def send_newsletter_job():
         except Exception as e:
             logging.critical(f"ERRO FATAL: O job terminou abruptamente: {e}", exc_info=True)
             raise
+        
+
 
 
 if __name__ == "__main__":

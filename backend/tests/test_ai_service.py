@@ -70,7 +70,7 @@ def test_generate_content_success(mock_genai, mock_logging):
         prompt,
         request_options={'timeout': 45}
     )
-    mock_logging.debug.assert_any_call("Chamando API Gemini (timeout=45s, prompt_len=15)")
+    mock_logging.debug.assert_any_call("Chamando API Gemini (model=gemini-2.5-flash, temperature=0.1, timeout=45s, prompt_len=15)")
     mock_logging.debug.assert_any_call("API Gemini respondeu com sucesso (response_len=26)")
 
 def test_generate_content_model_not_available(mock_logging):
@@ -82,7 +82,7 @@ def test_generate_content_model_not_available(mock_logging):
     response = service.generate_content("some prompt")
 
     assert response is None
-    mock_logging.warning.assert_any_call("Modelo Gemini não disponível.")
+    mock_logging.warning.assert_any_call("GEMINI_API_KEY não configurada. Modelo Gemini não disponível.")
 
 @pytest.mark.parametrize("invalid_prompt", [None, "", "   ", 123])
 def test_generate_content_invalid_prompt(invalid_prompt, mock_logging):

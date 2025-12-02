@@ -425,8 +425,9 @@ class NewsService():
                 news_dict = {
                     "category": getattr(news, "topic_name", "Geral"),
                     "title": news.title,
-                    "img_url": news.image_url or "", 
+                    "img_url": news.image_url or "",
                     "summary": news.description or "",
+                    "content": news.content or "",  # Campo adicionado para IA gerar resumos ricos
                     "source": getattr(news, "source_name", "Fonte Desconhecida"),
                     "date": news.published_at.strftime("%d/%m/%Y") if news.published_at else "",
                     "url": news.url
