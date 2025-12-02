@@ -3,33 +3,39 @@ import requests
 import logging
 import time
 from datetime import datetime
-from newspaper import Article
+
 from sqlalchemy.exc import IntegrityError
-from newspaper.configuration import Configuration
 from app.repositories.news_repository import NewsRepository
 from app.repositories.news_source_repository import NewsSourceRepository
 from app.repositories.topic_repository import TopicRepository
-from app.models.news import News, NewsValidationError
+from app.models.news import News
 from app.models.news_source import NewsSource
-from app.models.exceptions import NewsSourceValidationError
 
 from app.services.keyword_generation_service import KeywordGenerationService
+from app.services.ai_service import AIService
 from app.utils.scraping_blacklist import ScrapingBlacklist
+from app.services.scrape_service import ScrapeService
 
 class NewsCollectService():
     def __init__(
         self,
         news_repo: NewsRepository | None = None,
         news_source_repo: NewsSourceRepository | None = None,
-        topic_repo: TopicRepository | None = None
+        topic_repo: TopicRepository | None = None,
     ):
         self.news_repo = news_repo or NewsRepository()
         self.news_sources_repo = news_source_repo or NewsSourceRepository()
         self.topic_repo = topic_repo or TopicRepository()
 
+        self.ai_service = AIService()
         self.keyword_service = KeywordGenerationService()
         self.blacklist = ScrapingBlacklist('/tmp/scraping_blacklist.json')
-        self.blacklist.load
+        self.blacklist.load()
+        
+        # Injetar a instância da blacklist no ScrapeService
+        # para garantir que ambos usem o mesmo objeto em memória.
+        self.scrape_service = ScrapeService()
+        self.scrape_service.set_blacklist(self.blacklist)
 
         self.gnews_api_key = os.getenv('GNEWS_API_KEY')
         self.api_endpoint = "https://gnews.io/api/v4/top-headlines"
@@ -127,6 +133,7 @@ class NewsCollectService():
                     return []
 
         return []
+
 
     def collect_news_simple(self):
         """
@@ -228,7 +235,12 @@ class NewsCollectService():
                     continue
 
                 if self.news_repo.find_by_url(article_url):
-                    logging.debug(f"    Artigo {i} já existe: {article_url}")
+                    logging.debug(f"    Artigo {i} já existe (URL): {article_url}")
+                    continue
+
+                # Verificar se já existe uma notícia com o mesmo título
+                if self.news_repo.find_by_title(title):
+                    logging.debug(f"    Artigo {i} já existe (Título): '{title}'")
                     continue
 
                 source_name = article_meta.get('source', {}).get('name')
@@ -239,10 +251,14 @@ class NewsCollectService():
                     continue
 
                 # Scraping do conteúdo
-                article_content = self.scrape_article_content(article_url)
-                if not article_content:
-                    logging.warning(f"    Falha no scraping: {article_url}")
+                article_scrap = self.scrape_service.scrape_article_content(article_url)
+                if not article_scrap:
+                    logging.warning(f"    Falha no scraping (artigo ignorado): {article_url}")
                     continue
+
+                article_html = article_scrap.get('html')
+                article_text = article_scrap.get('text')
+
 
                 # Buscar ou criar fonte
                 news_source_model = self._get_or_create_source(source_name, source_url)
@@ -263,8 +279,9 @@ class NewsCollectService():
                         title=title,
                         url=article_url,
                         description=article_meta.get('description'),
-                        content=article_content,
+                        content=article_text,
                         image_url=article_meta.get('image'),
+                        html=article_html,
                         published_at=published_at_dt,
                         source_id=news_source_model.id,
                         topic_id=topic_id 
@@ -291,6 +308,7 @@ class NewsCollectService():
 
         return (new_articles_count, new_sources_count)
 
+
     def _get_or_create_source(self, source_name: str, source_url: str):
         """Helper para buscar ou criar fonte de notícia"""
         news_source_model = self.news_sources_repo.find_by_url(source_url)
@@ -316,46 +334,4 @@ class NewsCollectService():
                 return None
 
         return news_source_model
-
-    def scrape_article_content(self, url: str) -> str | None:
-        """Scraping com blacklist para filtrar sites problemáticos"""
-        try:
-            # Verificar blacklist primeiro
-            if self.blacklist.is_blocked(url):
-                blocked_info = self.blacklist.get_blocked_info(url)
-                logging.warning(f"Site bloqueado pela blacklist: {url} (motivo: {blocked_info.get('reason', 'N/A')})")
-                return None
-
-            logging.debug(f"Fazendo scraping de: {url}")
-
-            config = Configuration()
-            config.browser_user_agent = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Safari/537.36'
-            config.request_timeout = 30
-            config.keep_article_html = True
-
-            article = Article(url, config=config)
-            article.download()
-            article.parse()
-            return article.article_html
-
-        except Exception as e:
-            error_msg = str(e)
-            logging.error(f"Erro no scraping de {url}: {error_msg}")
-
-            if any(error_code in error_msg for error_code in ['403', 'Forbidden', 'SSL', 'timeout', 'Timeout']):
-                error_type = 'Unknown Error'
-                if '403' in error_msg or 'Forbidden' in error_msg:
-                    error_type = '403 Forbidden'
-                elif 'SSL' in error_msg:
-                    error_type = 'SSL Error'
-                elif 'timeout' in error_msg or 'Timeout' in error_msg:
-                    error_type = 'Timeout Error'
-
-                self.blacklist.add_to_blacklist(
-                    url=url,
-                    error_type=error_type,
-                    error_message=error_msg,
-                    reason="Site blocks scraping or fails consistently"
-                )
-
-            return None
+    

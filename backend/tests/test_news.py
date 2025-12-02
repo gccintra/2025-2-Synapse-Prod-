@@ -18,6 +18,7 @@ def valid_news_data():
         "published_at": datetime.now(),
         "source_id": 1,
         "content": "This is the news content.",
+        "html": "<p>This is the news content.</p>",
         "topic_id": 2,
         "id": 100,
         "description": "A test description.",
@@ -29,13 +30,12 @@ def valid_news_data():
 
 
 def test_news_creation_with_valid_data(valid_news_data):
-    
-
     news = News(**valid_news_data)
 
     assert news.id == valid_news_data["id"]
     assert news.title == "Test Title with extra spaces"  # Título deve ser normalizado
     assert news.url == valid_news_data["url"]
+    assert news.html == valid_news_data["html"]
     assert news.published_at == valid_news_data["published_at"]
     assert news.source_id == valid_news_data["source_id"]
     assert news.content == valid_news_data["content"]
@@ -49,7 +49,6 @@ def test_news_creation_with_valid_data(valid_news_data):
 
 @pytest.mark.parametrize("invalid_title", [None, "", "   ", 123])
 def test_title_validation_raises_error(valid_news_data, invalid_title):
-
     with pytest.raises(NewsValidationError, match="title.*não pode ser vazio"):
         valid_news_data["title"] = invalid_title
         News(**valid_news_data)
@@ -64,14 +63,12 @@ def test_title_validation_raises_error(valid_news_data, invalid_title):
     (123, "não pode ser vazia"),
 ])
 def test_url_validation_raises_error(valid_news_data, invalid_url, error_msg):
-
     with pytest.raises(NewsValidationError, match=f"url.*{error_msg}"):
         valid_news_data["url"] = invalid_url
         News(**valid_news_data)
 
 
 def test_image_url_can_be_none(valid_news_data):
-
     valid_news_data["image_url"] = None
     news = News(**valid_news_data)
     assert news.image_url is None
@@ -82,7 +79,6 @@ def test_image_url_can_be_none(valid_news_data):
     ("not-a-url", "formato ou tamanho inválido"),
 ])
 def test_image_url_validation_raises_error(valid_news_data, invalid_image_url, error_msg):
-
     with pytest.raises(NewsValidationError, match=f"image_url.*{error_msg}"):
         valid_news_data["image_url"] = invalid_image_url
         News(**valid_news_data)
@@ -90,7 +86,6 @@ def test_image_url_validation_raises_error(valid_news_data, invalid_image_url, e
 
 @pytest.mark.parametrize("invalid_published_at", [None, "not-a-date", 123])
 def test_published_at_validation_raises_error(valid_news_data, invalid_published_at):
-
     with pytest.raises(NewsValidationError, match="published_at.*deve ser um datetime válido"):
         valid_news_data["published_at"] = invalid_published_at
         News(**valid_news_data)
@@ -122,6 +117,7 @@ def mock_news_entity():
     entity.url = "http://entity.com"
     entity.image_url = "http://entity.com/image.jpg"
     entity.content = "Entity content."
+    entity.html = "<p>Entity content.</p>"
     entity.published_at = datetime.now()
     entity.source_id = 10
     entity.topic_id = 20
@@ -137,7 +133,6 @@ def mock_news_entity():
 
 
 def test_from_entity_with_full_data(mock_news_entity):
-
     news = News.from_entity(mock_news_entity)
 
     assert news.id == mock_news_entity.id
@@ -159,12 +154,10 @@ def test_from_entity_with_missing_relations(mock_news_entity):
 
 
 def test_from_entity_with_none_entity():
-
     assert News.from_entity(None) is None
 
 
 def test_to_orm(valid_news_data):
-
     with patch('app.models.news.NewsEntity') as MockNewsEntity:
         news = News(**valid_news_data)
         orm_entity = news.to_orm()
@@ -177,6 +170,7 @@ def test_to_orm(valid_news_data):
             url=news.url,
             image_url=news.image_url,
             content=news.content,
+            html=news.html,
             published_at=news.published_at,
             source_id=news.source_id,
             topic_id=news.topic_id,

@@ -10,7 +10,7 @@ from app.routes.news_source_routes import news_source_bp
 from app.routes.news_routes import news_bp
 
 STANDARD_TOPICS = [
-    'Technology', 'Crypto', 'Games', 'Economy', 'Business', 'Health',
+    'Technology', 'Crypto', 'Games', 'Economy', 'Business',
     'Science', 'Entertainment', 'World'
 ]
 
@@ -82,6 +82,5 @@ def create_app(config_overrides=None):
     app.register_blueprint(topic_bp, url_prefix="/topics")
     app.register_blueprint(news_bp, url_prefix="/news")
     app.register_blueprint(news_source_bp, url_prefix="/news_sources")
-    
 
     return app

@@ -21,6 +21,7 @@ const NewsPage = () => {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [userData, setUserData] = useState({ email: "" });
   const historyAddedRef = useRef(false);
+  const contentRef = useRef(null);
 
   useEffect(() => {
     const fetchNewsData = async () => {
@@ -43,8 +44,9 @@ const NewsPage = () => {
           image: newsData.image_url || "https://via.placeholder.com/800x400",
           source: newsData.source_name || "Fonte não informada",
           date: formatDateLong(newsData.published_at) || "Data não informada",
-          contentHtml:
-            newsData.content ||
+          contentHtml: // Prioriza o HTML, com fallback para content e description
+            newsData.html ||
+            newsData.content || 
             newsData.description ||
             "Conteúdo não disponível",
         });
@@ -80,6 +82,93 @@ const NewsPage = () => {
       addHistory();
     }
   }, [isLoggedIn, newsId]);
+
+  // useEffect: Processar placeholders após renderização do HTML
+  useEffect(() => {
+    if (articleData?.contentHtml && contentRef.current) {
+      processEmbedPlaceholders();
+    }
+  }, [articleData]);
+
+  // Função para processar placeholders de YouTube e Twitter
+  const processEmbedPlaceholders = () => {
+    if (!contentRef.current) return;
+
+    // Processar placeholders do YouTube
+    const youtubePlaceholders = contentRef.current.querySelectorAll('.youtube-placeholder');
+    youtubePlaceholders.forEach(placeholder => {
+      const videoId = placeholder.getAttribute('data-video-id');
+      if (videoId) {
+        const iframe = document.createElement('iframe');
+        iframe.src = `https://www.youtube-nocookie.com/embed/${videoId}`;
+        iframe.width = '560';
+        iframe.height = '315';
+        iframe.frameBorder = '0';
+        iframe.allowFullscreen = true;
+        iframe.allow = 'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share';
+        iframe.referrerPolicy = 'strict-origin-when-cross-origin';
+        iframe.title = 'YouTube video player';
+        iframe.className = 'w-full max-w-full h-auto aspect-video rounded-lg';
+
+        placeholder.parentNode.replaceChild(iframe, placeholder);
+      }
+    });
+
+    // Processar placeholders do Twitter
+    const twitterPlaceholders = contentRef.current.querySelectorAll('.twitter-placeholder');
+    twitterPlaceholders.forEach(placeholder => {
+      const tweetId = placeholder.getAttribute('data-tweet-id');
+      if (tweetId) {
+        // Criar container para o tweet
+        const tweetContainer = document.createElement('div');
+        tweetContainer.className = 'twitter-tweet-container my-4';
+
+        // Criar blockquote para o tweet (formato padrão do Twitter)
+        const blockquote = document.createElement('blockquote');
+        blockquote.className = 'twitter-tweet';
+        blockquote.setAttribute('data-conversation', 'none');
+        blockquote.setAttribute('data-theme', 'light');
+
+        // Link para o tweet
+        const tweetLink = document.createElement('a');
+        tweetLink.href = `https://twitter.com/i/status/${tweetId}`;
+        tweetLink.target = '_blank';
+        tweetLink.rel = 'noopener noreferrer';
+        tweetLink.textContent = 'View Tweet';
+
+        blockquote.appendChild(tweetLink);
+        tweetContainer.appendChild(blockquote);
+
+        placeholder.parentNode.replaceChild(tweetContainer, placeholder);
+      }
+    });
+
+    // Carregar script do Twitter se houver tweets
+    if (twitterPlaceholders.length > 0) {
+      loadTwitterScript();
+    }
+  };
+
+  // Função para carregar o script do Twitter
+  const loadTwitterScript = () => {
+    // Verificar se o script já foi carregado
+    if (document.getElementById('twitter-script')) return;
+
+    const script = document.createElement('script');
+    script.id = 'twitter-script';
+    script.src = 'https://platform.twitter.com/widgets.js';
+    script.async = true;
+    script.charset = 'utf-8';
+
+    script.onload = () => {
+      // Reprocessar tweets após carregamento do script
+      if (window.twttr && window.twttr.widgets) {
+        window.twttr.widgets.load();
+      }
+    };
+
+    document.head.appendChild(script);
+  };
 
   const createMarkup = (htmlContent) => {
     return { __html: htmlContent };
@@ -238,7 +327,8 @@ const NewsPage = () => {
           </style>
           <article>
             <div
-              className="w-11/12 mx-auto md:w-full prose prose-lg max-w-none font-montserrat text-gray-800 article-content"
+              ref={contentRef}
+            className="w-11/12 mx-auto md:w-full prose prose-lg max-w-none font-montserrat text-gray-800 article-content"
               dangerouslySetInnerHTML={createMarkup(articleData.contentHtml)}
             />
           </article>
