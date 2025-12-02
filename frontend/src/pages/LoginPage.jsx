@@ -206,7 +206,7 @@ function LoginPage() {
               className="w-full rounded-md py-3 px-5 mt-4 text-gray-700 font-semibold border border-gray-300 bg-white hover:bg-gray-50 shadow-sm transition duration-200 flex items-center justify-center"
             >
               <GoogleIcon />
-              <span className="ml-2">Login with Google</span>
+              <span className="ml-2">Sign in with Google</span>
             </button>
           </form>
 

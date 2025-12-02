@@ -411,6 +411,7 @@ const FeedPage = () => {
                       <NewsCard
                         news={newsItem}
                         isListItem={true}
+                        showSaveButton={isLoggedIn}
                         isLoggedIn={isLoggedIn}
                         ref={isLastItem ? lastElementRef : null}
                         activeCategory={

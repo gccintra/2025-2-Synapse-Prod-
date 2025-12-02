@@ -50,7 +50,7 @@ const NewsCard = forwardRef(
           await newsAPI.favoriteNews(news.id);
           toast.success("News successfully saved!");
         }
-        setIsSaved(!isSaved); // Atualiza o estado visual
+        setIsSaved(!isSaved);
       } catch (error) {
         toast.error(error.message || "Error saving news item.");
       } finally {
@@ -65,8 +65,9 @@ const NewsCard = forwardRef(
           to={!isLoading ? `/article/${news?.id}` : undefined}
           state={{ from: location.pathname, fromCategory: activeCategory }}
           ref={ref}
-          className={`relative group flex flex-row items-start gap-4 p-4 border-b border-gray-200 ${
-            !isLoading && "hover:bg-gray-100 transition-colors cursor-pointer"
+          className={`relative group flex flex-row items-center gap-4 p-4 border-b border-gray-200 w-full min-h-[140px] ${
+            !isLoading &&
+            "hover:bg-gray-100 transition-colors duration-200 cursor-pointer"
           }`}
         >
           {isLoading ? (
@@ -80,7 +81,7 @@ const NewsCard = forwardRef(
           )}
 
           {/* texto */}
-          <div className="flex-grow">
+          <div className="flex-grow min-w-0 flex flex-col">
             {isLoading ? (
               <div className="animate-pulse">
                 <div className="h-5 bg-gray-300 rounded w-3/4 mb-2"></div>
@@ -89,7 +90,7 @@ const NewsCard = forwardRef(
               </div>
             ) : (
               <>
-                <h3 className="text-sm lg:text-base font-semibold text-gray-900 mb-1 font-montserrat">
+                <h3 className="text-sm lg:text-base font-semibold text-gray-900 mb-1 font-montserrat line-clamp-2 leading-tight">
                   {news?.title}
                 </h3>
                 <p className="text-xs lg:text-sm text-gray-600 line-clamp-2 font-montserrat mb-2">
