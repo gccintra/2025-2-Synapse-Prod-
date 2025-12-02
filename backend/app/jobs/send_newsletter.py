@@ -15,47 +15,6 @@ sys.path.insert(0, project_root)
 from app import create_app
 from app.repositories.user_repository import UserRepository
 from app.services.newsletter_service import NewsletterService
-from app.services.ai_service import AIService
-
-
-def gerar_texto_intro(ai_service, user, news_data) -> str:
-    """
-    Função de compatibilidade para manter a interface antiga dos testes.
-
-    DEPRECATED: Use NewsletterService.generate_newsletter_content() para melhor eficiência.
-    Esta função mantém compatibilidade com testes existentes.
-    """
-    try:
-        # Criar instância do NewsletterService para usar novo método
-        newsletter_service = NewsletterService(ai_service=ai_service)
-        ai_content = newsletter_service.generate_newsletter_content(user, news_data)
-
-        if ai_content and 'intro' in ai_content:
-            return ai_content['intro']
-        else:
-            # Fallback em inglês para manter consistência
-            return f"Hello {user.full_name}, here's your personalized selection of this week's most important news."
-
-    except Exception as e:
-        logging.warning(f"Erro na função de compatibilidade gerar_texto_intro: {e}")
-        return f"Hello {user.full_name}, here's your personalized selection of this week's most important news."
-
-
-def build_newsletter_email(user_name, ai_content, news_items):
-    """
-    Função de compatibilidade para manter a interface antiga dos testes.
-
-    DEPRECATED: Use NewsletterService.build_newsletter_email() para melhor eficiência.
-    Esta função mantém compatibilidade com testes existentes.
-    """
-    try:
-        # Criar instância do NewsletterService para usar novo método
-        newsletter_service = NewsletterService()
-        return newsletter_service.build_newsletter_email(user_name, ai_content, news_items)
-
-    except Exception as e:
-        logging.error(f"Erro na função de compatibilidade build_newsletter_email: {e}")
-        return "<html><body><h1>Error generating newsletter</h1></body></html>"
 
 
 def send_newsletter_job():

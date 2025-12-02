@@ -327,7 +327,7 @@ class NewsletterService:
             return self.news_service.get_news_to_email(user_id, page=1, per_page=5)
         except Exception as e:
             logging.error(f"Error fetching news for user {user_id}: {e}")
-            return []
+            raise
 
     def generate_complete_newsletter_content(self, user, news_list, model: str = 'gemini-2.5-flash', temperature: float = 0.4) -> dict | None:
         """
@@ -450,7 +450,7 @@ class NewsletterService:
                 # Fallback: retornar estrutura básica em inglês
                 return {
                     "intro": f"Hello {user.full_name}, here's your personalized selection of this week's most important news.",
-                    "summaries": [news.get('description', 'Summary not available') for news in news_list]
+                    "summaries": [news.get('summary', 'Summary not available') for news in news_list]
                 }
 
         except Exception as e:
@@ -458,7 +458,7 @@ class NewsletterService:
             # Fallback em caso de erro - em inglês
             return {
                 "intro": f"Hello {user.full_name}, here's your personalized selection of this week's most important news.",
-                "summaries": [news.get('description', 'Summary not available') for news in news_list]
+                "summaries": [news.get('summary', 'Summary not available') for news in news_list]
             }
 
     def _generate_ai_content_with_fallback(self, user, news_data: List[Dict]) -> Dict[str, any]:
