@@ -60,6 +60,7 @@ def news_setup(db):
         description="Descrição da notícia.",
         url="http://jornal.teste.com/noticia1",
         content="Conteúdo completo da notícia.",
+        html="<p>Conteúdo completo da notícia.</p>",
         published_at=datetime.now(timezone.utc),
         source_id=source.id,
         topic_id=topic.id

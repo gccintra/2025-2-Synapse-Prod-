@@ -35,6 +35,7 @@ def sample_news_model():
         title="Test News",
         url="http://www.example.com/news/1",
         content="This is a test.",
+        html="<p>This is a test.</p>",
         published_at=datetime.now(),
         source_id=1,
         topic_id=1
@@ -48,6 +49,7 @@ def sample_news_entity():
     mock_entity.title = "Test News"
     mock_entity.url = "http://www.example.com/news/1"
     mock_entity.content = "This is a test."
+    mock_entity.html = "<p>This is a test.</p>"
     mock_entity.published_at = datetime.now()
     mock_entity.image_url = "http://example.com/image.jpg"
     mock_entity.source_id = 1

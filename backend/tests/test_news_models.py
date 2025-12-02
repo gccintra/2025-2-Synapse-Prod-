@@ -18,6 +18,7 @@ def valid_news_data():
         "published_at": datetime.now(),
         "source_id": 1,
         "content": "This is the news content.",
+        "html": "<p>This is the news content.</p>",
         "topic_id": 2,
         "id": 100,
         "description": "A test description.",
@@ -35,6 +36,7 @@ def test_news_creation_with_valid_data(valid_news_data):
     assert news.title == "Test Title with extra spaces"
     assert news.url == valid_news_data["url"]
     assert news.published_at == valid_news_data["published_at"]
+    assert news.html == valid_news_data["html"]
     assert news.source_id == valid_news_data["source_id"]
     assert news.content == valid_news_data["content"]
     assert news.topic_id == valid_news_data["topic_id"]
@@ -120,6 +122,7 @@ def mock_news_entity():
     entity.url = "http://entity.com"
     entity.image_url = "http://entity.com/image.jpg"
     entity.content = "Entity content."
+    entity.html = "<p>Entity content.</p>"
     entity.published_at = datetime.now()
     entity.source_id = 10
     entity.topic_id = 20
@@ -175,6 +178,7 @@ def test_to_orm(valid_news_data):
             url=news.url,
             image_url=news.image_url,
             content=news.content,
+            html=news.html,
             published_at=news.published_at,
             source_id=news.source_id,
             topic_id=news.topic_id,
