@@ -15,6 +15,7 @@ from app.services.keyword_generation_service import KeywordGenerationService
 from app.services.ai_service import AIService
 from app.utils.scraping_blacklist import ScrapingBlacklist
 from app.services.scrape_service import ScrapeService
+from app.utils.image_url_validator import ImageUrlValidator
 
 class NewsCollectService():
     def __init__(
@@ -275,16 +276,25 @@ class NewsCollectService():
                         published_at_str = published_at_str[:-1] + '+00:00'
                     published_at_dt = datetime.fromisoformat(published_at_str)
 
+                    # Validação de imagem
+                    image_url = article_meta.get('image')
+                    if image_url and not ImageUrlValidator.validate_image_url_accessible(image_url):
+                        logging.warning(
+                            f"    Imagem não acessível para artigo '{title[:50]}...': {image_url}. "
+                            f"Pulando artigo."
+                        )
+                        continue
+
                     article = News(
                         title=title,
                         url=article_url,
                         description=article_meta.get('description'),
                         content=article_text,
-                        image_url=article_meta.get('image'),
+                        image_url=image_url,
                         html=article_html,
                         published_at=published_at_dt,
                         source_id=news_source_model.id,
-                        topic_id=topic_id 
+                        topic_id=topic_id
                     )
 
                     saved_article = self.news_repo.create(article)
