@@ -84,7 +84,7 @@ const DynamicHeader = ({
                   alt="Back Icon"
                   className="w-5 h-5 sm:mr-2"
                 />
-                <span className="hidden sm:inline font-medium font-montserrat">
+                <span className="ml-2 font-medium font-montserrat text-sm">
                   {actualBackText}
                 </span>
               </button>
@@ -92,8 +92,8 @@ const DynamicHeader = ({
           )}
         </div>
 
-        {/* centro: logo Synapse */}
-        <div className="flex justify-center w-1/3">
+        {/* centro: logo Synapse - apenas em telas maiores quando não é feed */}
+        <div className="hidden sm:flex justify-center w-1/3">
           {location.pathname !== "/feed" && ( // caso ñ estiver no feed, Synapse fica no centro
             <Link to="/feed" onClick={() => setDropdownOpen(false)}>
               <h1 className="text-2xl sm:text-3xl font-bold text-black font-rajdhani">
@@ -102,6 +102,9 @@ const DynamicHeader = ({
             </Link>
           )}
         </div>
+
+        {/* Em telas pequenas, centro vazio para dar mais espaço */}
+        <div className="flex sm:hidden justify-center w-1/3"></div>
 
         {/* lado direito: dropdown do usuário ou botões de Login/Signup */}
         <div className="relative flex justify-end w-1/3">
