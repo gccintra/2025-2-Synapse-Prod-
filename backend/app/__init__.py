@@ -17,14 +17,31 @@ STANDARD_TOPICS = [
 def create_app(config_overrides=None):
     app = Flask(__name__)
 
+    # --- CONFIGURAÇÃO DO CORS (PRODUÇÃO + DEV) ---
+    # Aceita localhost E a URL de produção definida nas variáveis
+    allowed_origins = ["http://localhost:5173"]
+    
+    # Tenta pegar a URL do frontend das variáveis de ambiente
+    frontend_url = os.getenv("FRONTEND_URL")
+    if frontend_url:
+        allowed_origins.append(frontend_url)
+
     CORS(
         app,
-        origins=["http://localhost:5173"],
+        origins=allowed_origins,
         supports_credentials=True
     )
     
     app.config["JWT_SECRET_KEY"] = os.getenv("JWT_SECRET_KEY")
-    app.config["SQLALCHEMY_DATABASE_URI"] = os.getenv("DATABASE_URL")
+
+    # --- CORREÇÃO DO DATABASE_URL PARA O RAILWAY ---
+    database_url = os.getenv("DATABASE_URL")
+    if database_url and database_url.startswith("postgres://"):
+        database_url = database_url.replace("postgres://", "postgresql://", 1)
+    
+    app.config["SQLALCHEMY_DATABASE_URI"] = database_url
+    # -----------------------------------------------
+
     app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
     app.config["JWT_TOKEN_LOCATION"] = ["cookies"]
     app.config["JWT_COOKIE_CSRF_PROTECT"] = True
@@ -51,6 +68,7 @@ def create_app(config_overrides=None):
     db.init_app(app)
     jwt = JWTManager(app)
 
+    # Importação das entidades para o SQLAlchemy reconhecê-las
     from app.entities import (custom_topic_entity, news_entity, news_source_entity, topic_entity, user_entity, user_preferred_custom_topics, user_preferred_news_sources_entity, user_saved_news_entity, user_read_history_entity)
 
     with app.app_context():
@@ -62,21 +80,25 @@ def create_app(config_overrides=None):
         print("Verificando e inicializando tópicos padrão...")
         topic_repo = TopicRepository()
 
-        existing_topic_names = {t.name.lower() for t in topic_repo.list_all()}
+        # Verifica se as tabelas existem antes de tentar listar (segurança extra)
+        try:
+            existing_topic_names = {t.name.lower() for t in topic_repo.list_all()}
 
-        new_topics_created_count = 0
-        for topic_name in STANDARD_TOPICS:
-            if topic_name.lower() not in existing_topic_names:
-                try:
-                    topic = Topic(name=topic_name, state=1)  
-                    created_topic = topic_repo.create(topic)
-                    print(f"Tópico padrão criado: '{created_topic.name}' (ID={created_topic.id})")
-                    new_topics_created_count += 1
-                except Exception as e:
-                    print(f"Erro ao criar tópico padrão '{topic_name}': {e}")
+            new_topics_created_count = 0
+            for topic_name in STANDARD_TOPICS:
+                if topic_name.lower() not in existing_topic_names:
+                    try:
+                        topic = Topic(name=topic_name, state=1)  
+                        created_topic = topic_repo.create(topic)
+                        print(f"Tópico padrão criado: '{created_topic.name}' (ID={created_topic.id})")
+                        new_topics_created_count += 1
+                    except Exception as e:
+                        print(f"Erro ao criar tópico padrão '{topic_name}': {e}")
 
-        if new_topics_created_count == 0:
-            print("Todos os tópicos padrão já existem.")
+            if new_topics_created_count == 0:
+                print("Todos os tópicos padrão já existem.")
+        except Exception as e:
+            print(f"Aviso: Não foi possível inicializar tópicos (provavelmente primeira execução): {e}")
 
     app.register_blueprint(user_bp, url_prefix="/users")
     app.register_blueprint(topic_bp, url_prefix="/topics")
