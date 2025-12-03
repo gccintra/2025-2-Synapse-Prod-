@@ -117,8 +117,8 @@ function EditAccount() {
         backText="Back"
       />
       {/* Container principal da página de edição */}
-      <div className="h-[calc(100vh-10rem)] flex flex-col justify-start items-center bg-[#f5f5f5] pt-16">
-        <div className="w-full max-w-lg px-4">
+      <div className="min-h-[calc(100vh-6rem)] flex flex-col justify-start items-center bg-[#f5f5f5] pt-8 sm:pt-16">
+        <div className="w-full max-w-lg px-4 sm:px-6">
           <div className="w-full text-center">
             <h2 className=" mb-2 text-xl md:text-2xl font-bold text-black font-montserrat">
               Edit Your Account Information

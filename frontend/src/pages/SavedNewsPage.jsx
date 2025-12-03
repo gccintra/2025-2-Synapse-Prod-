@@ -93,13 +93,13 @@ const SavedNewsPage = () => {
         backText="Back to feed"
       />
 
-      <main className="flex-grow max-w-6xl mx-auto sm:px-6 lg:px-8 mt-12 w-full">
-        <h1 className="p-3 text-2xl sm:text-3xl font-medium text-gray-900 font-montserrat text-center">
+      <main className="flex-grow max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 mt-6 sm:mt-12 w-full">
+        <h1 className="p-2 sm:p-3 text-xl sm:text-2xl md:text-3xl font-medium text-gray-900 font-montserrat text-center">
           Your saved news
         </h1>
 
         {loading ? (
-          <div className="hidden md:flex flex-wrap justify-center gap-8 mt-12 p-4">
+          <div className="flex flex-wrap justify-center gap-4 sm:gap-6 md:gap-8 mt-6 sm:mt-8 md:mt-12 p-2 sm:p-4">
             {Array.from({ length: 6 }).map((_, index) => (
               <div key={index} className="w-full sm:w-1/2 lg:w-[30%] xl:w-1/4">
                 <SavedNewsCardSkeleton />
@@ -137,7 +137,7 @@ const SavedNewsPage = () => {
             variants={containerVariants}
             initial="hidden"
             animate="visible"
-            className="p-4 flex flex-wrap justify-center gap-8 mt-12"
+            className="p-2 sm:p-4 flex flex-wrap justify-center gap-4 sm:gap-6 md:gap-8 mt-6 sm:mt-8 md:mt-12"
           >
             <AnimatePresence>
               {savedNews.map((news) => (

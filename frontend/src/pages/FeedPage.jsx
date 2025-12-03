@@ -40,10 +40,10 @@ const TopicSelector = React.forwardRef(
   ({ topics, selectedTopic, onSelectTopic, isLoading }, ref) => {
     if (isLoading) {
       return (
-        <div className="flex gap-4 mb-8 flex-wrap">
-          <div className="mt-6 h-8 w-24 bg-gray-300 rounded-full animate-pulse" />
-          <div className="mt-6 h-8 w-28 bg-gray-300 rounded-full animate-pulse" />
-          <div className="mt-6 h-8 w-20 bg-gray-300 rounded-full animate-pulse" />
+        <div className="flex gap-3 sm:gap-4 mb-6 sm:mb-8 flex-wrap px-2 sm:px-0">
+          <div className="mt-4 sm:mt-6 h-7 sm:h-8 w-20 sm:w-24 bg-gray-300 rounded-full animate-pulse" />
+          <div className="mt-4 sm:mt-6 h-7 sm:h-8 w-24 sm:w-28 bg-gray-300 rounded-full animate-pulse" />
+          <div className="mt-4 sm:mt-6 h-7 sm:h-8 w-18 sm:w-20 bg-gray-300 rounded-full animate-pulse" />
         </div>
       );
     }
@@ -51,7 +51,7 @@ const TopicSelector = React.forwardRef(
     return (
       <motion.div
         ref={ref}
-        className="flex gap-4 mb-8 cursor-grab select-none custom-scroll overflow-x-auto flex-nowrap w-11/12 mx-auto md:w-full md:mx-0"
+        className="flex gap-3 sm:gap-4 mb-6 sm:mb-8 cursor-grab select-none custom-scroll overflow-x-auto flex-nowrap w-full px-2 sm:px-0"
         variants={containerVariants}
         initial="hidden"
         animate="visible"
@@ -91,7 +91,7 @@ const containerVariants = {
 const TopicButton = ({ label, isSelected, onClick }) => (
   <motion.button
     onClick={onClick}
-    className="relative flex-shrink-0 flex items-center gap-3 mt-6 text-xs border border-black shadow-lg pl-6 pr-6 py-1 rounded-full font-montserrat transition-colors duration-300"
+    className="relative flex-shrink-0 flex items-center gap-2 sm:gap-3 mt-4 sm:mt-6 text-xs sm:text-sm border border-black shadow-lg pl-4 pr-4 sm:pl-6 sm:pr-6 py-1 sm:py-1.5 rounded-full font-montserrat transition-colors duration-300"
     animate={{
       color: isSelected ? "#fff" : "#000",
       fontWeight: isSelected ? "600" : "500",
@@ -323,7 +323,7 @@ const FeedPage = () => {
         showBackButton={false}
       />
 
-      <main className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-4">
+      <main className="relative z-10 max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 mt-2 sm:mt-4">
         {/* Skeleton Loading */}
         <div className="relative">
           <TopicSelector

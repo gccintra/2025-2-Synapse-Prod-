@@ -63,12 +63,12 @@ const DynamicHeader = ({
 
   return (
     <>
-      <header className="flex justify-between items-center p-6 bg-white border-b border-gray-300 relative z-30">
+      <header className="flex justify-between items-center p-4 sm:p-6 bg-white border-b border-gray-300 relative z-30">
         {/* lado esquerdo: botão "Back" ou espaço vazio */}
         <div className="flex items-center w-1/3">
           {location.pathname === "/feed" ? (
             <Link to="/feed" onClick={() => setDropdownOpen(false)}>
-              <h1 className="text-3xl font-bold text-black font-rajdhani">
+              <h1 className="text-2xl sm:text-3xl font-bold text-black font-rajdhani">
                 Synapse
               </h1>
             </Link>
@@ -96,7 +96,7 @@ const DynamicHeader = ({
         <div className="flex justify-center w-1/3">
           {location.pathname !== "/feed" && ( // caso ñ estiver no feed, Synapse fica no centro
             <Link to="/feed" onClick={() => setDropdownOpen(false)}>
-              <h1 className="text-3xl font-bold text-black font-rajdhani">
+              <h1 className="text-2xl sm:text-3xl font-bold text-black font-rajdhani">
                 Synapse
               </h1>
             </Link>
@@ -111,10 +111,10 @@ const DynamicHeader = ({
                 className="flex items-center rounded-md text-gray-800 hover:text-gray-600 focus:outline-none text-base font-montserrat"
                 onClick={() => setDropdownOpen((open) => !open)}
               >
-                <span className="hidden min-[700px]:inline font-medium font-montserrat">
+                <span className="hidden sm:inline font-medium font-montserrat text-sm sm:text-base">
                   {userEmail}
                 </span>
-                <span className="inline min-[700px]:hidden font-medium font-montserrat">
+                <span className="inline sm:hidden font-medium font-montserrat text-sm">
                   {userEmail.split("@")[0]}
                 </span>
 
@@ -131,7 +131,7 @@ const DynamicHeader = ({
                     initial="hidden"
                     animate="visible"
                     exit="hidden"
-                    className="absolute right-0 mt-2 w-36 sm:w-48 bg-white rounded-md shadow-lg z-10 text-xs font-montserrat ring-1 ring-black ring-opacity-5"
+                    className="absolute right-0 mt-2 w-48 sm:w-52 bg-white rounded-md shadow-lg z-10 text-sm font-montserrat ring-1 ring-black ring-opacity-5"
                   >
                     <div className="p-1">
                       <Link

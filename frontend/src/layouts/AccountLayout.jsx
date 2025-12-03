@@ -25,10 +25,10 @@ const AccountLayout = () => {
         onBackClick={() => navigate("/feed")}
         backText="Back to feed"
       />
-      <main className="max-w-7xl mx-auto px-6">
-        <div className="flex flex-col items-center min-[670px]:flex-row min-[670px]:items-start">
+      <main className="max-w-7xl mx-auto px-4 sm:px-6">
+        <div className="flex flex-col items-center md:flex-row md:items-start">
           <motion.aside
-            className="mt-16 w-11/12 min-[670px]:w-1/3 min-[670px]:sticky min-[670px]:top-24 min-[670px]:self-start min-[670px]:ml-12"
+            className="mt-8 md:mt-16 w-full md:w-1/3 md:sticky md:top-24 md:self-start md:ml-12"
             variants={sectionVariants}
             initial="hidden"
             animate="visible"

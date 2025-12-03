@@ -8,10 +8,10 @@ import { toast } from "react-toastify";
 import PreferredTopics from "../components/PreferredTopics";
 
 const InfoRow = ({ label, value, action, actionLink }) => (
-  <div className="flex justify-between items-center py-3">
+  <div className="flex justify-between items-center py-2 sm:py-3">
     <div>
-      <p className="text-base text-gray-500 font-montserrat">{label}</p>
-      <p className="mt-1 text-base text-gray-900 font-montserrat">{value}</p>
+      <p className="text-sm sm:text-base text-gray-500 font-montserrat">{label}</p>
+      <p className="mt-1 text-sm sm:text-base text-gray-900 font-montserrat break-words">{value}</p>
     </div>
     {action && (
       <motion.div
@@ -22,7 +22,7 @@ const InfoRow = ({ label, value, action, actionLink }) => (
       >
         <Link
           to={actionLink}
-          className="font-medium text-base text-black font-montserrat"
+          className="font-medium text-sm sm:text-base text-black font-montserrat"
         >
           {action}
         </Link>
@@ -253,7 +253,7 @@ const AccountPage = () => {
 
   return (
     <motion.section
-      className="mt-16 w-11/12 min-[670px]:w-1/2"
+      className="mt-8 md:mt-16 w-full md:w-2/3 lg:w-1/2"
       variants={containerVariants}
       initial="hidden"
       animate="visible"
