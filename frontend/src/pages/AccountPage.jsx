@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { usersAPI, topicsAPI, newsSourcesAPI } from "../services/api";
+import { useAuthContext } from "../contexts/AuthContext";
 
 import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "react-toastify";
@@ -125,11 +126,23 @@ const AccountPage = () => {
   const [topicError, setTopicError] = useState("");
   const navigate = useNavigate();
 
+  // Contexto de autenticação para sincronizar estado
+  const { isAuthenticated, loading: authLoading, checkAuth } = useAuthContext();
+
   const handleOpenAddSource = () => navigate("/add-source");
 
   useEffect(() => {
-    const fetchUserData = async () => {
-      setLoading(true); // Garante que o estado de loading seja ativado no início.
+    // Aguarda que a autenticação seja verificada antes de buscar dados
+    if (authLoading) {
+      return; // Aguarda AuthContext terminar verificação
+    }
+
+    if (!isAuthenticated) {
+      return; // Se não autenticado, PrivateRoute já vai redirecionar
+    }
+
+    const fetchUserData = async (retryCount = 0) => {
+      setLoading(true);
       setError(null);
       try {
         // buscando dados do perfil, tópicos e fontes em paralelo
@@ -147,13 +160,36 @@ const AccountPage = () => {
           preferred_sources: sourcesRes.data || [],
         });
       } catch (err) {
+        console.log("Erro ao buscar dados do usuário:", err);
+
+        // Se for erro 401, tenta revalidar autenticação
+        if (err.status === 401 || err.isAuthError) {
+          console.log("Token pode ter expirado, revalidando autenticação...");
+          try {
+            await checkAuth();
+            return; // checkAuth vai atualizar o estado, useEffect vai executar novamente
+          } catch (authErr) {
+            console.error("Falha ao revalidar autenticação:", authErr);
+            setError("Sua sessão expirou. Você será redirecionado para fazer login.");
+            return;
+          }
+        }
+
+        // Para outros erros, tenta retry uma vez
+        if (retryCount < 1) {
+          console.log(`Tentando novamente (${retryCount + 1}/1)...`);
+          setTimeout(() => fetchUserData(retryCount + 1), 1000);
+          return;
+        }
+
         setError(err.message || "Erro de conexão ao buscar dados do usuário.");
       } finally {
         setLoading(false);
       }
     };
+
     fetchUserData();
-  }, []); // A dependência 'navigate' foi removida, pois não afeta a busca de dados.
+  }, [authLoading, isAuthenticated, checkAuth]); // Executa quando autenticação muda
 
   // adicionar um novo tópico à lista.
   const handleAddTopic = async () => {
@@ -239,8 +275,8 @@ const AccountPage = () => {
     },
   };
 
-  // Não renderiza nada até que os dados sejam carregados ou ocorra um erro.
-  if (loading || !userData) return null;
+  // Aguarda autenticação e carregamento de dados
+  if (authLoading || loading || !userData) return null;
 
   // mensagem de erro se a busca de dados falhar
   if (error) {

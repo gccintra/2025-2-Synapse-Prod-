@@ -29,6 +29,12 @@ export const AuthProvider = ({ children }) => {
       }
     } catch (error) {
       console.log('Auth check failed:', error.message);
+
+      // Se for erro 401, definitivamente não está autenticado
+      if (error.status === 401 || error.isAuthError) {
+        console.log('Token inválido ou expirado');
+      }
+
       setUser(null);
       setIsAuthenticated(false);
     } finally {

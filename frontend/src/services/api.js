@@ -26,6 +26,14 @@ async function apiRequest(endpoint, options = {}) {
     const data = await response.json();
 
     if (!response.ok) {
+      // Diferencia erro 401 (não autorizado) de outros erros
+      if (response.status === 401) {
+        const authError = new Error(data.error || data.message || "Authentication required");
+        authError.status = 401;
+        authError.isAuthError = true;
+        throw authError;
+      }
+
       throw new Error(data.error || data.message || "Request error");
     }
 
