@@ -107,7 +107,7 @@ const DynamicHeader = ({
         <div className="flex sm:hidden justify-center w-1/3"></div>
 
         {/* lado direito: dropdown do usuário ou botões de Login/Signup */}
-        <div className="relative flex justify-end w-1/3">
+        <div className="relative flex justify-end items-center w-1/3 min-w-0">
           {isAuthenticated ? (
             <div>
               <button
@@ -177,20 +177,20 @@ const DynamicHeader = ({
               </AnimatePresence>
             </div>
           ) : (
-            <>
+            <div className="flex items-center gap-2 sm:gap-4 shrink-0">
               <Link
                 to="/login"
-                className="sm:bg-black sm:text-white font-medium sm:font-bold py-2 px-2 sm:py-2 sm:px-4 rounded hover:bg-gray-200 sm:hover:bg-gray-800 transition-colors duration-200 font-montserrat text-sm"
+                className="bg-black text-white font-medium sm:font-bold py-1.5 px-3 sm:py-2 sm:px-4 rounded hover:bg-gray-800 transition-colors duration-200 font-montserrat text-xs sm:text-sm whitespace-nowrap"
               >
                 Login
               </Link>
               <Link
                 to="/registrar"
-                className="ml-4 text-black sm:border border-black font-medium sm:font-bold py-2 px-2 sm:py-2 sm:px-4 rounded hover:bg-gray-200 transition-colors duration-200 font-montserrat text-sm"
+                className="text-black border border-black font-medium sm:font-bold py-1.5 px-3 sm:py-2 sm:px-4 rounded hover:bg-gray-200 transition-colors duration-200 font-montserrat text-xs sm:text-sm whitespace-nowrap"
               >
                 Sign Up
               </Link>
-            </>
+            </div>
           )}
         </div>
       </header>
