@@ -1,22 +1,29 @@
+// hooks/useAuth.js (ou onde estiver seu hook)
 import { useState, useEffect } from 'react';
+import { usersAPI } from '../services/api'; // Ajuste o caminho da importação
 
-function getCookie(name) {
-  const value = `; ${document.cookie}`;
-  const parts = value.split(`; ${name}=`);
-  if (parts.length === 2) return parts.pop().split(';').shift();
-  return null;
-}
-
-/**
- * Hook para verificar o status de autenticação do usuário.
- * @returns {{isAuthenticated: boolean}} Objeto contendo o status de autenticação.
- * Hook to check the user's authentication status.
- * @returns {{isAuthenticated: boolean}} An object containing the authentication status.
- */
 export const useAuth = () => {
-  const [isAuthenticated, setIsAuthenticated] = useState(!!getCookie('csrf_access_token'));
+  // Começa como null (carregando) para não chutar nem true nem false
+  const [isAuthenticated, setIsAuthenticated] = useState(null);
 
+  useEffect(() => {
+    const checkAuth = async () => {
+      try {
+        // Tenta bater na rota protegida
+        await usersAPI.getUserProfile();
+        setIsAuthenticated(true);
+      } catch (error) {
+        // Se der erro (401), não está logado
+        setIsAuthenticated(false);
+      }
+    };
 
-  return { isAuthenticated };
+    checkAuth();
+  }, []);
+
+  // Retorna loading enquanto isAuthenticated for null
+  return { 
+    isAuthenticated: !!isAuthenticated, 
+    loading: isAuthenticated === null 
+  };
 };
-

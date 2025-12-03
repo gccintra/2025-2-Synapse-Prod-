@@ -45,10 +45,10 @@ def create_app(config_overrides=None):
     
     # IMPORTANTE: Desativar CSRF temporariamente para garantir que o login funcione
     # (Habilitar depois se você configurar o envio do cabeçalho X-CSRF-TOKEN no front)
-    app.config["JWT_COOKIE_CSRF_PROTECT"] = True
+    app.config["JWT_COOKIE_CSRF_PROTECT"] = False
 
     # Opcional: Se o cookie CSRF também precisar de acesso via JS (geralmente precisa)
-    app.config["JWT_CSRF_IN_COOKIES"] = True
+    # app.config["JWT_CSRF_IN_COOKIES"] = True
     
     app.config["JWT_ACCESS_TOKEN_EXPIRES"] = timedelta(days=7)
     

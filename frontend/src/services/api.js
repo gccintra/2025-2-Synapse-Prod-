@@ -16,15 +16,7 @@ function getCookie(name) {
 
 async function apiRequest(endpoint, options = {}) {
   const url = `${API_BASE_URL}${endpoint}`;
-  const method = options.method || "GET";
 
-  const csrfMethods = ["POST", "PUT", "DELETE", "PATCH"];
-  if (csrfMethods.includes(method.toUpperCase())) {
-    const csrfToken = getCookie("csrf_access_token");
-    if (csrfToken) {
-      defaultOptions.headers["X-CSRF-TOKEN"] = csrfToken;
-    }
-  }
   const config = {
     ...defaultOptions,
     ...options,
