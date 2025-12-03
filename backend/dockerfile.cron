@@ -1,17 +1,29 @@
+# /backend/dockerfile.cron
+
 FROM python:3.12-slim
 
+# Instala o cron
 RUN apt-get update && apt-get -y install --no-install-recommends cron && apt-get clean && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
 
 COPY requirements.txt .
-RUN pip install -r requirements.txt
+RUN pip install --no-cache-dir -r requirements.txt
 
 COPY . .
 
-RUN mv /app/crontab /etc/cron.d/news-collection-job && \
-    chmod 0644 /etc/cron.d/news-collection-job
- 
+# Move o arquivo crontab para o local correto e dá permissão
+# O arquivo 'crontab' DEVE existir na pasta backend do seu projeto
+COPY crontab /etc/cron.d/news-collection-job
+RUN chmod 0644 /etc/cron.d/news-collection-job
+
+# Aplica o crontab
+RUN crontab /etc/cron.d/news-collection-job
+
 RUN touch /var/log/cron.log
 
-CMD ["/bin/sh", "-c", "printenv | grep -E 'DATABASE_URL|GNEWS_API_KEY|MAILTRAP_USER|MAILTRAP_PASSWORD' > /etc/environment && echo 'PYTHONPATH=/app' >> /etc/environment && cron && tail -f /var/log/cron.log"]
+# Comando de inicialização:
+# 1. Pega variáveis de ambiente do container e salva em /etc/environment (para o cron ver)
+# 2. Inicia o cron
+# 3. Segura o container rodando com tail -f
+CMD printenv | grep -E 'DATABASE_URL|GNEWS_API_KEY|GEMINI_API_KEY|GMAIL_SENDER_EMAIL|GMAIL_APP_PASSWORD' >> /etc/environment && cron && tail -f /var/log/cron.log

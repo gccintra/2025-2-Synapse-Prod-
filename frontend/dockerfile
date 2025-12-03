@@ -1,17 +1,33 @@
-FROM node:24.7.0-alpine
+# /frontend/dockerfile
+
+# Usar a versão LTS (Long Term Support) para estabilidade
+FROM node:20-alpine
 
 WORKDIR /app
 
 COPY package*.json ./
 
-RUN npm ci && npm cache clean --force
+# Instala dependências
+RUN npm ci
 
 COPY . .
 
-RUN chown -R node:node /app
+# --- FASE DE BUILD ---
+# Isso cria a pasta 'dist' com HTML/CSS/JS otimizados
+RUN npm run build
 
-EXPOSE 5173
+# Instala um servidor HTTP leve e eficiente
+RUN npm install -g serve
+
+# Ajusta permissões (boa prática)
+RUN chown -R node:node /app
 
 USER node
 
-CMD ["npm", "run", "dev"]
+# Porta padrão do servidor 'serve'
+EXPOSE 3000
+
+# Inicia o servidor estático
+# -s: Single Page App (resolve rotas do React)
+# dist: a pasta que foi gerada no build
+CMD ["serve", "-s", "dist", "-l", "3000"]
