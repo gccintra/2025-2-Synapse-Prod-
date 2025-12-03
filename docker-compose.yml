@@ -1,64 +1,36 @@
+version: '3.8'
+
 services:
   backend:
     build: ./backend
-    container_name: synapse-backend
+    restart: always
     environment:
+      # O Railway injeta a PORT automaticamente, não precisa definir porta fixa
+      # Mapeando variáveis do Railway para o Container:
+      DATABASE_URL: ${DATABASE_URL}
       JWT_SECRET_KEY: ${JWT_SECRET_KEY}
-      DATABASE_URL: "postgresql+psycopg://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}"
       GNEWS_API_KEY: ${GNEWS_API_KEY}
       GEMINI_API_KEY: ${GEMINI_API_KEY}
       GMAIL_SENDER_EMAIL: ${GMAIL_SENDER_EMAIL}
       GMAIL_APP_PASSWORD: ${GMAIL_APP_PASSWORD}
-    ports:
-      - "5001:5000"
-    volumes:
-      - ./backend:/app
-    depends_on:
-      db:
-        condition: service_healthy
 
   frontend:
     build: ./frontend
-    container_name: synapse-frontend
-    ports:
-      - "5173:5173"
-    volumes:
-      - ./frontend:/app
-      - /app/node_modules
-
+    restart: always
+    environment:
+      # Se for Vite/React (SPA), essas variaveis precisam ser em tempo de BUILD (ARG)
+      # Se for Next.js (SSR), funciona aqui. 
+      # Ajuste conforme seu framework, mas geralmente é necessário saber a URL do back:
+      VITE_API_URL: ${VITE_API_URL} # ou NEXT_PUBLIC_API_URL
+      
   cron:
     build:
       context: ./backend
       dockerfile: dockerfile.cron
-    container_name: synapse-cron
+    restart: always
     environment:
-      DATABASE_URL: "postgresql+psycopg://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}"
+      DATABASE_URL: ${DATABASE_URL}
       GNEWS_API_KEY: ${GNEWS_API_KEY}
       GEMINI_API_KEY: ${GEMINI_API_KEY}
       GMAIL_SENDER_EMAIL: ${GMAIL_SENDER_EMAIL}
       GMAIL_APP_PASSWORD: ${GMAIL_APP_PASSWORD}
-    volumes:
-      - ./backend:/app
-    depends_on:
-      db:
-        condition: service_healthy
-
-  db:
-    image: postgres:14-alpine
-    container_name: synapse-db
-    environment:
-      - POSTGRES_DB=${POSTGRES_DB}
-      - POSTGRES_USER=${POSTGRES_USER}
-      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
-    volumes:
-      - postgres_data:/var/lib/postgresql/data/
-    ports:
-      - "5432:5432"
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
-      interval: 5s
-      timeout: 5s
-      retries: 5
-
-volumes:
-  postgres_data:
