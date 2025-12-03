@@ -1,6 +1,4 @@
-# /frontend/dockerfile
-
-# Usar a versão LTS (Long Term Support) para estabilidade
+# Usar a versão LTS
 FROM node:20-alpine
 
 WORKDIR /app
@@ -12,22 +10,19 @@ RUN npm ci
 
 COPY . .
 
-# --- FASE DE BUILD ---
-# Isso cria a pasta 'dist' com HTML/CSS/JS otimizados
+# --- A CORREÇÃO MÁGICA ---
+# Aceita a variável vinda do Railway
+ARG VITE_API_BASE_URL
+# Torna ela disponível para o comando de build
+ENV VITE_API_BASE_URL=$VITE_API_BASE_URL
+
+# Agora sim, o build vai enxergar a URL
 RUN npm run build
 
-# Instala um servidor HTTP leve e eficiente
+# Instala servidor web
 RUN npm install -g serve
-
-# Ajusta permissões (boa prática)
 RUN chown -R node:node /app
-
 USER node
-
-# Porta padrão do servidor 'serve'
 EXPOSE 3000
 
-# Inicia o servidor estático
-# -s: Single Page App (resolve rotas do React)
-# dist: a pasta que foi gerada no build
 CMD ["serve", "-s", "dist", "-l", "3000"]
