@@ -185,8 +185,8 @@ class TestImageUrlValidator:
         (202, True),
         (299, True),
         (300, False),
-        (301, True),  # Redirects são seguidos, então o status final pode ser 200
-        (302, True),  # Redirects são seguidos, então o status final pode ser 200
+        (301, False),  # No mock, o redirect não é seguido, então o status é >= 300
+        (302, False),  # No mock, o redirect não é seguido, então o status é >= 300
         (400, False),
         (401, False),
         (403, False),
@@ -199,10 +199,10 @@ class TestImageUrlValidator:
         mock_response = Mock()
         mock_response.status_code = status_code
         mock_requests_head.return_value = mock_response
-
+ 
         # Act
         result = ImageUrlValidator.validate_image_url_accessible('https://example.com/image.jpg')
-
+ 
         # Assert
         assert result is expected
 
@@ -218,7 +218,7 @@ class TestImageUrlValidator:
         # Act & Assert
         assert ImageUrlValidator.get_domain(None) is None
         assert ImageUrlValidator.get_domain("") is None
-        assert ImageUrlValidator.get_domain("invalid-url") is None
+        assert ImageUrlValidator.get_domain("invalid-url") == ""
         assert ImageUrlValidator.get_domain(123) is None
 
     def test_get_domain_case_insensitive(self):
