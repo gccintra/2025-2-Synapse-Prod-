@@ -1,0 +1,47 @@
+from sqlalchemy import select, delete
+from sqlalchemy.exc import SQLAlchemyError
+from app.extensions import db
+from app.entities.user_preferred_custom_topics import UserPreferredCustomTopicEntity
+
+class UserPreferredCustomTopicRepository:
+    def __init__(self, session=None):
+        self.session = session or db.session
+
+    def attach(self, user_id: int, topic_id: int) -> bool:
+        try:
+            exists = self.session.execute(
+                select(UserPreferredCustomTopicEntity).filter_by(user_id=user_id, topic_id=topic_id)
+            ).scalar_one_or_none()
+            if exists:
+                return False
+            rel = UserPreferredCustomTopicEntity(user_id=user_id, topic_id=topic_id)
+            self.session.add(rel)
+            self.session.commit()
+            return True
+        except SQLAlchemyError:
+            self.session.rollback()
+            raise
+
+    def detach(self, user_id: int, topic_id: int) -> bool:
+        try:
+            res = self.session.execute(
+                delete(UserPreferredCustomTopicEntity).filter_by(user_id=user_id, topic_id=topic_id)
+            )
+            self.session.commit()
+            return res.rowcount > 0
+        except SQLAlchemyError:
+            self.session.rollback()
+            raise
+
+    def list_user_topic_ids(self, user_id: int) -> list[int]:
+        return self.session.execute(
+            select(UserPreferredCustomTopicEntity.topic_id).filter_by(user_id=user_id)
+        ).scalars().all()
+
+    def count_by_user(self, user_id: int) -> int:
+        """Conta quantos tópicos um usuário tem associado."""
+        try:
+            return self.session.query(UserPreferredCustomTopicEntity).filter_by(user_id=user_id).count()
+        except SQLAlchemyError:
+            self.session.rollback()
+            raise

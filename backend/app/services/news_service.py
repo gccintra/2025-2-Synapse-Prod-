@@ -1,148 +1,441 @@
-import os
-import requests
-import logging
-from datetime import datetime
-from newspaper import Article
-from sqlalchemy.exc import IntegrityError
-from newspaper.configuration import Configuration
 from app.repositories.news_repository import NewsRepository
 from app.repositories.news_source_repository import NewsSourceRepository
+from app.repositories.topic_repository import TopicRepository
+from app.repositories.user_news_source_repository import UserNewsSourceRepository
+from app.repositories.user_read_history_repository import UserReadHistoryRepository
+from app.services.user_custom_topic_service import UserCustomTopicService
+from app.models.exceptions import UserNotFoundError, NewsNotFoundError
+from app.repositories.user_preferred_custom_topic_repository import UserPreferredCustomTopicRepository
 from app.models.news import News, NewsValidationError
-from app.models.news_source import NewsSource
-from app.models.exceptions import NewsSourceValidationError
+from app.models.news_source import NewsSource, NewsSourceValidationError
+from app.models.exceptions import NewsNotFoundError
+from app.extensions import db
+from typing import Optional
+import logging
+import math
 
-
-# TODO: Enviar a header da noticia pra IA para ela criar os topicos da noticia (categorizar) e criar na tabela de topicos.
-
-# TODO: fazer consultas no banco para topicos mais selecionados e a partir desses topicos, pedir para IA criar palavras chaves para noticias e enviar para o endpoint de search.
-
-# TODO: Tratar a quantidade de requests que vou fazer para cada topico, enviar um objeto com os topicos e varias informacoes do tipo
-
-# TODO: adicionar parâmetro para dizer se vou rodar um top headlines ou um search por palavra chave
 
 class NewsService():
-    def __init__(self, news_repo: NewsRepository | None = None, news_source_repo: NewsSourceRepository | None = None):
+   
+    def __init__(
+        self,
+        news_repo: NewsRepository | None = None,
+        topic_repo: TopicRepository | None = None,
+        user_news_source_repo: UserNewsSourceRepository | None = None,
+        user_history_repo: UserReadHistoryRepository | None = None
+    ):
         self.news_repo = news_repo or NewsRepository()
-        self.news_sources_repo = news_source_repo or NewsSourceRepository()
-        self.gnews_api_key = os.getenv('GNEWS_API_KEY')
-        self.api_endpoint = "https://gnews.io/api/v4/top-headlines"
-        self.api_endpoint_search = "https://gnews.io/api/v4/search"
+        self.topic_repo = topic_repo or TopicRepository()
+        self.user_news_source_repo = user_news_source_repo or UserNewsSourceRepository()
+        self.user_custom_topic_service = UserCustomTopicService()
+        self.user_history_repo = UserReadHistoryRepository()
 
-    # TODO: Nao devo receber uma lista de topicos, devo criar uma função para calcular quais topicos devem ser pesquisados, além de selecionar quantas consultas serão feitas em cada endpoint (search e top headlines)
-    
-    def collect_and_enrich_new_articles(self, topics: list[str] | None = None):
-        if not self.gnews_api_key:
-            logging.error("A variável de ambiente GNEWS_API_KEY não foi configurada.")
-            raise ValueError("A variável de ambiente GNEWS_API_KEY não foi configurada.")
-        
-        all_articles_metadata = []
-        
-        search_topics = topics or [None]
+    def get_news_by_id(self, user_id: Optional[int], news_id: int) -> dict:
+        news = self.news_repo.find_by_id(news_id, user_id=user_id)
+        if not news:
+            raise NewsNotFoundError(f"Notícia com ID {news_id} não encontrada.")
 
-        for topic in search_topics:
-            logging.info(f"Buscando notícias para o tópico: {'Geral' if topic is None else topic}")
-            articles_metadata = self.discover_articles_via_gnews(topic)
-            all_articles_metadata.extend(articles_metadata)
+        news_dict = {
+            "id": news.id,
+            "title": news.title,
+            "description": news.description,
+            "url": news.url,
+            "image_url": news.image_url,
+            "content": news.content,
+            "html": news.html,
+            "published_at": news.published_at.isoformat() if news.published_at else None,
+            "source_id": news.source_id,
+            "created_at": news.created_at.isoformat() if news.created_at else None,
+            "is_favorited": news.is_favorited, 
+        }
 
-        logging.info(f"Encontrados {len(all_articles_metadata)} artigos na API.")
+        if news.source_name:
+            news_dict["source_name"] = news.source_name
 
-        new_articles_count = 0
-        new_sources_count = 0
+        if news.topic_name:
+            news_dict["topic_name"] = news.topic_name
 
-        for i, article_meta in enumerate(all_articles_metadata, 1):
-            title = article_meta.get('title')
-            logging.info(f"Processando artigo {i}/{len(all_articles_metadata)}: '{title}'")
-            article_url = article_meta.get('url')
-            if not article_url:
-                logging.warning("Artigo sem URL encontrado, pulando.")
-                continue
+        return news_dict
 
-            if self.news_repo.find_by_url(article_url):
-                logging.info(f"Artigo já existe no banco de dados, pulando: {article_url}")
-                continue
+    def get_all_news(self, user_id: Optional[int], page: int = 1, per_page: int = 10):
+        """
+        Retorna todas as notícias paginadas.
 
-            source_name = article_meta.get('source', {}).get('name')
-            source_url = article_meta.get('source', {}).get('url')
+        Args:
+            user_id: ID do usuário
+            page: Número da página (começa em 1)
+            per_page: Quantidade de itens por página
 
-            if not source_name or not source_url:
-                logging.warning(f"Pulando artigo por falta de dados da fonte: {article_url}")
-                continue
+        Returns:
+            Dict com notícias, paginação e metadados
+        """
 
-            news_source_model = self.news_sources_repo.find_by_url(source_url)
-            if not news_source_model:
-                try:
-                    logging.info(f"Nova fonte encontrada: '{source_name}'. Criando no banco de dados.")
-                    new_source = NewsSource(name=source_name, url=source_url)
-                    news_source_model = self.news_sources_repo.create(new_source)
-                    new_sources_count += 1
-                except IntegrityError:
-                    logging.warning(f"Race condition ao criar fonte. Buscando novamente por URL: {source_url}")
-                    news_source_model = self.news_sources_repo.find_by_url(source_url)
-                    if not news_source_model:
-                        logging.error(f"Não foi possível encontrar a fonte por URL '{source_url}' após erro de integridade.")
-                        continue
-                except (NewsSourceValidationError, Exception) as e:
-                    logging.error(f"Não foi possível criar a fonte '{source_name}': {e}", exc_info=True)
-                    continue
-            
-            source_id = news_source_model.id
+        paginated_news = self.news_repo.list_all(page=page, per_page=per_page, user_id=user_id)
 
-            article_content = self.scrape_article_content(article_url)
-            if not article_content:
-                logging.warning(f"Falha ao extrair conteúdo do artigo, pulando: {article_url}")
-                continue
+        total_count = self.news_repo.count_all()
 
-            try:
-                published_at_str = article_meta.get('publishedAt')
-                if published_at_str.endswith('Z'):
-                    published_at_str = published_at_str[:-1] + '+00:00'
-                published_at_dt = datetime.fromisoformat(published_at_str)
+        news_list = []
+        for news in paginated_news:
+            news_dict = {
+                "id": news.id,
+                "title": news.title,
+                "description": news.description,
+                "url": news.url,
+                "image_url": news.image_url,
+                "content": news.content,
+                "html": news.html,
+                "published_at": news.published_at.isoformat() if news.published_at else None,
+                "source_id": news.source_id,
+                "created_at": news.created_at.isoformat() if news.created_at else None,
+                "is_favorited": news.is_favorited, # Adiciona o campo de favorito
+            }
 
-                article = News(
-                    title=article_meta.get('title'),
-                    url=article_url,
-                    description=article_meta.get('description'),
-                    content=article_content,
-                    image_url=article_meta.get('image'),
-                    published_at=published_at_dt,
-                    source_id=source_id,
-                )
-                
-                self.news_repo.create(article)
-                new_articles_count += 1
-                logging.info(f"Novo artigo salvo: '{article.title}'")
+            if news.source_name:
+                news_dict["source_name"] = news.source_name
 
-            except (NewsValidationError, Exception) as e:
-                logging.error(f"Não foi possível criar o artigo '{article_meta.get('title')}': {e}", exc_info=True)
-                continue
-            
-        return new_articles_count, new_sources_count
+            if news.topic_name:
+                news_dict["topic_name"] = news.topic_name
 
-    def discover_articles_via_gnews(self, topic: str | None = None, language='pt', country='br', max_articles=10):
-        params = {'lang': language, 'country': country, 'apikey': self.gnews_api_key, 'max': max_articles}
-        if topic: params['topic'] = topic
+            news_list.append(news_dict)
 
+        total_pages = math.ceil(total_count / per_page) if total_count > 0 else 1
+
+        return {
+            "news": news_list,
+            "pagination": {
+                "page": page,
+                "per_page": per_page,
+                "total": total_count,
+                "pages": total_pages
+            }
+        }
+
+    def get_for_you_news(self, user_id: int, page: int = 1, per_page: int = 10):
+        """
+        Retorna feed personalizado "For You" com ranking baseado em preferências do usuário.
+
+        Sistema de scoring híbrido (últimos 15 dias):
+        - Score temporal: 300 (24h), 150 (1-2d), 75 (2-5d), 25 (5+d)
+        - Fonte preferida: +100 pontos
+        - Custom topic match: +200 pontos por match
+
+        Args:
+            user_id: ID do usuário
+            page: Número da página (começa em 1)
+            per_page: Quantidade de itens por página
+
+        Returns:
+            Dict com notícias rankeadas por score, paginação e metadados
+        """
         try:
-            response = requests.get(self.api_endpoint, params=params)
-            response.raise_for_status()
-            return response.json().get('articles', [])
-        except requests.exceptions.RequestException as e:
-            logging.error(f"Erro ao chamar a GNews API: {e}", exc_info=True)
-            return []
+            preferred_source_ids = self.user_news_source_repo.get_user_preferred_source_ids(user_id)
+            custom_topics = self.user_custom_topic_service.get_user_preferred_topics(user_id)
 
-    def scrape_article_content(self, url: str) -> str | None:
-        try:
-            logging.debug(f"Fazendo scraping de: {url}")
-            
-            config = Configuration()
-            config.browser_user_agent = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Safari/537.36'
-            config.request_timeout = 15
-            config.keep_article_html = True
+            recent_news = self.news_repo.get_recent_news_with_base_score(
+                user_id=user_id,
+                preferred_source_ids=preferred_source_ids,
+                days_limit=15
+            )
 
-            article = Article(url, config=config)
-            article.download()
-            article.parse()
-            return article.article_html
+            # Calcular score final adicionando score de custom topics
+            for news in recent_news:
+                base_score = (news.time_score or 0) + (news.source_score or 0)
+
+                topic_score = self._calculate_topic_score(news, custom_topics)
+
+                setattr(news, 'total_score', base_score + topic_score)
+
+            # Ordenar por score total (decrescente) e published_at (decrescente) como desempate
+            sorted_news = sorted(
+                recent_news,
+                key=lambda x: (getattr(x, 'total_score', 0), x.published_at),
+                reverse=True
+            )
+
+            # Paginação manual
+            total_count = len(sorted_news)
+            start_index = (page - 1) * per_page
+            end_index = start_index + per_page
+            paginated_news = sorted_news[start_index:end_index]
+
+            news_list = []
+            for news in paginated_news:
+                news_dict = {
+                    "id": news.id,
+                    "title": news.title,
+                    "description": news.description,
+                    "url": news.url,
+                    "image_url": news.image_url,
+                    "content": news.content,
+                    "html": news.html,
+                    "published_at": news.published_at.isoformat() if news.published_at else None,
+                    "source_id": news.source_id,
+                    "created_at": news.created_at.isoformat() if news.created_at else None,
+                    "is_favorited": news.is_favorited,
+                    "score": getattr(news, 'total_score', 0),  
+                }
+
+                if news.source_name:
+                    news_dict["source_name"] = news.source_name
+
+                if news.topic_name:
+                    news_dict["topic_name"] = news.topic_name
+
+                news_list.append(news_dict)
+
+            total_pages = math.ceil(total_count / per_page) if total_count > 0 else 1
+
+            return {
+                "news": news_list,
+                "pagination": {
+                    "page": page,
+                    "per_page": per_page,
+                    "total": total_count,
+                    "pages": total_pages
+                }
+            }
+
         except Exception as e:
-            logging.error(f"Erro no scraping de {url}: {e}", exc_info=True)
-            return None
+            print(f"Erro no feed personalizado: {e}")
+            return self.get_all_news(user_id, page, per_page)
+
+    def _calculate_topic_score(self, news: News, custom_topics: list) -> int:
+        """
+        Calcula score baseado em matches de custom topics no conteúdo da notícia.
+
+        Args:
+            news: Modelo de notícia
+            custom_topics: Lista de custom topics do usuário
+
+        Returns:
+            Score total baseado em matches (200 pontos por match)
+        """
+        if not custom_topics:
+            return 0
+
+        score = 0
+        # Concatenar título, descrição e conteúdo para busca
+        text_content = f"{news.title or ''} {news.description or ''} {news.content or ''}".lower()
+
+        for topic in custom_topics:
+            # O tópico é um dicionário, ex: {'id': 1, 'name': 'tecnologia'}
+            topic_name = topic.get('name', '').lower()
+            if topic_name and topic_name in text_content:
+                score += 200 # Adiciona 200 pontos para cada match
+
+        return score
+
+
+    def get_news_by_topic(self, topic_id: int, page: int = 1, per_page: int = 10, user_id: Optional[int] = None) -> dict:
+        """Busca notícias paginadas por um tópico específico."""
+        paginated_news = self.news_repo.find_by_topic(topic_id, page, per_page, user_id)
+
+        total_count = self.news_repo.count_by_topic(topic_id)
+
+        news_list = []
+        for news in paginated_news:
+            news_dict = {
+                "id": news.id,
+                "title": news.title,
+                "description": news.description,
+                "url": news.url,
+                "image_url": news.image_url,
+                "content": news.content,
+                "html": news.html,
+                "published_at": news.published_at.isoformat() if news.published_at else None,
+                "source_id": news.source_id,
+                "topic_id": news.topic_id,
+                "is_favorited": news.is_favorited,
+            }
+            if news.source_name:
+                news_dict["source_name"] = news.source_name
+            if news.topic_name:
+                news_dict["topic_name"] = news.topic_name
+            news_list.append(news_dict)
+
+        total_pages = math.ceil(total_count / per_page) if total_count > 0 else 1
+
+        return {
+            "news": news_list,
+            "pagination": {
+                "page": page,
+                "per_page": per_page,
+                "total": total_count,
+                "pages": total_pages
+            }
+        }
+
+    def get_favorite_news(self, user_id: int, page: int = 1, per_page: int = 20) -> dict:
+        """
+        Retorna as notícias favoritas de um usuário.
+
+        Args:
+            user_id: ID do usuário
+            page: Número da página (começa em 1)
+            per_page: Quantidade de itens por página
+
+        Returns:
+            Dict com notícias favoritas, paginação e metadados
+        """
+        paginated_news = self.news_repo.list_favorites_by_user(user_id, page, per_page)
+
+        # Para contar o total, vamos buscar todas as favoritas (sem paginação) e contar
+        all_favorites = self.news_repo.list_favorites_by_user(user_id, page=1, per_page=1000000)
+        total_count = len(all_favorites)
+
+        news_list = []
+        for news in paginated_news:
+            news_dict = {
+                "id": news.id,
+                "title": news.title,
+                "description": news.description,
+                "url": news.url,
+                "image_url": news.image_url,
+                "content": news.content,
+                "html": news.html,
+                "published_at": news.published_at.isoformat() if news.published_at else None,
+                "source_id": news.source_id,
+                "created_at": news.created_at.isoformat() if news.created_at else None,
+                "is_favorited": True,  # Sempre True já que são favoritas
+            }
+
+            if news.source_name:
+                news_dict["source_name"] = news.source_name
+
+            if news.topic_name:
+                news_dict["topic_name"] = news.topic_name
+
+            news_list.append(news_dict)
+
+        total_pages = math.ceil(total_count / per_page) if total_count > 0 else 1
+
+        return {
+            "news": news_list,
+            "pagination": {
+                "page": page,
+                "per_page": per_page,
+                "total": total_count,
+                "pages": total_pages
+            }
+        }
+    
+    def save_history(self, user_id: int, news_id: int):
+        try:
+            created_history = self.user_history_repo.create(user_id, news_id)
+            return created_history
+        except (UserNotFoundError,NewsNotFoundError) as e:
+            raise e
+        except Exception as e:
+            logging.error(f"Erro inesperado ao salvar noticia como lida (user_id={user_id}, news_id={news_id}): {e}", exc_info=True)
+            raise Exception("Ocorreu um erro interno ao marcar noticia como lida.")
+    
+    def get_history_news(self, user_id: int, page: int = 1, per_page: int = 10) -> dict:
+        try:
+            results, total_count = self.user_history_repo.get_user_history(
+                user_id=user_id,
+                page=page,
+                per_page=per_page
+            )
+            
+            news_list = []
+            for history_entity, news_entity in results:
+                news_model = News.from_entity(news_entity)
+                
+                from app.entities.user_saved_news_entity import UserSavedNewsEntity
+                favorite_check = db.session.query(UserSavedNewsEntity).filter_by(
+                    user_id=user_id,
+                    news_id=news_model.id,
+                    is_favorite=True
+                ).first()
+                
+                news_dict = {
+                    "id": news_model.id,
+                    "title": news_model.title,
+                    "description": news_model.description,
+                    "url": news_model.url,
+                    "image_url": news_model.image_url,
+                    "content": news_model.content,
+                    "html": news_model.html,
+                    "published_at": news_model.published_at.isoformat() if news_model.published_at else None,
+                    "source_id": news_model.source_id,
+                    "topic_id": news_model.topic_id,
+                    "created_at": news_model.created_at.isoformat() if news_model.created_at else None,
+                    "is_favorited": favorite_check is not None,
+                    "read_at": history_entity.read_at.isoformat(),
+                }
+                
+                if news_model.source_name:
+                    news_dict["source_name"] = news_model.source_name
+                
+                if news_model.topic_name:
+                    news_dict["topic_name"] = news_model.topic_name
+                
+                news_list.append(news_dict)
+            
+            total_pages = math.ceil(total_count / per_page) if total_count > 0 else 1
+            
+            logging.info(f"Histórico formatado: user_id={user_id}, total_news={len(news_list)}, total={total_count}")
+            
+            return {
+                "news": news_list,
+                "pagination": {
+                    "page": page,
+                    "per_page": per_page,
+                    "total": total_count,
+                    "pages": total_pages,
+                    "has_next": page < total_pages,
+                    "has_prev": page > 1
+                }
+            }
+            
+        except Exception as e:
+            logging.error(f"Erro ao buscar histórico de leitura: {e}", exc_info=True)
+            raise Exception(f"Erro ao buscar histórico: {str(e)}")
+
+    # get for you news adaptada para retornar noticias em um formato diferente 
+    def get_news_to_email(self, user_id: int, page: int = 1, per_page: int = 10):
+        try:
+            preferred_source_ids = self.user_news_source_repo.get_user_preferred_source_ids(user_id)
+            custom_topics = self.user_custom_topic_service.get_user_preferred_topics(user_id)
+
+            recent_news = self.news_repo.get_recent_news_with_base_score(
+                user_id=user_id,
+                preferred_source_ids=preferred_source_ids,
+                days_limit=15
+            )
+
+            for news in recent_news:
+                base_score = (news.time_score or 0) + (news.source_score or 0)
+                topic_score = self._calculate_topic_score(news, custom_topics)
+                setattr(news, 'total_score', base_score + topic_score)
+
+            sorted_news = sorted(
+                recent_news,
+                key=lambda x: (getattr(x, 'total_score', 0), x.published_at),
+                reverse=True
+            )
+
+            total_count = len(sorted_news)
+            start_index = (page - 1) * per_page
+            end_index = start_index + per_page
+            paginated_news = sorted_news[start_index:end_index]
+
+            news_list = []
+            for news in paginated_news:
+                news_dict = {
+                    "category": getattr(news, "topic_name", "Geral"),
+                    "title": news.title,
+                    "img_url": news.image_url or "",
+                    "summary": news.description or "",
+                    "content": news.content or "",  # Campo adicionado para IA gerar resumos ricos
+                    "source": getattr(news, "source_name", "Fonte Desconhecida"),
+                    "date": news.published_at.strftime("%d/%m/%Y") if news.published_at else "",
+                    "url": news.url
+                }
+                news_list.append(news_dict)
+
+            return news_list
+
+        except Exception as e:
+            print(f"Erro no feed personalizado: {e}")
+            return []

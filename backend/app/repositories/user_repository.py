@@ -1,10 +1,13 @@
 from sqlalchemy import func, select
-from sqlalchemy.exc import SQLAlchemyError
+from sqlalchemy.exc import SQLAlchemyError, IntegrityError
 import logging
 
 from app.extensions import db
 from app.entities.user_entity import UserEntity
+from app.entities.news_entity import NewsEntity
 from app.models.user import User
+from app.models.exceptions import UserNotFoundError, NewsNotFoundError, NewsAlreadyFavoritedError, NewsNotFavoritedError
+
 
 class UserRepository:
     def __init__(self, session=None):
@@ -50,3 +53,48 @@ class UserRepository:
         stmt = select(UserEntity)
         entities = self.session.execute(stmt).scalars().all()
         return [User.from_entity(entity) for entity in entities]
+    
+    def get_users_to_newsletter(self) -> list[User]:
+        stmt = select(UserEntity).where(UserEntity.newsletter.is_(True))
+        entities = self.session.execute(stmt).scalars().all()
+        
+        return [User.from_entity(entity) for entity in entities]
+
+    def add_favorite_news(self, user_id: int, news_id: int):
+        """Adiciona uma notícia à lista de favoritos de um usuário."""
+        try:
+            user_entity = self.session.get(UserEntity, user_id)
+            if not user_entity:
+                raise UserNotFoundError("Usuário não encontrado.")
+
+            news_entity = self.session.get(NewsEntity, news_id)
+            if not news_entity:
+                raise NewsNotFoundError("Notícia não encontrada.")
+
+            if news_entity not in user_entity.saved_news:
+                user_entity.saved_news.append(news_entity)
+                self.session.commit()
+            else:
+                raise NewsAlreadyFavoritedError("Notícia já favoritada pelo usuário.")
+        except (SQLAlchemyError, IntegrityError) as e:
+            self.session.rollback()
+            logging.error(f"Erro de banco ao favoritar notícia (user_id={user_id}, news_id={news_id}): {e}", exc_info=True)
+            raise
+
+    def remove_favorite_news(self, user_id: int, news_id: int):
+        """Remove uma notícia da lista de favoritos de um usuário."""
+        try:
+            user_entity = self.session.get(UserEntity, user_id)
+            if not user_entity:
+                raise UserNotFoundError("Usuário não encontrado.")
+
+            news_entity = self.session.get(NewsEntity, news_id)
+            if not news_entity or news_entity not in user_entity.saved_news:
+                raise NewsNotFavoritedError("Notícia não encontrada nos favoritos do usuário.")
+            
+            user_entity.saved_news.remove(news_entity)
+            self.session.commit()
+        except SQLAlchemyError as e:
+            self.session.rollback()
+            logging.error(f"Erro de banco ao desfavoritar notícia (user_id={user_id}, news_id={news_id}): {e}", exc_info=True)
+            raise

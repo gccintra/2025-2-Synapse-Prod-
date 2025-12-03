@@ -1,6 +1,10 @@
 import React from "react";
 import ReactDOM from "react-dom/client";
-import { createBrowserRouter, RouterProvider, Navigate } from "react-router-dom";
+import {
+  createBrowserRouter,
+  RouterProvider,
+  Navigate,
+} from "react-router-dom";
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import "./index.css";
@@ -12,41 +16,69 @@ import EditAccount from "./pages/EditAccount.jsx";
 import ChangePassword from "./pages/ChangePassword.jsx";
 import AccountPage from "./pages/AccountPage";
 import PublicRoute from "./components/PublicRoute.jsx";
+import AddSource from "./components/AddSource.jsx";
 import PrivateRoute from "./components/PrivateRoute.jsx";
+import FeedPage from "./pages/FeedPage.jsx";
+import NewsPage from "./pages/NewsPage.jsx";
+import SavedNewsPage from "./pages/SavedNewsPage.jsx";
+import NewsHistoryPage from "./pages/NewsHistoryPage";
+import NewsletterPage from "./pages/NewsletterPage.jsx";
 
-// Cria o objeto de configuração do roteador
+import RootLayout from "./layouts/RootLayout";
+import AccountLayout from "./layouts/AccountLayout.jsx";
+
 const router = createBrowserRouter([
-  // Rotas públicas normais
-
   {
-    path: "/",
-    element: <Navigate to="/login" replace />,
-  },
-  {
-    path: "/sobre", // A URL da página "sobre"
-    element: <AboutPage />, // Renderiza o componente AboutPage
-  },
-  {
-    // Rotas públicas restritas (APENAS para usuários não logados)
-    element: <PublicRoute />,
+    element: <RootLayout />,
     children: [
       {
-        path: "/login", 
-        element: <LoginPage />,
+        path: "/",
+        element: <Navigate to="/feed" replace />,
+      },
+      { path: "/feed", element: <FeedPage /> },
+      {
+        path: "/about",
+        element: <AboutPage />,
       },
       {
-        path: "/registrar",
-        element: <RegisterPage />,
+        path: "/article/:id",
+        element: <NewsPage />,
       },
-    ],
-  },
-  {
-    // Rotas privadas (apenas para usuários logados)
-    element: <PrivateRoute />,
-    children: [
-      { path: "/account", element: <AccountPage /> },
-      { path: "/edit-account", element: <EditAccount /> },
-      { path: "/change-password", element: <ChangePassword /> },
+      {
+        path: "/history",
+        element: <NewsHistoryPage />, // Adicione esta linha
+      },
+      {
+        // Rotas públicas restritas (APENAS para usuários não logados)
+        element: <PublicRoute />,
+        children: [
+          {
+            path: "/login",
+            element: <LoginPage />,
+          },
+          {
+            path: "/registrar",
+            element: <RegisterPage />,
+          },
+        ],
+      },
+      {
+        // Rotas privadas (apenas para usuários logados)
+        element: <PrivateRoute />,
+        children: [
+          {
+            element: <AccountLayout />,
+            children: [
+              { path: "/account", element: <AccountPage /> },
+              { path: "/newsletter", element: <NewsletterPage /> },
+            ],
+          },
+          { path: "/edit-account", element: <EditAccount /> },
+          { path: "/change-password", element: <ChangePassword /> },
+          { path: "/add-source", element: <AddSource /> },
+          { path: "/saved-news", element: <SavedNewsPage /> },
+        ],
+      },
     ],
   },
 ]);
@@ -55,6 +87,11 @@ const router = createBrowserRouter([
 ReactDOM.createRoot(document.getElementById("root")).render(
   <React.StrictMode>
     <RouterProvider router={router} />
-    <ToastContainer position="bottom-right" autoClose={5000} hideProgressBar={false} theme="dark" />
+    <ToastContainer
+      position="bottom-right"
+      autoClose={5000}
+      hideProgressBar={false}
+      theme="dark"
+    />
   </React.StrictMode>
 );

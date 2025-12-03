@@ -36,3 +36,4 @@ class TopicRepository:
         stmt = select(TopicEntity)
         es = self.session.execute(stmt).scalars().all()
         return [Topic.from_entity(e) for e in es]
+

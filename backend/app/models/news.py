@@ -12,10 +12,15 @@ class News:
         published_at: datetime,
         source_id: int,
         content: str,
+        html: str,
+        topic_id: int | None = None,
         id: int | None = None,
         description: str | None = None,
         image_url: str | None = None,
         created_at: datetime | None = None,
+        source_name: str | None = None,
+        topic_name: str | None = None,
+        scrapping_status: str | None = None,
     ):
         self.id = id
         self.title = title
@@ -23,9 +28,14 @@ class News:
         self.url = url
         self.image_url = image_url
         self.content = content
+        self.html = html
         self.published_at = published_at
         self.source_id = source_id
+        self.topic_id = topic_id
         self.created_at = created_at
+        self.source_name = source_name
+        self.topic_name = topic_name
+        self.scrapping_status = scrapping_status
 
     @property
     def title(self) -> str:
@@ -97,10 +107,31 @@ class News:
             raise NewsValidationError("source_id", "deve ser um inteiro positivo.")
         self._source_id = value
 
+    @property
+    def topic_id(self) -> int:
+        return self._topic_id
+
+    @topic_id.setter
+    def topic_id(self, value: int):
+        if not value or not isinstance(value, int) or value <= 0:
+            raise NewsValidationError("topic_id", "deve ser um inteiro positivo.")
+        self._topic_id = value
+
     @classmethod
     def from_entity(cls, entity: NewsEntity) -> "News":
         if not entity:
             return None
+
+        # Extrair nome da fonte se disponível
+        source_name = None
+        if hasattr(entity, 'source') and entity.source:
+            source_name = entity.source.name
+
+        # Extrair nome do tópico se disponível
+        topic_name = None
+        if hasattr(entity, 'topic') and entity.topic:
+            topic_name = entity.topic.name
+
         return cls(
             id=entity.id,
             title=entity.title,
@@ -108,9 +139,13 @@ class News:
             url=entity.url,
             image_url=entity.image_url,
             content=entity.content,
+            html=entity.html,
             published_at=entity.published_at,
             source_id=entity.source_id,
+            topic_id=entity.topic_id,
             created_at=entity.created_at,
+            source_name=source_name,
+            topic_name=topic_name,
         )
 
     def to_orm(self) -> NewsEntity:
@@ -121,7 +156,9 @@ class News:
             url=self.url,
             image_url=self.image_url,
             content=self.content,
+            html=self.html,
             published_at=self.published_at,
             source_id=self.source_id,
+            topic_id=self.topic_id,
             created_at=self.created_at,
         )

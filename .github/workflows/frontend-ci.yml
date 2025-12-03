@@ -1,0 +1,54 @@
+name: Frontend CI
+
+on:
+  pull_request:
+    branches: [dev, main]
+
+  push:
+    branches: [dev, main]
+    paths:
+      - "frontend/**"
+      - ".github/workflows/frontend-ci.yml"
+
+  workflow_dispatch: # Permite acionamento manual dos workflows
+
+jobs:
+  build-and-test:
+    name: Frontend Build & Test
+    runs-on: ubuntu-latest
+
+    defaults:
+      run:
+        working-directory: ./frontend
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Check for file changes
+        id: changed-files
+        uses: tj-actions/changed-files@v44
+        with:
+          files: |
+            frontend/**
+            .github/workflows/frontend-ci.yml
+
+      - name: Set up Node.js
+        if: steps.changed-files.outputs.any_changed == 'true'
+        uses: actions/setup-node@v4
+        with:
+          node-version: "24.7.0"
+          cache: "npm"
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install dependencies
+        if: steps.changed-files.outputs.any_changed == 'true'
+        run: npm ci
+
+      - name: Run build
+        if: steps.changed-files.outputs.any_changed == 'true'
+        run: npm run build
+
+      - name: Mark as successful if no files were changed
+        if: steps.changed-files.outputs.any_changed == 'false'
+        run: echo "No frontend files changed. Skipping CI."

@@ -1,6 +1,17 @@
 @import url("https://fonts.googleapis.com/css2?family=Rajdhani:wght@300;700&display=swap");
-@import url("https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;700&display=swap");
 
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/* para esconder scrollbar dos tópicos na FeedPage.jsx */
+@media (max-width: 1255px) {
+  .custom-scroll {
+    scrollbar-width: none; /* Firefox */
+    -ms-overflow-style: none; /* IE and Edge */
+  }
+  .custom-scroll::-webkit-scrollbar {
+    display: none; /* Chrome, Safari and Opera */
+  }
+}

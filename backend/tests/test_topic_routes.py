@@ -1,13 +1,14 @@
 import json
 import pytest
-from unittest.mock import patch
+from app.models.custom_topic import CustomTopic
 from app.models.topic import Topic
-from app.entities.user_topic_entity import UserTopicEntity
+from app.entities.user_preferred_custom_topics import UserPreferredCustomTopicEntity
 
 valid_user_data = {
     "full_name": "Test User",
     "email": "test.user@example.com",
-    "password": "StrongPassword123"
+    "password": "StrongPassword123",
+    "newsletter": False
 }
 
 def get_auth_client(client, user_data):
@@ -39,7 +40,7 @@ def test_add_topic_to_user_successfully(client, db):
         "name": "tecnologia"
     }
     response = auth_client.post(
-        '/topics/create',
+        '/topics/custom',
         data=json.dumps(request_data),
         content_type='application/json',
         headers=headers
@@ -49,12 +50,12 @@ def test_add_topic_to_user_successfully(client, db):
     data = response.get_json()
     assert data['success'] is True
     assert "Tópico adicionado com sucesso." in data['message']
-    assert data['data']['topic']['name'] == "tecnologia"
+    assert data['data']['topic']['name'] == "Tecnologia"
 
 def test_add_existing_topic_to_user_successfully(client, db):
     auth_client, headers = get_auth_client(client, valid_user_data)
 
-    topic = Topic(name="política").to_orm()
+    topic = CustomTopic(name="política").to_orm()
     db.session.add(topic)
     db.session.commit()
 
@@ -62,23 +63,23 @@ def test_add_existing_topic_to_user_successfully(client, db):
         "name": "política"
     }
     response = auth_client.post(
-        '/topics/create',
+        '/topics/custom',
         data=json.dumps(request_data),
         content_type='application/json',
         headers=headers
     )
-
+    
     assert response.status_code == 201
     data = response.get_json()
     assert data['success'] is True
     assert "Tópico adicionado com sucesso." in data['message']
-    assert data['data']['topic']['name'] == "política"
+    assert data['data']['topic']['name'] == "Política"
 
 def test_add_topic_to_user_without_name_fails(client, db):
     auth_client, headers = get_auth_client(client, valid_user_data)
 
     response = auth_client.post(
-        '/topics/create',
+        '/topics/custom',
         data=json.dumps({}),
         content_type='application/json',
         headers=headers
@@ -86,71 +87,71 @@ def test_add_topic_to_user_without_name_fails(client, db):
 
     assert response.status_code == 400
     error_data = response.get_json()
-    assert "name: não pode ser vazio." in error_data['error']
+    assert "Campo 'name' é obrigatório." in error_data['message']
 
 def test_get_user_topics_successfully(client, db):
     auth_client, headers = get_auth_client(client, valid_user_data)
     
-    auth_client.post('/topics/create', data=json.dumps({"name": "saúde"}), content_type='application/json', headers=headers)
-    auth_client.post('/topics/create', data=json.dumps({"name": "economia"}), content_type='application/json', headers=headers)
+    auth_client.post('/topics/custom', data=json.dumps({"name": "saúde"}), content_type='application/json', headers=headers)
+    auth_client.post('/topics/custom', data=json.dumps({"name": "economia"}), content_type='application/json', headers=headers)
 
-    response = auth_client.get('/topics/list')
+    response = auth_client.get('/topics/custom', headers=headers)
 
     assert response.status_code == 200
     data = response.get_json()
     assert data['success'] is True
-    assert len(data['data']) == 2
-    topic_names = [t['name'] for t in data['data']]
-    assert "saúde" in topic_names
-    assert "economia" in topic_names
+    assert len(data['data']['topics']) == 2
+    topic_names = [t['name'] for t in data['data']['topics']]
+    assert "Saúde" in topic_names
+    assert "Economia" in topic_names
 
 def test_get_user_topics_no_topics(client, db):
-    auth_client, _ = get_auth_client(client, valid_user_data)
-    response = auth_client.get('/topics/list')
+    auth_client, headers = get_auth_client(client, valid_user_data)
+    response = auth_client.get('/topics/custom', headers=headers)
 
     assert response.status_code == 200
     data = response.get_json()
     assert data['success'] is True
-    assert len(data['data']) == 0
+    assert len(data['data']['topics']) == 0
 
 def test_remove_topic_from_user_successfully(client, db):
     auth_client, headers = get_auth_client(client, valid_user_data)
 
-    topic = Topic(name="arte").to_orm()
+    topic = CustomTopic(name="arte").to_orm()
     db.session.add(topic)
     db.session.flush()
     
-    user_topic = UserTopicEntity(user_id=1, topic_id=topic.id)
+    user_topic = UserPreferredCustomTopicEntity(user_id=1, topic_id=topic.id)
     db.session.add(user_topic)
     db.session.commit()
-
-    response = auth_client.delete(f'/topics/delete/{topic.id}', headers=headers)
+    
+    response = auth_client.delete(f'/topics/custom/{topic.id}', headers=headers)
     assert response.status_code == 200
     data = response.get_json()
     assert data['success'] is True
-    assert "Tópico desvinculado com sucesso." in data['message']
+    assert "Tópico removido das preferências com sucesso." in data['message']
 
-    association = db.session.query(UserTopicEntity).filter_by(user_id=1, topic_id=topic.id).first()
+    association = db.session.query(UserPreferredCustomTopicEntity).filter_by(user_id=1, topic_id=topic.id).first()
     assert association is None
 
 def test_remove_nonexistent_topic_from_user_fails(client, db):
     auth_client, headers = get_auth_client(client, valid_user_data)
-
-    response = auth_client.delete(f'/topics/delete/999', headers=headers)
+    
+    response = auth_client.delete(f'/topics/custom/999', headers=headers)
     assert response.status_code == 404
     error_data = response.get_json()
-    assert "Nada a remover." in error_data['error']
+    assert "Tópico não encontrado." in error_data['message']
 
 def test_topic_routes_without_token_fails(client):
-    response = client.get('/topics/list') 
+    response = client.get('/topics/custom') 
     assert response.status_code == 401
 
     response = client.post(
-        '/topics/create',
+        '/topics/custom',
         data=json.dumps({"name": "test"}),
         content_type='application/json'
     )
     assert response.status_code == 401
 
-    response = client.delete('/topics/delete/1')
+    response = client.delete('/topics/custom/1')
     assert response.status_code == 401

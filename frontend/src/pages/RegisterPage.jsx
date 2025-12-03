@@ -2,6 +2,13 @@ import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
 
+import FormField from "../components/FormField";
+import emailIcon from "../icons/envelope-regular-full.svg";
+import userIcon from "../icons/user-regular-full.svg";
+import calendarIcon from "../icons/calendar-regular-full.svg";
+import lockIcon from "../icons/lock-regular-full.svg";
+import H2Login from "../components/H2Login";
+
 function RegisterPage() {
   // 1. Estados para armazenar os dados do formulário
   const [fullName, setFullName] = useState("");
@@ -14,12 +21,10 @@ function RegisterPage() {
   // Estados para feedback da API e validação
   const [errors, setErrors] = useState({});
 
-  // Regex para validação de senha
   const uppercaseRegex = /[A-Z]/;
   const lowercaseRegex = /[a-z]/;
   const numberRegex = /[0-9]/;
 
-  // 2. Função de validação do formulário
   const validateForm = () => {
     const newErrors = {};
 
@@ -81,7 +86,7 @@ function RegisterPage() {
       if (response.ok) {
         toast.success(`User registered successfully! Redirecting to login...`);
         setTimeout(() => {
-          navigate("/");
+          navigate("/login");
         }, 2000);
       } else {
         toast.error(data.error || "An unknown error occurred.");
@@ -94,191 +99,90 @@ function RegisterPage() {
   return (
     <div className="min-h-screen lg:flex bg-[#f5f5f5]">
       {/* Lado esquerdo (formulário) */}
-      <div
-        className="flex w-full lg:w-1/2 flex-col
-      items-center justify-center lg:justify-start
-      bg-[#f5f5f5] p-8"
-      >
-        {/* Container para o "Synapse" - alinhado à esquerda */}
-        <div className="w-full max-w-lg text-left">
-          <h1 className="mb-10 text-64xl font-bold text-black font-rajdhani">
-            Synapse
-          </h1>
-        </div>
-        <div className="w-full max-w-lg">
-          <form onSubmit={handleSubmit} className="space-y-4">
-            {/* Campo Email */}
-            <label
-                className="block text-sm font-medium text-gray-900 font-montserrat"
-                htmlFor="email"
-              >
-                Email Address
-                <div className="relative mt-1">
-                  <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
-                    <img
-                      src="./src/icons/envelope-regular-full.svg"
-                      alt="email icon"
-                      className="h-5 w-5"
-                    />
-                  </div>
-                  <input
-                    id="email"
-                    type="email"
-                    value={email}
-                    onChange={(e) => {
-                      setEmail(e.target.value);
-                      if (errors.email) {
-                        setErrors({ ...errors, email: null });
-                      }
-                    }}
-                    placeholder="Enter your e-mail..."
-                    className={`w-full border rounded py-2 px-9 focus:outline-none focus:ring-1 font-montserrat ${errors.email ? "border-red-500 focus:ring-red-500" : "border-gray-800 focus:ring-black"}`}
-                    required
-                  />
-                </div>
-              {errors.email && (
-                <p className="mt-1 text-sm text-red-600">{errors.email}</p>
-              )}
-            </label>
-            {/* Campo Nome Completo */}
-            <label
-                className="mt-6 block text-sm font-medium text-gray-900 font-montserrat"
-                htmlFor="fullName"
-              >
-                Full Name
-                <div className="relative mt-1">
-                  <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
-                    <img
-                      src="./src/icons/user-regular-full.svg"
-                      alt="user icon"
-                      className="h-5 w-5"
-                    />
-                  </div>
-                  <input
-                    id="fullName"
-                    type="text"
-                    value={fullName}
-                    onChange={(e) => {
-                      setFullName(e.target.value);
-                      if (errors.fullName) {
-                        setErrors({ ...errors, fullName: null });
-                      }
-                    }}
-                    placeholder="Enter your name..."
-                    className={`w-full border rounded py-2 px-9 focus:outline-none focus:ring-1 font-montserrat ${errors.fullName ? "border-red-500 focus:ring-red-500" : "border-gray-800 focus:ring-black"}`}
-                    required
-                  />
-                </div>
-              {errors.fullName && (
-                <p className="mt-1 text-sm text-red-600">{errors.fullName}</p>
-              )}
-            </label>
-            {/* Campo data de nascimento*/}
-            <label
-                className="mt-6 block text-sm font-medium text-gray-900 font-montserrat"
-                htmlFor="birthdate"
-              >
-                Birthdate
-                <div className="relative mt-1">
-                  <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
-                    <img
-                      src="./src/icons/calendar-regular-full.svg"
-                      alt="calendar icon"
-                      className="h-5 w-5"
-                    />
-                  </div>
-                  <input
-                    id="birthdate"
-                    type="date"
-                    value={birthdate}
-                    onChange={(e) => setBirthdate(e.target.value)}
-                    required
-                    className="w-full border rounded py-2 px-9 focus:outline-none focus:ring-1 font-montserrat border-gray-800 focus:ring-black [&::-webkit-calendar-picker-indicator]:hidden"
-                  />
-                </div>
-            </label>
-            {/* Campo de Senha */}
-            <label
-                className="mt-6 block text-sm font-medium text-gray-900 font-montserrat"
-                htmlFor="password"
-              >
-                Password
-                <div className="relative mt-1">
-                  <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
-                    <img
-                      src="./src/icons/lock-regular-full.svg"
-                      alt="lock icon"
-                      className="h-5 w-5"
-                    />
-                  </div>
-                  <input
-                    id="password"
-                    type="password"
-                    value={password}
-                    onChange={(e) => {
-                      setPassword(e.target.value);
-                      if (errors.password) {
-                        setErrors({ ...errors, password: null });
-                      }
-                    }}
-                    placeholder="Your password..."
-                    className={`w-full border rounded py-2 px-9 focus:outline-none focus:ring-1 font-montserrat ${errors.password ? "border-red-500 focus:ring-red-500" : "border-gray-800 focus:ring-black"}`}
-                    required
-                  />
-                </div>
-              {errors.password && (
-                <p className="mt-1 text-sm text-red-600">{errors.password}</p>
-              )}
-            </label>
-
-            {/* Campo Confirmação de Senha */}
-            <label
-                className="mt-6 block text-sm font-medium text-gray-900 font-montserrat"
-                htmlFor="ConfirmPassword"
-              >
-                Confirm Password
-                <div className="relative mt-1">
-                  <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
-                    <img
-                      src="./src/icons/lock-regular-full.svg"
-                      alt="lock icon"
-                      className="h-5 w-5"
-                    />
-                  </div>
-                  <input
-                    id="ConfirmPassword"
-                    type="password"
-                    value={confirmPassword}
-                    onChange={(e) => {
-                      setConfirmPassword(e.target.value);
-                      if (errors.confirmPassword) {
-                        setErrors({ ...errors, confirmPassword: null });
-                      }
-                    }}
-                    placeholder="Confirm your password..."
-                    className={`w-full border rounded py-2 px-9 focus:outline-none focus:ring-1 font-montserrat ${errors.confirmPassword ? "border-red-500 focus:ring-red-500" : "border-gray-800 focus:ring-black"}`}
-                    required
-                  />
-                </div>
-              {errors.confirmPassword && (
-                <p className="mt-1 text-sm text-red-600">
-                  {errors.confirmPassword}
-                </p>
-              )}
-            </label>
+      <div className="flex w-full lg:w-1/2 flex-col items-center justify-center p-6 min-h-screen lg:min-h-0">
+        <div className="w-5/6 md:w-full max-w-md">
+          <div className="text-left">
+            <h1 className="mb-10 text-[56px] md:text-64xl font-bold text-black font-rajdhani">
+              Synapse
+            </h1>
+          </div>
+          <form
+            onSubmit={handleSubmit}
+            className="-mt-4 space-y-2 md:space-y-4"
+          >
+            <FormField
+              id="email"
+              label="Email Address"
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="Enter your e-mail..."
+              error={errors.email}
+              iconSrc={emailIcon}
+              iconAlt="email icon"
+              required
+            />
+            <FormField
+              id="fullName"
+              label="Full Name"
+              type="text"
+              value={fullName}
+              onChange={(e) => setFullName(e.target.value)}
+              placeholder="Enter your name..."
+              error={errors.fullName}
+              iconSrc={userIcon}
+              iconAlt="user icon"
+              required
+            />
+            <FormField
+              id="birthdate"
+              label="Birthdate"
+              type="date"
+              value={birthdate}
+              onChange={(e) => setBirthdate(e.target.value)}
+              error={errors.birthdate}
+              iconSrc={calendarIcon}
+              iconAlt="calendar icon"
+              required
+              className="w-full border rounded py-2 px-9 focus:outline-none focus:ring-1 font-montserrat border-gray-800 focus:ring-black [&::-webkit-calendar-picker-indicator]:hidden"
+            />
+            <FormField
+              id="password"
+              label="Password"
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              placeholder="Your password..."
+              error={errors.password}
+              iconSrc={lockIcon}
+              iconAlt="lock icon"
+              required
+            />
+            <FormField
+              id="confirmPassword"
+              label="Confirm Password"
+              type="password"
+              value={confirmPassword}
+              onChange={(e) => setConfirmPassword(e.target.value)}
+              placeholder="Confirm your password..."
+              error={errors.confirmPassword}
+              iconSrc={lockIcon}
+              iconAlt="lock icon"
+              required
+            />
             <button
               type="submit"
-              className="mt-8 w-full rounded-md bg-black py-3 px-5 text-white hover:bg-gray-900"
+              className="mt-3 w-full text-sm rounded-md bg-black py-3 px-5 text-white font-bold md:font-medium hover:bg-gray-900 md:mt-6 font-montserrat"
             >
               Sign Up
             </button>
           </form>
 
-          <p className="mt-4 text-center text-sm text-black border-t border-[#111] pt-3">
+          <p className="mt-4 border-t border-[#111] pt-3 text-center text-xs text-black font-montserrat">
             Already have an account?{" "}
             <Link
-              to="/"
-              className="font-medium text-[#111] no-underline hover:underline hover:bg-[#1c1c1c] hover:text-[#fff] pt-0.2 px-0.5"
+              to="/login"
+              className="rounded px-0.5 pt-0.5 font-medium text-[#111] no-underline hover:bg-[#1c1c1c] hover:text-[#fff] hover:underline"
             >
               Login here
             </Link>
@@ -287,19 +191,20 @@ function RegisterPage() {
       </div>
 
       {/* Lado direito da tela*/}
-      <div className="hidden lg:flex w-full lg:w-1/2 flex-col items-left justify-center bg-black p-4 sm:p-8 text-white">
-        <h2 className="ml-8 text-160xl font-light leading-none font-rajdhani">
-          Know
-        </h2>
-        <h2 className="ml-8 text-160xl font-light leading-none font-rajdhani">
-          Your
-        </h2>
-        <h2 className="ml-8 text-160xl font-light leading-none font-rajdhani">
-          World,
-        </h2>
-        <h2 className="ml-8 text-160xl font-bold leading-none font-rajdhani">
-          Faster.
-        </h2>
+      <div className="hidden lg:flex w-full lg:w-1/2 flex-col items-start justify-center bg-black p-8 text-white">
+        <div className="ml-12">
+          <H2Login>Know</H2Login>
+          <H2Login>Your</H2Login>
+          <H2Login>World,</H2Login>
+          <H2Login className="font-bold">
+            <Link
+              to="/feed"
+              className="transition-colors duration-200 hover:text-gray-300"
+            >
+              Faster.
+            </Link>
+          </H2Login>
+        </div>
       </div>
     </div>
   );

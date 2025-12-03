@@ -4,7 +4,7 @@ from sqlalchemy.exc import SQLAlchemyError
 from app.extensions import db
 from app.entities.news_source_entity import NewsSourceEntity
 from app.models.news_source import NewsSource
-from app.entities.user_news_sources_entity import UserNewsSourceEntity
+from app.entities.user_preferred_news_sources_entity import UserPreferredNewsSourceEntity
 
 class NewsSourceRepository:
     def __init__(self, session=None):
@@ -61,8 +61,8 @@ class NewsSourceRepository:
         try:
             stmt = (
                 select(NewsSourceEntity)
-                .join(UserNewsSourceEntity, UserNewsSourceEntity.source_id == NewsSourceEntity.id)
-                .where(UserNewsSourceEntity.user_id == user_id)
+                .join(UserPreferredNewsSourceEntity, UserPreferredNewsSourceEntity.source_id == NewsSourceEntity.id)
+                .where(UserPreferredNewsSourceEntity.user_id == user_id)
                 .order_by(NewsSourceEntity.name)
             )
             entities = self.session.execute(stmt).scalars().all()
@@ -73,7 +73,7 @@ class NewsSourceRepository:
 
     def list_unassociated_by_user_id(self, user_id: int) -> list[NewsSource]:
         try:
-            subquery = select(UserNewsSourceEntity.source_id).where(UserNewsSourceEntity.user_id == user_id)
+            subquery = select(UserPreferredNewsSourceEntity.source_id).where(UserPreferredNewsSourceEntity.user_id == user_id)
 
             stmt = (
                 select(NewsSourceEntity)

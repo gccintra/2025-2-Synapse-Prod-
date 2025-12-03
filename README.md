@@ -21,8 +21,7 @@ Desenvolvido com um back-end em Flask (Python) e um front-end em React, o sistem
 * **Coleta Automatizada:** Um job diário busca e enriquece notícias de fontes globais usando a GNews API e web scraping.
 * **Feed Personalizado:** Os utilizadores podem gerir tópicos de interesse e fontes de notícias preferidas para customizar o seu feed.
 * **Gestão de Conta:** Sistema completo de autenticação, visualização e edição de perfil.
-* **(Futuro) Resumos com IA:** Geração de resumos concisos para otimizar o tempo de leitura.
-* **(Futuro) Newsletter Diária:** Envio de um e-mail personalizado com as notícias mais relevantes para o utilizador.
+* **Newsletter Diária:** Envio de um e-mail personalizado com as notícias mais relevantes para o utilizador.
 
 ## 🚀 Stack de Tecnologias
 
@@ -32,7 +31,7 @@ Desenvolvido com um back-end em Flask (Python) e um front-end em React, o sistem
 | **Back-end** | Python, Flask, SQLAlchemy |
 | **Base de Dados** | PostgreSQL |
 | **Infraestrutura** | Docker, Docker Compose |
-| **Coleta de Dados**| GNews API, Newspaper3k |
+| **Coleta de Dados** | GNews API, Newspaper3k |
 
 ## 🏁 Como Rodar o Projeto (Ambiente Docker)
 
