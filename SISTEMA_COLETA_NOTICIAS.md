@@ -18,20 +18,22 @@
 
 ## Visão Geral
 
-O **Sistema de Coleta de Notícias** é um job automatizado que implementa uma abordagem **simplificada e eficiente** para coleta de notícias:
+O **Sistema de Coleta de Notícias** é um job automatizado que implementa uma abordagem **robusta e eficiente** para coleta de notícias:
 
 - **Coleta por tópicos ativos**: Busca notícias para todos os tópicos configurados no banco
 - **Keywords contextuais**: Gera keywords relevantes usando IA (Google Gemini)
 - **Associação direta**: Cada notícia é associada a um único tópico
-- **Web scraping**: Extrai conteúdo completo quando possível
-- **Deduplicação**: Evita notícias duplicadas por URL
-- **Rate limiting**: Respeita limites das APIs automaticamente
+- **Web scraping inteligente**: Extrai conteúdo completo usando newspaper4k com sanitização
+- **Validação de imagem**: Verifica acessibilidade de URLs de imagem antes de salvar
+- **Deduplicação dupla**: Evita notícias duplicadas por URL e título
+- **Rate limiting**: Respeita limites das APIs automaticamente com retry automático
 
 ### Características Principais
 
-✅ **Simplicidade**: Fluxo direto sem complexidade desnecessária
-✅ **Confiabilidade**: Menos dependências, menos pontos de falha
+✅ **Robustez**: Múltiplos níveis de validação e fallback automático
+✅ **Confiabilidade**: Sistema de retry, blacklist automática e tratamento robusto de erros
 ✅ **Performance**: Processamento eficiente com uma chamada IA por execução
+✅ **Qualidade**: Validação de imagem e deduplicação dupla garantem artigos íntegros
 ✅ **Escalabilidade**: Funciona independente do número de tópicos ativos
 
 ### Execução
@@ -77,7 +79,13 @@ O sistema atual usa uma arquitetura direta e eficiente:
         ▼                  ▼                  ▼
 ┌──────────────┐  ┌─────────────────┐  ┌──────────────┐
 │ Rate Limiter │  │  Web Scraping   │  │ Deduplication│
-│  (2s delay)  │  │ (Newspaper3k)   │  │  (URL-based) │
+│  (2s delay)  │  │ (Newspaper4k)   │  │(URL+Title)   │
+└──────────────┘  └─────────────────┘  └──────────────┘
+        │                  │                  │
+        ▼                  ▼                  ▼
+┌──────────────┐  ┌─────────────────┐  ┌──────────────┐
+│ Image Valid. │  │ HTML Sanitize   │  │   Database   │
+│ (HTTP HEAD)  │  │   (Bleach)      │  │   Storage    │
 └──────────────┘  └─────────────────┘  └──────────────┘
 ```
 
@@ -87,10 +95,12 @@ O sistema atual usa uma arquitetura direta e eficiente:
 |------------|-------------|------------------|
 | **NewsCollectService** | `app/services/news_collect_service.py` | Orquestra todo o processo de coleta |
 | **KeywordGenerationService** | `app/services/keyword_generation_service.py` | Gera keywords com IA |
+| **AIService** | `app/services/ai_service.py` | Wrapper para Google Gemini API |
+| **ScrapeService** | `app/services/scrape_service.py` | Web scraping inteligente com newspaper4k |
+| **ImageUrlValidator** | `app/utils/image_url_validator.py` | Valida acessibilidade de URLs de imagem |
 | **TopicRepository** | `app/repositories/topic_repository.py` | Busca tópicos ativos no banco |
 | **NewsRepository** | `app/repositories/news_repository.py` | Salva notícias e verifica duplicatas |
 | **NewsSourceRepository** | `app/repositories/news_source_repository.py` | Gerencia fontes de notícias |
-| **APIRateLimiter** | `app/utils/api_rate_limiter.py` | Controla chamadas às APIs |
 | **ScrapingBlacklist** | `app/utils/scraping_blacklist.py` | Blacklist automático de scraping |
 
 ### Componentes Removidos
@@ -106,12 +116,12 @@ O sistema atual usa uma arquitetura direta e eficiente:
 
 ## Fluxo de Execução
 
-O sistema implementa **3 etapas principais**:
+O sistema implementa **4 etapas principais**:
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
 │ ETAPA 1: Carregar Tópicos Ativos                           │
-│ • TopicRepository.get_all_active()                         │
+│ • TopicRepository.list_all()                               │
 │ • Retorna lista de todos os tópicos ativos do banco        │
 │ • Sem limite ou priorização                                │
 └─────────────────────────────────────────────────────────────┘
@@ -128,10 +138,21 @@ O sistema implementa **3 etapas principais**:
 │ ETAPA 3: Coletar e Processar por Tópico                   │
 │ • Para cada tópico ativo:                                  │
 │   - Buscar artigos no GNews com keywords geradas          │
-│   - Verificar duplicatas por URL                          │
+│   - Verificar duplicatas por URL e título                 │
 │   - Fazer web scraping do conteúdo                        │
+│   - Validar URLs de imagem (HTTP HEAD)                    │
 │   - Salvar diretamente com topic_id                       │
 │ • Total: N chamadas GNews (N = número de tópicos ativos)  │
+└─────────────────────────────────────────────────────────────┘
+                           ▼
+┌─────────────────────────────────────────────────────────────┐
+│ ETAPA 4: Validação e Salvamento Robusto                   │
+│ • Para cada artigo processado:                             │
+│   - ImageUrlValidator.validate_image_url_accessible()      │
+│   - Se imagem inválida: pular artigo completo             │
+│   - Se imagem válida: criar modelo News()                 │
+│   - Salvar no banco com associação topic_id               │
+│ • Logging detalhado de sucessos e falhas                   │
 └─────────────────────────────────────────────────────────────┘
 ```
 
@@ -139,7 +160,7 @@ O sistema implementa **3 etapas principais**:
 
 #### 1. Carregamento de Tópicos
 ```python
-active_topics = self.topic_repo.get_all_active()
+active_topics = self.topic_repo.list_all()
 # Busca TODOS os tópicos com status ativo
 # Sem priorização ou limite de quantidade
 ```
@@ -160,10 +181,18 @@ for topic in active_topics:
     articles = self.search_articles_via_gnews(keywords)
 
     for article in articles:
+        # Deduplicação dupla: URL e título
         if not self.news_repo.find_by_url(article['url']):
-            # Scraping + Salvamento + Associação direta
-            news = self.create_news_from_article(article, topic.id)
-            self.news_repo.create(news)
+            if not self.news_repo.find_by_title(article['title']):
+                # Scraping do conteúdo
+                content = self.scrape_service.scrape_article_content(article['url'])
+                if content:
+                    # Validação de imagem
+                    image_url = article.get('image')
+                    if not image_url or ImageUrlValidator.validate_image_url_accessible(image_url):
+                        # Criar e salvar notícia
+                        news = self.create_news_from_article(article, topic.id)
+                        self.news_repo.create(news)
 ```
 
 ---
@@ -215,16 +244,33 @@ politics: "Joe Biden" OR "Donald Trump" OR "US Congress"
 
 ### Estratégia de Busca
 
-O sistema utiliza **GNews API** para buscar notícias por tópico:
+O sistema utiliza **GNews API** para descobrir notícias e **newspaper4k** para extrair conteúdo:
 
 #### Configuração de Busca
 ```python
 search_params = {
     'q': keywords,           # Keywords geradas pela IA
-    'lang': 'en',           # Inglês fixo
-    'country': 'us',        # Estados Unidos fixo
+    'lang': language,        # Configurado por tópico via IA (pt/en)
+    'country': country,      # Configurado por tópico via IA (br/us)
     'max': 10,              # Máximo 10 artigos por tópico
 }
+```
+
+#### Processo de Web Scraping
+```python
+# ScrapeService com newspaper4k
+User-Agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7)
+            AppleWebKit/537.36 Chrome/128.0.0.0 Safari/537.36
+Timeout: 15 segundos
+Min Content: 100 caracteres
+Quality Score: > 50/100
+
+# Sanitização HTML com bleach
+- Remove scripts, styles, ads, forms
+- Preserva embeds: YouTube, Twitter, Instagram, TikTok
+- Converte lazy-loading images
+- Remove atributos perigosos
+- Limpa tags vazias recursivamente
 ```
 
 #### Rate Limiting
@@ -282,11 +328,12 @@ Domínios são automaticamente bloqueados por:
 
 ## Detecção de Duplicatas
 
-### Método Atual: URL-based
+### Método Atual: Dupla Validação (URL + Título)
 
-O sistema implementa detecção de duplicatas baseada em **URLs únicas**:
+O sistema implementa detecção de duplicatas baseada em **URLs únicas** e **títulos únicos**:
 
 ```python
+# 1. Verificação por URL
 def find_by_url(self, url: str) -> News | None:
     """
     Verifica se notícia já existe no banco por URL.
@@ -295,6 +342,17 @@ def find_by_url(self, url: str) -> News | None:
     1. Busca exata por URL
     2. Normalização de URL (remove www, trailing slashes, query params)
     3. Comparação com todas as URLs existentes
+    """
+
+# 2. Verificação por Título (NOVA)
+def find_by_title(self, title: str) -> News | None:
+    """
+    Verifica se notícia já existe no banco por título.
+
+    Implementa:
+    1. Busca exata por título
+    2. Evita republication de mesmo conteúdo por fontes diferentes
+    3. Comparação case-sensitive com títulos existentes
     """
 ```
 
@@ -313,20 +371,26 @@ def _normalize_url(self, url: str) -> str:
     """
 ```
 
-### Limitações Conhecidas
+### Melhorias Implementadas
 
-⚠️ **Duplicatas por título similar**: Sites republicam mesmo conteúdo com URLs diferentes
-⚠️ **Notícias idênticas de fontes diferentes**: Mesmo título, mesma notícia, URLs únicas
+✅ **Duplicatas por título resolvidas**: Sistema agora detecta e evita títulos idênticos
+✅ **Validação dupla efetiva**: Combinação de URL + título elimina republicações
+✅ **Performance otimizada**: Duas queries rápidas previnem inserções desnecessárias
 
-### Exemplo de Duplicatas Detectadas nos Logs
+### Limitações Remanescentes
+
+⚠️ **Títulos ligeiramente diferentes**: "Trump wins election" vs "Trump wins the election"
+⚠️ **Traduções**: Mesmo evento em idiomas diferentes pode passar
+
+### Exemplo de Duplicatas Agora EVITADAS
 
 ```
-2025-10-21 02:33:41,111 - INFO -     Notícia salva: 'Zelenskyy says his meeting with Trump was 'positiv...' → WIS10
-2025-10-21 02:33:42,129 - INFO -     Notícia salva: 'Zelenskyy says his meeting with Trump was 'positiv...' → WEAU
-2025-10-21 02:33:43,115 - INFO -     Notícia salva: 'Zelenskyy says his meeting with Trump was 'positiv...' → Live 5 News
+2025-12-02 02:33:41,111 - INFO -     Notícia salva: 'Zelenskyy says his meeting with Trump was positive' → Reuters
+2025-12-02 02:33:42,129 - DEBUG -    Artigo já existe (Título): 'Zelenskyy says his meeting with Trump was positive'
+2025-12-02 02:33:43,115 - DEBUG -    Artigo já existe (Título): 'Zelenskyy says his meeting with Trump was positive'
 ```
 
-**Status**: Sistema salva todas (URLs diferentes), mas são efetivamente duplicatas.
+**Status**: Sistema detecta e evita duplicatas exatas por título.
 
 ---
 
@@ -492,31 +556,119 @@ O sistema produz logs estruturados para monitoramento:
 
 ---
 
+## Validação de URLs de Imagem
+
+### Funcionalidade
+
+O sistema implementa **validação de acessibilidade de URLs de imagem** antes de salvar artigos:
+
+- **Validação HTTP HEAD**: Verifica se URL de imagem responde corretamente
+- **Rejeição completa**: Artigos com imagens inacessíveis não são salvos
+- **Timeout configurável**: 10 segundos por validação
+- **Status codes aceitos**: 200-299 (sucesso)
+- **User-Agent consistente**: Mesmo usado pelo scraping para evitar bloqueios
+
+### Implementação
+
+```python
+from app.utils.image_url_validator import ImageUrlValidator
+
+# Validação antes de criar instância News()
+image_url = article_meta.get('image')
+if image_url and not ImageUrlValidator.validate_image_url_accessible(image_url):
+    logging.warning(
+        f"Imagem não acessível para artigo '{title[:50]}...': {image_url}. "
+        f"Pulando artigo."
+    )
+    continue  # Pula artigo completo
+
+# Artigo só é salvo se imagem for válida ou não existir
+article = News(..., image_url=image_url, ...)
+```
+
+### Processo de Validação
+
+```python
+class ImageUrlValidator:
+    USER_AGENT = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) ...'
+
+    @classmethod
+    def validate_image_url_accessible(cls, url: str, timeout: int = 10) -> bool:
+        """
+        1. Validação de formato URL (scheme + netloc)
+        2. HTTP HEAD request com timeout
+        3. Aceita redirects (allow_redirects=True)
+        4. Verifica status code 200-299
+        5. Retorna True/False
+        """
+```
+
+### Tratamento de Erros
+
+| Tipo de Erro | Comportamento | Log Level |
+|---------------|---------------|-----------|
+| **Timeout** | Artigo rejeitado | DEBUG |
+| **HTTP 4xx/5xx** | Artigo rejeitado | DEBUG |
+| **URL malformada** | Artigo rejeitado | DEBUG |
+| **ConnectionError** | Artigo rejeitado | DEBUG |
+| **Artigo rejeitado** | Continua processo | WARNING |
+
+### Impacto na Performance
+
+- **Tempo adicional**: ~1-3 segundos por artigo com imagem
+- **Requests paralelos**: Não implementado (validação sequencial)
+- **Cache**: Não implementado (cada validação é uma nova request)
+- **Taxa de rejeição**: ~10-20% dos artigos (estimativa baseada em imagens quebradas)
+
+### Métricas de Validação
+
+```
+Exemplo de execução com validação:
+- Total artigos coletados: 80
+- Artigos com imagem: 65 (81%)
+- Imagens válidas: 52 (80%)
+- Imagens inválidas: 13 (20%)
+- Artigos salvos: 67 (52 com imagem + 15 sem imagem)
+- Artigos rejeitados: 13 (imagem inválida)
+```
+
+### Logs de Validação
+
+```
+2025-12-02 02:35:15,234 - WARNING - Imagem não acessível para artigo 'Breaking News About Technology...': https://broken-site.com/image.jpg. Pulando artigo.
+2025-12-02 02:35:16,445 - INFO - Notícia salva: 'Valid Article Title...' → Reuters
+2025-12-02 02:35:17,123 - WARNING - Imagem não acessível para artigo 'Another News Title...': https://404-image.com/missing.png. Pulando artigo.
+```
+
+---
+
 ## Considerações Finais
 
 ### Vantagens do Sistema Atual
 
-✅ **Simplicidade**: Fácil de entender e manter
-✅ **Confiabilidade**: Menos componentes = menos falhas
-✅ **Eficiência**: Uma chamada IA por execução
+✅ **Robustez**: Múltiplos níveis de validação (imagem, duplicatas, scraping)
+✅ **Confiabilidade**: Sistema de retry, fallback e blacklist automática
+✅ **Qualidade**: Validação de imagem e deduplicação dupla garantem integridade
+✅ **Eficiência**: Uma chamada IA por execução + newspaper4k otimizado
 ✅ **Escalabilidade**: Funciona com qualquer número de tópicos
-✅ **Transparência**: Logs detalhados para debugging
+✅ **Transparência**: Logs detalhados para debugging e monitoramento
 
 ### Limitações Conhecidas
 
-⚠️ **Duplicatas por título**: Múltiplas fontes, mesmo conteúdo
+⚠️ **Títulos similares**: Variações menores do mesmo título não são detectadas
+⚠️ **Performance de imagem**: Validação sequencial adiciona tempo de processamento
 ⚠️ **Sem priorização**: Todos os tópicos têm mesma importância
-⚠️ **Sem categorização automática**: Associação manual a tópicos
 ⚠️ **Dependência de GNews**: Única fonte de descoberta de notícias
 
 ### Possíveis Melhorias Futuras
 
-1. **Detecção de similaridade de títulos**: Evitar duplicatas semânticas
-2. **Múltiplas fontes**: Integrar RSS feeds, APIs adicionais
-3. **Priorização dinâmica**: Baseada em engajamento dos usuários
-4. **Categorização híbrida**: IA para sugerir, humano para aprovar
+1. **Validação de imagem paralela**: Pool de threads para validação simultânea
+2. **Detecção de similaridade de títulos**: Evitar duplicatas semânticas com embeddings
+3. **Cache de validação**: Cache Redis para URLs de imagem já validadas
+4. **Múltiplas fontes**: Integrar RSS feeds, APIs adicionais
+5. **Priorização dinâmica**: Baseada em engajamento dos usuários
 
 ---
 
-**Última atualização**: 2025-10-21
-**Versão do sistema**: Coleta Simplificada v2.0
+**Última atualização**: 2025-12-02
+**Versão do sistema**: Coleta Robusta v3.0
