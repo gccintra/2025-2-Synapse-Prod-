@@ -1,4 +1,5 @@
-from app import create_app, db
+from app import create_app
+from app.extensions import db # Correção aqui
 from app.models.topic import Topic
 from app.repositories.topic_repository import TopicRepository
 
@@ -18,7 +19,6 @@ def init_db():
         topic_repo = TopicRepository()
 
         try:
-            # Lista tópicos existentes para não tentar criar duplicado
             existing_topic_names = {t.name.lower() for t in topic_repo.list_all()}
 
             new_topics_created_count = 0
