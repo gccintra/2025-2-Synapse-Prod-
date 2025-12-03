@@ -1,29 +1,13 @@
-import React, { useState, useEffect } from "react";
+import React from "react";
 import { Outlet, useLocation, useNavigate, Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import DynamicHeader from "../components/DynamicHeader";
-import { usersAPI } from "../services/api";
+import { useAuthContext } from "../contexts/AuthContext";
 
 const AccountLayout = () => {
-  const [userData, setUserData] = useState({ email: "" });
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const { user, isAuthenticated } = useAuthContext();
   const location = useLocation();
   const navigate = useNavigate();
-
-  useEffect(() => {
-    const fetchUser = async () => {
-      try {
-        const response = await usersAPI.getUserProfile();
-        if (response.success) {
-          setUserData(response.data);
-          setIsAuthenticated(true);
-        }
-      } catch (error) {
-        console.error("Failed to fetch user in AccountLayout:", error);
-      }
-    };
-    fetchUser();
-  }, []);
 
   const sectionVariants = {
     hidden: { y: 20, opacity: 0 },
@@ -36,7 +20,7 @@ const AccountLayout = () => {
   return (
     <div className="bg-gray-50 min-h-screen">
       <DynamicHeader
-        userEmail={userData.email}
+        userEmail={user?.email || ""}
         isAuthenticated={isAuthenticated}
         onBackClick={() => navigate("/feed")}
         backText="Back to feed"

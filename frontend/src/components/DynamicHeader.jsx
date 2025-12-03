@@ -1,10 +1,9 @@
 import React, { useState, useEffect } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 
-import { usersAPI } from "../services/api";
-
 import { toast } from "react-toastify";
 import { motion, AnimatePresence } from "framer-motion";
+import { useAuthContext } from "../contexts/AuthContext";
 
 import ArrowDownIcon from "../icons/arrow-down.svg";
 import BackIcon from "../icons/back-svgrepo-com.svg";
@@ -17,6 +16,7 @@ const DynamicHeader = ({
   backText,
   onBackClick,
 }) => {
+  const { logout } = useAuthContext();
   const dropdownVariants = {
     hidden: {
       opacity: 0,
@@ -50,12 +50,13 @@ const DynamicHeader = ({
   };
   const handleLogout = async () => {
     try {
-      await usersAPI.logout();
+      await logout(); // Usa o logout do AuthContext que limpa estado e chama API
       toast.success("Logout successful!");
+      navigate("/login");
     } catch (error) {
       console.error("Logout failed:", error);
       toast.error(error.message || "Logout failed. Please try again.");
-    } finally {
+      // Mesmo se a API falhar, ainda navega para login
       navigate("/login");
     }
   };

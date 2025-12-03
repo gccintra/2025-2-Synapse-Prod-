@@ -7,16 +7,17 @@ import DynamicHeader from "../components/DynamicHeader";
 import SavedNewsCardSkeleton from "../components/SavedNews/SavedNewsCardSkeleton";
 import ScrollToTopButton from "../components/ScrollToTopButton";
 import RemoveConfirmationModal from "../components/SavedNews/RemoveConfirmationModal";
+import { useAuthContext } from "../contexts/AuthContext";
 
-import { usersAPI, newsAPI } from "../services/api";
+import { newsAPI } from "../services/api";
 
 const SavedNewsPage = () => {
+  const { user } = useAuthContext();
   const [savedNews, setSavedNews] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [showModal, setShowModal] = useState(false);
   const [newsToRemove, setNewsToRemove] = useState(null);
-  const [userData, setUserData] = useState({ email: "" });
 
   // animações
   const containerVariants = {
@@ -34,23 +35,14 @@ const SavedNewsPage = () => {
   };
 
   useEffect(() => {
-    const fetchPageData = async () => {
+    const fetchSavedNews = async () => {
       setLoading(true);
       setError(null);
       try {
-        const [userResponse, savedNewsResponse] = await Promise.allSettled([
-          usersAPI.getUserProfile(),
-          newsAPI.getSavedNews(),
-        ]);
+        const savedNewsResponse = await newsAPI.getSavedNews();
 
-        if (userResponse.status === "fulfilled") {
-          setUserData(userResponse.value.data);
-        } else {
-          console.error("Failed to fetch user profile:", userResponse.reason);
-        }
-
-        if (savedNewsResponse.status === "fulfilled") {
-          const newsData = savedNewsResponse.value.data?.news || [];
+        if (savedNewsResponse.success) {
+          const newsData = savedNewsResponse.data?.news || [];
           const mappedNews = newsData.map((newsItem) => ({
             id: newsItem.id,
             title: newsItem.title,
@@ -68,7 +60,7 @@ const SavedNewsPage = () => {
       setLoading(false);
     };
 
-    fetchPageData();
+    fetchSavedNews();
   }, []);
 
   const handleConfirmRemove = (newsId) => {
@@ -95,7 +87,7 @@ const SavedNewsPage = () => {
   return (
     <div className="bg-gray-50 min-h-screen flex flex-col font-montserrat">
       <DynamicHeader
-        userEmail={userData.email}
+        userEmail={user?.email || ""}
         isAuthenticated={true}
         backTo="/feed"
         backText="Back to feed"

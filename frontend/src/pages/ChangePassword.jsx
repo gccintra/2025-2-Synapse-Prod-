@@ -7,35 +7,22 @@ import { usersAPI } from "../services/api";
 import AnimatedPage from "../components/AnimatedPage";
 import SeeEye from "../icons/eye-regular-full.svg";
 import BlockedEye from "../icons/eye-slash-regular-full.svg";
+import { useAuthContext } from "../contexts/AuthContext";
 
 function ChangePassword() {
   const navigate = useNavigate();
+  const { user } = useAuthContext();
 
   const [formData, setFormData] = useState({
     newPassword: "",
     confirmPassword: "",
   });
-  const [userEmail, setUserEmail] = useState("");
   const [errors, setErrors] = useState({});
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState({
     new: false,
     confirm: false,
   });
-
-  useEffect(() => {
-    const fetchUserData = async () => {
-      try {
-        const response = await usersAPI.getUserProfile();
-        if (response.success) {
-          setUserEmail(response.data.email);
-        }
-      } catch (err) {
-        console.error("Error fetching user data in ChangePassword:", err);
-      }
-    };
-    fetchUserData();
-  }, []);
 
   const validateForm = () => {
     const newErrors = {};
@@ -114,7 +101,7 @@ function ChangePassword() {
   return (
     <AnimatedPage>
       <DynamicHeader
-        userEmail={userEmail}
+        userEmail={user?.email || ""}
         isAuthenticated={true}
         onBackClick={() => navigate(-1)}
         backText="Back"

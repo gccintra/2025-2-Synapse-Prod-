@@ -8,6 +8,7 @@ import {
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import "./index.css";
+import { AuthProvider } from "./contexts/AuthContext.jsx";
 
 import LoginPage from "./pages/LoginPage";
 import AboutPage from "./pages/AboutPage";
@@ -86,12 +87,14 @@ const router = createBrowserRouter([
 // Renderiza o "Provedor de Rota" em vez do componente diretamente
 ReactDOM.createRoot(document.getElementById("root")).render(
   <React.StrictMode>
-    <RouterProvider router={router} />
-    <ToastContainer
-      position="bottom-right"
-      autoClose={5000}
-      hideProgressBar={false}
-      theme="dark"
-    />
+    <AuthProvider>
+      <RouterProvider router={router} />
+      <ToastContainer
+        position="bottom-right"
+        autoClose={5000}
+        hideProgressBar={false}
+        theme="dark"
+      />
+    </AuthProvider>
   </React.StrictMode>
 );

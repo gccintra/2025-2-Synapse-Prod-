@@ -1,9 +1,14 @@
 import React from 'react';
 import { Navigate, Outlet } from 'react-router-dom';
-import { useAuth } from '../hooks/useAuth.js';
+import { useAuthContext } from '../contexts/AuthContext';
 
 const PublicRoute = () => {
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, loading } = useAuthContext();
+
+  // Mostrar loading enquanto verifica autenticação
+  if (loading) {
+    return <div>Loading...</div>;
+  }
 
   if (isAuthenticated) {
     return <Navigate to="/account" replace />;

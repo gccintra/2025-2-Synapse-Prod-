@@ -4,6 +4,7 @@ import { toast } from "react-toastify";
 import DynamicHeader from "../components/DynamicHeader"; // Import the new DynamicHeader
 import AnimatedPage from "../components/AnimatedPage";
 import { usersAPI } from "../services/api";
+import { useAuthContext } from "../contexts/AuthContext";
 
 // Importe os ícones que você está usando no formulário
 import UserIcon from "../icons/user-regular-full.svg";
@@ -20,6 +21,7 @@ function getCookie(name) {
 function EditAccount() {
   // Hook para navegação programática
   const navigate = useNavigate();
+  const { user, refreshProfile } = useAuthContext();
 
   // Estado para os dados do formulário
   const [formData, setFormData] = useState({
@@ -30,39 +32,24 @@ function EditAccount() {
 
   // erros de validação
   const [errors, setErrors] = useState({});
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
 
-  // useEffect para buscar os dados do usuário ao carregar o componente
+  // useEffect para popular os dados do formulário com os dados do AuthContext
   useEffect(() => {
-    const fetchUserData = async () => {
-      setLoading(true);
+    if (user) {
+      const birthdateFromAPI = user.birthdate;
+      const date = new Date(birthdateFromAPI);
+      const userTimezoneOffset = date.getTimezoneOffset() * 60000;
+      const adjustedDate = new Date(date.getTime() + userTimezoneOffset);
+      const formattedDate = adjustedDate.toISOString().split("T")[0];
 
-      try {
-        const response = await usersAPI.getUserProfile();
-        if (response.success) {
-          const birthdateFromAPI = response.data.birthdate;
-          const date = new Date(birthdateFromAPI);
-          const userTimezoneOffset = date.getTimezoneOffset() * 60000;
-          const adjustedDate = new Date(date.getTime() + userTimezoneOffset);
-          const formattedDate = adjustedDate.toISOString().split("T")[0];
-
-          setFormData({
-            fullName: response.data.full_name,
-            email: response.data.email,
-            birthdate: formattedDate,
-          });
-        } else {
-          toast.error(response.error || "Could not load data.");
-        }
-      } catch (err) {
-        toast.error(err.message || "Connection error. Please try again later.");
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchUserData();
-  }, []);
+      setFormData({
+        fullName: user.full_name || "",
+        email: user.email || "",
+        birthdate: formattedDate,
+      });
+    }
+  }, [user]);
   const validateForm = () => {
     const newErrors = {};
 
@@ -105,6 +92,8 @@ function EditAccount() {
 
       if (response.success) {
         toast.success(`Data updated successfully!`);
+        // Atualiza os dados no AuthContext
+        await refreshProfile();
         // delay para o usuário ver a mensagem e depois redireciona
         setTimeout(() => {
           navigate("/account");
@@ -122,7 +111,7 @@ function EditAccount() {
   return (
     <AnimatedPage>
       <DynamicHeader
-        userEmail={formData.email}
+        userEmail={user?.email || ""}
         isAuthenticated={true}
         onBackClick={() => navigate(-1)}
         backText="Back"
