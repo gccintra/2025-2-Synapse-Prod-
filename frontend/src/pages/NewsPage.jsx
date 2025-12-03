@@ -6,24 +6,31 @@ import DynamicHeader from "../components/DynamicHeader";
 import NewsPageSkeleton from "../components/NewsPage/NewsPageSkeleton";
 import ScrollToTopButton from "../components/ScrollToTopButton";
 import { motion } from "framer-motion";
+import { useAuthContext } from "../contexts/AuthContext";
 
 import { newsAPI } from "../services/api";
-import { usersAPI } from "../services/api";
 import { formatDateLong } from "../utils/dateUtils";
 
 const NewsPage = () => {
   const { id: newsId } = useParams();
+
+  // AuthContext para autenticação centralizada
+  const { user, isAuthenticated, loading: authLoading } = useAuthContext();
+
   const [articleData, setArticleData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [isSaved, setIsSaved] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const [userData, setUserData] = useState({ email: "" });
   const historyAddedRef = useRef(false);
   const contentRef = useRef(null);
 
   useEffect(() => {
+    // Aguarda que a autenticação seja verificada
+    if (authLoading) {
+      return;
+    }
+
     const fetchNewsData = async () => {
       if (!newsId) {
         setError("ID da notícia não fornecido");
@@ -33,12 +40,10 @@ const NewsPage = () => {
       try {
         setLoading(true);
         setError(null);
-        const [newsResponse, authResponse] = await Promise.allSettled([
-          newsAPI.getNewsById(newsId),
-          usersAPI.getUserProfile(),
-        ]);
-        if (newsResponse.status === "rejected") throw newsResponse.reason;
-        const newsData = newsResponse.value.data;
+
+        // Busca apenas os dados da notícia, user já vem do AuthContext
+        const newsResponse = await newsAPI.getNewsById(newsId);
+        const newsData = newsResponse.data;
         setArticleData({
           title: newsData.title,
           image: newsData.image_url || "https://via.placeholder.com/800x400",
@@ -46,18 +51,12 @@ const NewsPage = () => {
           date: formatDateLong(newsData.published_at) || "Data não informada",
           contentHtml: // Prioriza o HTML, com fallback para content e description
             newsData.html ||
-            newsData.content || 
+            newsData.content ||
             newsData.description ||
             "Conteúdo não disponível",
         });
 
         setIsSaved(newsData.is_favorited || false);
-
-        // status de login
-        if (authResponse.status === "fulfilled") {
-          setIsLoggedIn(true);
-          setUserData(authResponse.value.data);
-        }
       } catch (err) {
         console.error("Erro ao carregar notícia:", err);
         setError(err.message || "Erro ao carregar a notícia");
@@ -67,10 +66,10 @@ const NewsPage = () => {
     };
 
     fetchNewsData();
-  }, [newsId]);
+  }, [authLoading, newsId]);
 
   useEffect(() => {
-    if (isLoggedIn && newsId && !historyAddedRef.current) {
+    if (isAuthenticated && newsId && !historyAddedRef.current) {
       const addHistory = async () => {
         try {
           await newsAPI.addNewsToHistory(newsId);
@@ -81,7 +80,7 @@ const NewsPage = () => {
       };
       addHistory();
     }
-  }, [isLoggedIn, newsId]);
+  }, [isAuthenticated, newsId]);
 
   // useEffect: Processar placeholders após renderização do HTML
   useEffect(() => {
@@ -175,7 +174,7 @@ const NewsPage = () => {
   };
 
   const handleSaveClick = async () => {
-    if (!isLoggedIn) {
+    if (!isAuthenticated) {
       toast.warn("To save a news story, you need to be logged in.");
       return;
     }
@@ -199,15 +198,15 @@ const NewsPage = () => {
   };
 
   if (loading) {
-    return <NewsPageSkeleton isLoggedIn={isLoggedIn} />;
+    return <NewsPageSkeleton isLoggedIn={isAuthenticated} />;
   }
 
   if (error) {
     return (
       <div className="bg-white min-h-screen">
         <DynamicHeader
-          userEmail={userData.email}
-          isAuthenticated={isLoggedIn}
+          userEmail={user?.email || ""}
+          isAuthenticated={isAuthenticated}
         />
         <main className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 pt-10 pb-20">
           <div className="text-center py-12">
@@ -231,8 +230,8 @@ const NewsPage = () => {
     return (
       <div className="bg-white min-h-screen">
         <DynamicHeader
-          userEmail={userData.email}
-          isAuthenticated={isLoggedIn}
+          userEmail={user?.email || ""}
+          isAuthenticated={isAuthenticated}
         />
         <main className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 pt-10 pb-20">
           <div className="text-center py-12">
@@ -257,7 +256,7 @@ const NewsPage = () => {
   return (
     <div className="bg-gray-50 min-h-screen">
       <ScrollToTopButton />
-      <DynamicHeader userEmail={userData.email} isAuthenticated={isLoggedIn} />
+      <DynamicHeader userEmail={user?.email || ""} isAuthenticated={isAuthenticated} />
       <motion.main
         className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 pt-10 pb-20"
         initial={{ opacity: 0, y: 20 }}

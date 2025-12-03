@@ -4,11 +4,12 @@ import { Link, useLocation } from "react-router-dom";
 import { useInfiniteScroll } from "../hooks/useInfiniteScroll";
 import ScrollToTopButton from "../components/ScrollToTopButton";
 import { motion, AnimatePresence } from "framer-motion";
+import { useAuthContext } from "../contexts/AuthContext";
 
 import NewsCard from "../components/FeedPage/NewsCard";
 import DynamicHeader from "../components/DynamicHeader";
 
-import { topicsAPI, usersAPI, newsAPI } from "../services/api";
+import { topicsAPI, newsAPI } from "../services/api";
 
 const LoginPrompt = () => (
   <div className="relative min-h-[400px] overflow-hidden">
@@ -116,7 +117,9 @@ const itemVariants = {
 };
 
 const FeedPage = () => {
-  const [userData, setUserData] = useState({ email: "" });
+  // AuthContext para autenticação centralizada
+  const { user, isAuthenticated, loading: authLoading } = useAuthContext();
+
   const [initialLoading, setInitialLoading] = useState(true);
   const [topics, setTopics] = useState([]);
   const [selectedTopic, setSelectedTopic] = useState(null);
@@ -124,7 +127,6 @@ const FeedPage = () => {
   const topicsContainerRef = useRef(null);
   const [showLeftGradient, setShowLeftGradient] = useState(false);
   const [showRightGradient, setShowRightGradient] = useState(false);
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
   const location = useLocation();
   const [activeCategory, setActiveCategory] = useState(
     location.state?.activeCategory || "For You"
@@ -132,7 +134,7 @@ const FeedPage = () => {
 
   const fetchNews = useCallback(
     (page, perPage) => {
-      if (!isLoggedIn && !selectedTopic) {
+      if (!isAuthenticated && !selectedTopic) {
         return Promise.resolve({
           data: { news: [], pagination: { pages: 1 } },
         });
@@ -143,7 +145,7 @@ const FeedPage = () => {
         return newsAPI.getForYouNews(page, perPage);
       }
     },
-    [isLoggedIn, selectedTopic]
+    [isAuthenticated, selectedTopic]
   );
 
   // infinite scroll
@@ -159,62 +161,47 @@ const FeedPage = () => {
   });
 
   useEffect(() => {
+    // Aguarda que a autenticação seja verificada
+    if (authLoading) {
+      return;
+    }
+
     const fetchInitialData = async () => {
       setInitialLoading(true);
       setTopicsLoading(true);
 
-      let currentUserIsLoggedIn = false;
-      let currentFetchedTopics = [];
-
       try {
-        // chamadas em paralelo
-        const [userResponse, topicsResponse] = await Promise.allSettled([
-          usersAPI.getUserProfile(),
-          topicsAPI.getStandardTopics(),
-        ]);
-
-        // resposta do Usuário
-        if (userResponse.status === "fulfilled") {
-          setUserData(userResponse.value.data);
-          currentUserIsLoggedIn = true;
-        } else {
-          currentUserIsLoggedIn = false;
-        }
-
-        // resposta dos Tópicos
-        if (topicsResponse.status === "fulfilled") {
-          currentFetchedTopics = topicsResponse.value.data || [];
-          setTopics(currentFetchedTopics);
-        }
+        // Busca apenas os tópicos, user já vem do AuthContext
+        const topicsResponse = await topicsAPI.getStandardTopics();
+        setTopics(topicsResponse.data || []);
       } catch (err) {
-        console.error("Erro crítico na inicialização:", err);
+        console.error("Erro ao buscar tópicos:", err);
       } finally {
-        // estados de login e loading atualizados
-        setIsLoggedIn(currentUserIsLoggedIn);
         setInitialLoading(false);
         setTopicsLoading(false);
 
         // LÓGICA DE SELEÇÃO DO TÓPICO INICIAL
         let topicToSelect;
+        const fetchedTopics = topicsResponse.data || [];
 
         // Passo A: Define o padrão baseado no login
-        if (currentUserIsLoggedIn) {
+        if (isAuthenticated) {
           topicToSelect = null; // Padrão para logado: "For You"
         } else {
           topicToSelect =
-            currentFetchedTopics.length > 0 ? currentFetchedTopics[0] : null; // Padrão para não logado: Primeiro tópico
+            fetchedTopics.length > 0 ? fetchedTopics[0] : null; // Padrão para não logado: Primeiro tópico
         }
 
         // Passo B: Tenta sobrescrever com o histórico de navegação, se existir
-        if (location.state?.activeCategory && currentFetchedTopics.length > 0) {
+        if (location.state?.activeCategory && fetchedTopics.length > 0) {
           if (location.state.activeCategory === "For You") {
             // Se veio de "For You", só permite se estiver logado
-            if (currentUserIsLoggedIn) {
+            if (isAuthenticated) {
               topicToSelect = null;
             }
           } else {
             // Tenta encontrar o tópico pelo nome
-            const restoredTopic = currentFetchedTopics.find(
+            const restoredTopic = fetchedTopics.find(
               (t) => t.name === location.state.activeCategory
             );
             if (restoredTopic) {
@@ -229,12 +216,12 @@ const FeedPage = () => {
     };
 
     fetchInitialData();
-  }, []);
+  }, [authLoading, isAuthenticated, location.state?.activeCategory]);
 
   // resetar o feed quando o tópico muda
   useEffect(() => {
     resetNews();
-  }, [selectedTopic, isLoggedIn]);
+  }, [selectedTopic, isAuthenticated]);
 
   // efeito que controla o carrossel de tópicos (gradientes e drag-to-scroll)
   useEffect(() => {
@@ -318,8 +305,8 @@ const FeedPage = () => {
       {/* Dynamic Header for Feed Page */}
       <DynamicHeader
         className="relative z-index"
-        userEmail={userData.email}
-        isAuthenticated={isLoggedIn}
+        userEmail={user?.email || ""}
+        isAuthenticated={isAuthenticated}
         showBackButton={false}
       />
 
@@ -361,7 +348,7 @@ const FeedPage = () => {
           </div>
         )}
         {/* Exibe a tela de login para a seção "For You" se não estiver logado */}
-        {!isLoggedIn && selectedTopic === null && (
+        {!isAuthenticated && selectedTopic === null && (
           <div className="mt-12 mb-12">
             <LoginPrompt />
           </div>
@@ -381,14 +368,14 @@ const FeedPage = () => {
               ? Array.from({ length: 3 }).map((_, index) => (
                   <NewsCard key={index} isLoading={true} />
                 ))
-              : (isLoggedIn || selectedTopic) &&
+              : (isAuthenticated || selectedTopic) &&
                 news
                   .slice(0, 3)
                   .map((newsItem) => (
                     <NewsCard
                       key={newsItem.id}
                       news={newsItem}
-                      isLoggedIn={isLoggedIn}
+                      isLoggedIn={isAuthenticated}
                       activeCategory={
                         selectedTopic ? selectedTopic.name : "For You"
                       }
@@ -403,7 +390,7 @@ const FeedPage = () => {
                 Array.from({ length: 4 }).map((_, index) => (
                   <NewsCard key={index} isListItem={true} isLoading={true} />
                 ))
-              : (isLoggedIn || selectedTopic) &&
+              : (isAuthenticated || selectedTopic) &&
                 news.slice(3).map((newsItem, index) => {
                   const isLastItem = index === news.slice(3).length - 1;
                   return (
@@ -411,8 +398,8 @@ const FeedPage = () => {
                       <NewsCard
                         news={newsItem}
                         isListItem={true}
-                        showSaveButton={isLoggedIn}
-                        isLoggedIn={isLoggedIn}
+                        showSaveButton={isAuthenticated}
+                        isLoggedIn={isAuthenticated}
                         ref={isLastItem ? lastElementRef : null}
                         activeCategory={
                           selectedTopic ? selectedTopic.name : "For You"
@@ -444,7 +431,7 @@ const FeedPage = () => {
         {!newsLoading &&
           news.length === 0 &&
           !newsError &&
-          (isLoggedIn || selectedTopic) && (
+          (isAuthenticated || selectedTopic) && (
             <div className="text-center py-12">
               <p className="text-gray-500 text-lg">
                 Nenhuma notícia encontrada.

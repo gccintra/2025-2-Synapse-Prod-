@@ -11,7 +11,7 @@ const PublicRoute = () => {
   }
 
   if (isAuthenticated) {
-    return <Navigate to="/account" replace />;
+    return <Navigate to="/feed" replace />;
   }
 
   return <Outlet />;
